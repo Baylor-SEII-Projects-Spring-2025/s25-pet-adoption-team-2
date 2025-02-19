@@ -51,7 +51,7 @@ export default function HomePage() {
           <Card sx={{ width: 600 }} elevation={4}>
             <CardContent>
               <Typography variant="h3" align="center">
-                Pet Adoption Spring 2025 by Paul Becker
+                Pet Adoption Spring 2025 by Group 2
               </Typography>
               <Typography variant="body1" color="text.secondary">
                 This is your template project for the Spring 2025 Baylor
@@ -90,9 +90,9 @@ export default function HomePage() {
             />
 
             {/* Here is a link to another page */}
-            <Link href="/other">
+            <Link href="/login">
               <Button variant="contained" color="success">
-                Link to another page
+                Login
               </Button>
             </Link>
 

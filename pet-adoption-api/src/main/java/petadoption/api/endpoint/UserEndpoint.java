@@ -27,4 +27,19 @@ public class UserEndpoint {
     public User saveUser(@RequestBody User user) {
         return userService.saveUser(user);
     }
+
+    // New login endpoint
+    @PostMapping("/login")
+    public String login(@RequestBody LoginRequest loginRequest) {
+        String email = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
+
+        // Manipulate the data: Convert email to lowercase and log the password length
+        String manipulatedEmail = email.toLowerCase();
+
+        log.info("Login attempt with email: {}", manipulatedEmail);
+        log.info("Password: {}", password);
+
+        return String.format("Processed email: %s with password: %s", manipulatedEmail, password);
+    }
 }
