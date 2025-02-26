@@ -101,4 +101,46 @@ public class UserEndpoint {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/api/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+        try {
+            // Extract login credentials
+            String email = loginRequest.get("email");
+            String password = loginRequest.get("password");
+
+            // Basic validation
+            if (email == null || password == null) {
+                log.warn("Login attempt with missing email or password");
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Email and password are required"));
+            }
+
+            // Find user by email
+            User user = userRepository.findByEmailAddress(email);
+
+            // Check if user exists and password matches
+            if (user == null || !password.equals(user.getPassword())) {
+                log.warn("Failed login attempt for email: {}", email);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Invalid email or password"));
+            }
+
+            // Create success response with user details
+            log.info("User logged in successfully: {}", email);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Login successful");
+            response.put("userId", user.getId());
+            response.put("email", user.getEmailAddress());
+            response.put("userType", user.getUserType());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error during login", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Login failed: " + e.getMessage()));
+        }
+    }
 }
