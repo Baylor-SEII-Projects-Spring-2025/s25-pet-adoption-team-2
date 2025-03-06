@@ -33,6 +33,50 @@ public class UserEndpoint {
         return user;
     }
 
+    @PutMapping("/api/user/email")
+    public ResponseEntity<?> updateEmail(@RequestBody Map<String, String> updateRequest) {
+        try {
+            // Extract user id and new email address from the request body
+            String idStr = updateRequest.get("id");
+            String newEmail = updateRequest.get("email");
+
+            if (idStr == null || newEmail == null) {
+                log.warn("Update email request missing user id or email");
+                return ResponseEntity.badRequest().body(Map.of("error", "User ID and new email are required"));
+            }
+
+            Long id = Long.parseLong(idStr);
+
+            // Find the user using the UserService (which wraps the repository)
+            var userOpt = userService.findUser(id);
+            if (userOpt.isEmpty()) {
+                log.warn("User with id {} not found", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
+            }
+
+            // Update the user's email address and persist the change
+            User user = userOpt.get();
+            user.setEmailAddress(newEmail);
+            userService.saveUser(user);
+
+            log.info("Updated email for user {} to {}", id, newEmail);
+
+            // Build and return the success response
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Email updated successfully");
+            response.put("userId", user.getId());
+            response.put("email", user.getEmailAddress());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error updating email", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update email: " + e.getMessage()));
+        }
+    }
+
+
     @PostMapping("/users")
     public User saveUser(@RequestBody User user) {
         return userService.saveUser(user);
