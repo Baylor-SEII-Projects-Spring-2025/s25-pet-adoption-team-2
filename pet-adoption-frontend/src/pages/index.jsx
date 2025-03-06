@@ -183,7 +183,7 @@ export default function HomePage() {
             <Card sx={{ width: '100%' }} elevation={4}>
               <CardContent>
                 <Typography variant="h3" align="center">
-                  Pet Adoption Spring 2025 by Paul Becker
+                  Pet Adoption Spring 2025
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
                   This is your template project for the Spring 2025 Baylor
