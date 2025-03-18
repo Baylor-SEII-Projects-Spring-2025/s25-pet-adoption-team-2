@@ -16,14 +16,29 @@ public class User {
             sequenceName = TABLE_NAME + "_SEQUENCE"
     )
     @Column(name = "USER_ID")
-    Long id;
+    private Long id;
 
     @Column(name = "EMAIL_ADDRESS")
-    String emailAddress;
+    private String emailAddress;
 
     @Column(name = "PASSWORD")
-    String password;
+    private String password;
 
     @Column(name = "USER_TYPE")
-    String userType;
+    private String userType;
+
+    @Column(name = "FIRST_NAME")
+    private String firstName;
+
+    @Column(name = "LAST_NAME")
+    private String lastName;
+
+    @Column(name = "PHONE")
+    private String phone;
+
+    @Column(name = "ADDRESS")
+    private String address;
+
+    @Column(name = "SHELTER_NAME")
+    private String shelterName;
 }
