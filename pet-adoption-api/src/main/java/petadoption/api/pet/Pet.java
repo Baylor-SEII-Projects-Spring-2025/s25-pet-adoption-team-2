@@ -18,12 +18,36 @@ public class Pet {
     @Column(name = "PET_ID")
     private Long id;
 
+    @Column(name = "NAME", nullable = false)
+    private String name;
+
+    @Column(name = "AGE", nullable = false)
+    private Integer age;
+
+    @Column(name = "SPECIES", nullable = false)
+    private String species;
+
+    @Column(name = "BREED", nullable = false)
+    private String breed;
+
+    @Column(name = "GENDER", nullable = false)
+    private String gender;
+
+    @Column(name = "HEALTH_STATUS", nullable = false)
+    private String healthStatus;
+
     @Column(name = "IMAGE_URL")
     private String imageUrl;
 
     @Column(name = "DESCRIPTION")
     private String description;
 
-    @Column(name = "RATING")
-    private Double rating;
+    @Column(name = "ADOPTION_CENTER_ID", nullable = false)
+    private Long adoptionCenterId; // Links pet to its adoption center
+
+    @Column(name = "STATUS", nullable = false)
+    private String status = "Pending"; // "Pending", "Verified", "Rejected"
+
+    @Column(name = "AVAILABLE", nullable = false)
+    private Boolean available = true;
 }
