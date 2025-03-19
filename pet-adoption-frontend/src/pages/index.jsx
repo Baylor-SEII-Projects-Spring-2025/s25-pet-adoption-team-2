@@ -15,6 +15,9 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import Recommendations from "../Components/Recommendations";
+
+
 
 export default function HomePage() {
   const router = useRouter();
@@ -210,6 +213,16 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </Container>
+
+      {/* Recommendations for adopter users */}
+      {isLoggedIn && user?.userType !== "SHELTER" && (
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          <Typography variant="h4" align="center" gutterBottom>
+            Recommended Pets
+          </Typography>
+          <Recommendations userId={user.id} />
+        </Container>
+      )}
     </>
   );
 }
