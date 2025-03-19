@@ -31,6 +31,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	testImplementation 'org.mockito:mockito-core:4.0.0'
 
 	// Spring Security - you'll need this, but not immediately; here they are for when you are ready though!
 	// implementation 'org.springframework.boot:spring-boot-starter-security'
