@@ -223,6 +223,28 @@ export default function HomePage() {
           <Recommendations userId={user.id} />
         </Container>
       )}
+
+      {/* Conditional Buttons for Events */}
+      <Container>
+        {isLoggedIn && user?.userType === "SHELTER" && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => router.push("/ShelterEventsPage")}
+          >
+            Add Events (Shelter)
+          </Button>
+        )}
+        {isLoggedIn && user?.userType !== "SHELTER" && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => router.push("/AdopterEventsPage")}
+          >
+            View Events (Adopter)
+          </Button>
+        )}
+      </Container>
     </>
   );
 }
