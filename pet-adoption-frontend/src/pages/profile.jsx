@@ -66,7 +66,7 @@ export default function Profile() {
         return;
       }
       // Fetch latest user info from backend
-      fetch(`http://localhost:8080/users/${userId}`)
+      fetch(`http://35.225.196.242:8080/users/${userId}`)
         .then((response) => response.json())
         .then((data) => {
           setUser(data);
@@ -125,7 +125,7 @@ export default function Profile() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/user", {
+      const response = await fetch("http://35.225.196.242:8080/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatePayload),

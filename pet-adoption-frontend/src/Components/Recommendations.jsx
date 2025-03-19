@@ -17,7 +17,7 @@ const Recommendations = ({ userId }) => {
 
   useEffect(() => {
     async function fetchRecommendations() {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
       try {
         const response = await fetch(`${backendUrl}/api/recommendations/${userId}`);
         if (response.ok) {
