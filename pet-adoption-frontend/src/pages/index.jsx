@@ -180,7 +180,7 @@ export default function HomePage() {
                 component="h1"
                 sx={{ fontWeight: "bold", mb: 2 }}
               >
-                Find Your Forever Friend
+                Find Your Forever Friend Scrum
               </Typography>
               <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
                 Adopt a pet and change both your lives for the better
