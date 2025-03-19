@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
-import PetCard from "../components/PetCard";
+import PetCard from "../Components/PetCard";
 
 export default function Adopt() {
     const [pets, setPets] = useState([]);
