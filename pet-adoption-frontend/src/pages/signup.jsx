@@ -55,7 +55,7 @@ export default function Signup() {
     setSuccess("");
 
     try {
-      const response = await fetch("http://34.56.208.228:8080/api/signup", {
+      const response = await fetch("http://35.225.196.242:8080/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,14 +70,15 @@ export default function Signup() {
         }),
       });
 
-      const data = await response.json();
+      //const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to sign up");
+        const errorText = await response.text();
+        throw new Error(`Request failed: ${errorText}`);
       }
+      const data = await response.json();
 
       setSuccess(`Account created successfully! Welcome, ${data.email}`);
-      // Optionally reset the form:
       setFormData({
         email: "",
         password: "",
