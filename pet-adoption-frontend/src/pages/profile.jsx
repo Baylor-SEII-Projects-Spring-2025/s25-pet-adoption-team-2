@@ -125,7 +125,7 @@ export default function Profile() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/user", {
+      const response = await fetch("http://104.198.72.107:8080/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatePayload),
