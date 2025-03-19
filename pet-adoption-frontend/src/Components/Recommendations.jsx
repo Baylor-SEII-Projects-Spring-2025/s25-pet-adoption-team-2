@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import Image from 'next/image';
 
 const Recommendations = ({ userId }) => {
   const [recommendations, setRecommendations] = useState([]);
@@ -78,12 +79,16 @@ const Recommendations = ({ userId }) => {
       >
         <ArrowBackIosIcon />
       </IconButton>
-      <Card sx={{ minWidth: 250, maxWidth: 400 }}>
-        <img
-          src={currentPet.imageUrl}
-          alt="pet"
-          style={{ width: "100%", height: 200, objectFit: "cover" }}
-        />
+      <Card sx={{ minWidth: 250, maxWidth: 400, position: "relative" }}>
+        {/* Container for the Image if you want to use 'fill' */}
+        <Box sx={{ position: "relative", width: "100%", height: 200 }}>
+          <Image
+            src={currentPet.imageUrl}
+            alt="pet"
+            fill
+            style={{ objectFit: "cover" }}
+          />
+        </Box>
         <CardContent>
           <Typography variant="body1">{currentPet.description}</Typography>
           <Rating
