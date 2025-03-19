@@ -1,7 +1,7 @@
 // components/Recommendations.jsx
 import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
-import PetCard from "./PetCard";
+import PetCard from "../Components/PetCard";
 
 export default function Recommendations({ userId }) {
   const [pets, setPets] = useState([]);
