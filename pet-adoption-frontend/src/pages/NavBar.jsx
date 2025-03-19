@@ -28,6 +28,8 @@ import {
 const pages = [
   { title: 'Home', path: '/' },
   { title: 'Adopt', path: '/adopt' },
+  { title: 'Events', path: '/AdopterEventsPage' },
+  {title: 'Events', path: '/ShelterEventsPage'},
   { title: 'About', path: '/about' },
 ];
 

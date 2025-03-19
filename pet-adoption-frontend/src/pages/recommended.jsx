@@ -1,34 +1,38 @@
-//import React, { useState } from "react";
-import Head from "next/head";
-import {
-  //Button,
-  Card,
-  CardContent,
-  Stack,
-  //TextField,
-  Typography,
-} from "@mui/material";
+// components/Recommendations.jsx
+import React, { useState, useEffect } from "react";
+import { Box, Typography } from "@mui/material";
+import PetCard from "./PetCard";
 
+export default function Recommendations({ userId }) {
+  const [pets, setPets] = useState([]);
 
-export default function Recommended() {
+  useEffect(() => {
+    async function fetchRecommendations() {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+      try {
+        const response = await fetch(`${backendUrl}/api/recommendations/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPets(data);
+        } else {
+          console.error("Failed to fetch recommendations, status:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations", error);
+      }
+    }
+    if (userId) {
+      fetchRecommendations();
+    }
+  }, [userId]);
 
   return (
-    <>
-      <Head>
-        <title>Recommended</title>
-      </Head>
-
-      <main>
-        <Stack sx={{ paddingTop: 4 }} alignItems="center" gap={2}>
-          <Card sx={{ width: 600 }} elevation={4}>
-            <CardContent>
-              <Typography variant="h3" align="center">
-                Recommended
-              </Typography>
-            </CardContent>
-          </Card>
-        </Stack>
-      </main>
-    </>
+      <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
+        {pets.length === 0 ? (
+            <Typography>No recommendations available.</Typography>
+        ) : (
+            pets.map((pet) => <PetCard key={pet.id} pet={pet} />)
+        )}
+      </Box>
   );
 }
