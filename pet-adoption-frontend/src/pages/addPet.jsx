@@ -1,7 +1,18 @@
-// pages/add-pet.js
 import React, { useState } from "react";
 import Head from "next/head";
-import { Box, Button, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Stack,
+    TextField,
+    Typography,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+} from "@mui/material";
 
 export default function AddPet() {
     const [pet, setPet] = useState({
@@ -11,10 +22,18 @@ export default function AddPet() {
         breed: "",
         gender: "",
         healthStatus: "",
+        coatLength: "",
+        weight: "",
         description: "",
-        adoptionCenterId: ""
+        adoptionCenterId: "",
     });
     const [selectedFile, setSelectedFile] = useState(null);
+
+    // Dropdown options
+    const speciesOptions = ["Dog", "Cat"];
+    const genderOptions = ["Male", "Female", "Other"];
+    const healthStatusOptions = ["Excellent", "Good", "Fair", "Poor"];
+    const coatLengthOptions = ["Hairless", "Short", "Medium", "Long"];
 
     const handleChange = (e) => {
         setPet({ ...pet, [e.target.name]: e.target.value });
@@ -26,20 +45,23 @@ export default function AddPet() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+        const backendUrl =
+            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
         const formData = new FormData();
 
-        // Append pet details
+        // Append pet details (breed is now just a text field)
         formData.append("name", pet.name);
         formData.append("age", pet.age);
         formData.append("species", pet.species);
         formData.append("breed", pet.breed);
         formData.append("gender", pet.gender);
         formData.append("healthStatus", pet.healthStatus);
+        formData.append("coatLength", pet.coatLength);
+        formData.append("weight", pet.weight);
         formData.append("description", pet.description);
         formData.append("adoptionCenterId", pet.adoptionCenterId);
 
-        // Append file if selected
+        // Append the image file, if one was selected
         if (selectedFile) {
             formData.append("image", selectedFile);
         }
@@ -60,8 +82,10 @@ export default function AddPet() {
                     breed: "",
                     gender: "",
                     healthStatus: "",
+                    coatLength: "",
+                    weight: "",
                     description: "",
-                    adoptionCenterId: ""
+                    adoptionCenterId: "",
                 });
                 setSelectedFile(null);
             } else {
@@ -101,13 +125,23 @@ export default function AddPet() {
                                     required
                                     type="number"
                                 />
-                                <TextField
-                                    label="Species"
-                                    name="species"
-                                    value={pet.species}
-                                    onChange={handleChange}
-                                    required
-                                />
+                                {/* Species Dropdown */}
+                                <FormControl fullWidth required>
+                                    <InputLabel>Species</InputLabel>
+                                    <Select
+                                        label="Species"
+                                        name="species"
+                                        value={pet.species}
+                                        onChange={handleChange}
+                                    >
+                                        {speciesOptions.map((option) => (
+                                            <MenuItem key={option} value={option}>
+                                                {option}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                {/* Breed as a free-text field */}
                                 <TextField
                                     label="Breed"
                                     name="breed"
@@ -115,19 +149,62 @@ export default function AddPet() {
                                     onChange={handleChange}
                                     required
                                 />
+                                {/* Gender Dropdown */}
+                                <FormControl fullWidth required>
+                                    <InputLabel>Gender</InputLabel>
+                                    <Select
+                                        label="Gender"
+                                        name="gender"
+                                        value={pet.gender}
+                                        onChange={handleChange}
+                                    >
+                                        {genderOptions.map((option) => (
+                                            <MenuItem key={option} value={option}>
+                                                {option}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                {/* Health Status Dropdown */}
+                                <FormControl fullWidth required>
+                                    <InputLabel>Health Status</InputLabel>
+                                    <Select
+                                        label="Health Status"
+                                        name="healthStatus"
+                                        value={pet.healthStatus}
+                                        onChange={handleChange}
+                                    >
+                                        {healthStatusOptions.map((option) => (
+                                            <MenuItem key={option} value={option}>
+                                                {option}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                {/* Coat Length Dropdown */}
+                                <FormControl fullWidth required>
+                                    <InputLabel>Coat Length</InputLabel>
+                                    <Select
+                                        label="Coat Length"
+                                        name="coatLength"
+                                        value={pet.coatLength}
+                                        onChange={handleChange}
+                                    >
+                                        {coatLengthOptions.map((option) => (
+                                            <MenuItem key={option} value={option}>
+                                                {option}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                {/* Weight Input */}
                                 <TextField
-                                    label="Gender"
-                                    name="gender"
-                                    value={pet.gender}
+                                    label="Weight (lbs)"
+                                    name="weight"
+                                    value={pet.weight}
                                     onChange={handleChange}
                                     required
-                                />
-                                <TextField
-                                    label="Health Status"
-                                    name="healthStatus"
-                                    value={pet.healthStatus}
-                                    onChange={handleChange}
-                                    required
+                                    type="number"
                                 />
                                 <TextField
                                     label="Description"
@@ -145,6 +222,7 @@ export default function AddPet() {
                                     required
                                     type="number"
                                 />
+                                {/* File Input */}
                                 <input type="file" onChange={handleFileChange} />
                                 <Button variant="contained" type="submit">
                                     Add Pet
