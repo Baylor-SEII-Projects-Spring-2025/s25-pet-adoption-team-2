@@ -41,4 +41,37 @@ public class User {
 
     @Column(name = "SHELTER_NAME")
     private String shelterName;
+
+    // Preference weights for species (scale 0.0 to 1.0)
+    @Column(name = "PREFERRED_DOG_WEIGHT")
+    private Double preferredDogWeight = 0.5; // 50/50 dog cat by default
+
+    @Column(name = "PREFERRED_CAT_WEIGHT")
+    private Double preferredCatWeight = 0.5; // 50/50 dog cat by default
+
+
+    @Column(name = "TARGET_AGE")
+    private Integer targetAge;
+
+    @Column(name = "AGE_TOLERANCE")
+    private Double ageTolerance;
+
+
+    @Column(name = "TARGET_WEIGHT")
+    private Integer targetWeight;
+
+    @Column(name = "WEIGHT_TOLERANCE")
+    private Double weightTolerance;
+
+
+
+    @Column(name = "PREFERRED_MALE_WEIGHT")
+    private Double preferredMaleWeight = 0.5; // (0.0-1.0 again)
+
+    @Column(name = "PREFERRED_FEMALE_WEIGHT")
+    private Double preferredFemaleWeight = 0.5; // (0.0-1.0 again)
+
+
+    @Column(name = "PREFERRED_BREED")
+    private String preferredBreed;
 }
