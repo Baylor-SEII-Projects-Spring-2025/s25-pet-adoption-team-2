@@ -74,4 +74,18 @@ public class User {
 
     @Column(name = "PREFERRED_BREED")
     private String preferredBreed;
+
+    @Column(name = "PREFERRED_SPECIES")
+    private String preferredSpecies;
+
+
+    @Column(name = "PREFERRED_GENDER")
+    private String preferredGender;
+
+
+    @Column(name = "PREFERRED_COAT_LENGTH")
+    private String preferredCoatLength;
+
+    @Column(name = "PREFERRED_HEALTH_STATUS")
+    private String preferredHealthStatus;
 }

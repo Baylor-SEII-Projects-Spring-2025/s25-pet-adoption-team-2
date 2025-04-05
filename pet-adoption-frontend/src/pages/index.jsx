@@ -55,6 +55,30 @@ export default function HomePage() {
     handleMenuClose();
   };
 
+  const handleRatePet = async (petId, rating) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/user/rate', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // send it
+        body: JSON.stringify({ userId: user.id, petId, rating }),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser);
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log("Rating processed; user preferences updated.");
+      } else {
+        console.error("Failed to update rating and preferences");
+      }
+    } catch (error) {
+      console.error("Error updating rating:", error);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -220,7 +244,7 @@ export default function HomePage() {
           <Typography variant="h4" align="center" gutterBottom>
             Recommended Pets
           </Typography>
-          <Recommendations userId={user.id} />
+          <Recommendations userId={user.id} onRatePet={handleRatePet} />
         </Container>
       )}
     </>

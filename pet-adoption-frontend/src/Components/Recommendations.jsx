@@ -1,4 +1,4 @@
-// components/Recommendations.jsx
+// Components/Recommendations.jsx
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -11,7 +11,7 @@ import {
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-const Recommendations = ({ userId }) => {
+const Recommendations = ({ userId, onRatePet }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -89,9 +89,11 @@ const Recommendations = ({ userId }) => {
           <Rating
             name={`rating-${currentPet.id}`}
             value={currentPet.rating}
-            onChange={(event, newValue) =>
-              console.log(`Pet ${currentPet.id} rated ${newValue}`)
-            }
+            onChange={(event, newValue) => {
+              if (onRatePet && newValue != null) {
+                onRatePet(currentPet.id, newValue);
+              }
+            }}
           />
         </CardContent>
       </Card>
