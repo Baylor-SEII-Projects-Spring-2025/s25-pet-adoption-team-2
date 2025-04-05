@@ -75,10 +75,11 @@ public class Pet {
     private String coatLength;
 
     // URL to the pet's image (optional)
-    @Column(name = "IMAGE_URL")
+    @Column(name = "IMAGE_URL", length = 2048)
     private String imageUrl;
 
     // Description (free text)
+    @Lob
     @Column(name = "DESCRIPTION")
     private String description;
 
