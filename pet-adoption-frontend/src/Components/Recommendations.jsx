@@ -11,7 +11,7 @@ import {
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-const Recommendations = ({ userId, onRatePet }) => {
+const Recommendations = ({ userId, refreshKey, onRatePet }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -32,7 +32,7 @@ const Recommendations = ({ userId, onRatePet }) => {
       }
     }
     fetchRecommendations();
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   const handleNext = () => {
     if (recommendations.length > 0) {
@@ -86,6 +86,7 @@ const Recommendations = ({ userId, onRatePet }) => {
         />
         <CardContent>
           <Typography variant="body1">{currentPet.description}</Typography>
+          <Typography variant="body1">{currentPet.species}</Typography>
           <Rating
             name={`rating-${currentPet.id}`}
             value={currentPet.rating}

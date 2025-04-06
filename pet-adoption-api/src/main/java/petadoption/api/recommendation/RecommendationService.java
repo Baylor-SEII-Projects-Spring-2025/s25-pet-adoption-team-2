@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import petadoption.api.user.User;
 import petadoption.api.user.UserRepository;
+import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +49,13 @@ public class RecommendationService {
         if (user.getPreferredSpecies() != null && !user.getPreferredSpecies().equalsIgnoreCase("Any")) {
             if (user.getPreferredSpecies().equalsIgnoreCase(pet.getSpecies())) {
                 score += 50;
+            }
+            else {
+                // adding some randomness so the user has a chance to change their mind about species
+                Random random = new Random();
+                double randomDouble = random.nextDouble(); // between 0.0 and 1.0
+                randomDouble *= 60;
+                score += randomDouble;
             }
         } else {
             score += 25; // decided on 25 as the neutral bonus

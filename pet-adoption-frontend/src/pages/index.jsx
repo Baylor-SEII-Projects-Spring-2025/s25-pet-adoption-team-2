@@ -55,22 +55,25 @@ export default function HomePage() {
     handleMenuClose();
   };
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const handleRatePet = async (petId, rating) => {
+    if (!user || !user.id || !petId || rating == null) {
+      console.error("Missing required fields for rating:", { userId: user ? user.id : null, petId, rating });
+      return;
+    }
     try {
       const response = await fetch('http://localhost:8080/api/user/rate', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // send it
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, petId, rating }),
       });
-
       if (response.ok) {
         const updatedUser = await response.json();
         setUser(updatedUser);
         sessionStorage.setItem('user', JSON.stringify(updatedUser));
         console.log("Rating processed; user preferences updated.");
+        setRefreshKey(prev => prev + 1);
       } else {
         console.error("Failed to update rating and preferences");
       }
@@ -78,6 +81,7 @@ export default function HomePage() {
       console.error("Error updating rating:", error);
     }
   };
+
 
   return (
     <>
@@ -244,7 +248,7 @@ export default function HomePage() {
           <Typography variant="h4" align="center" gutterBottom>
             Recommended Pets
           </Typography>
-          <Recommendations userId={user.id} onRatePet={handleRatePet} />
+          <Recommendations userId={user.id} refreshKey={refreshKey} onRatePet={handleRatePet} />
         </Container>
       )}
     </>
