@@ -18,5 +18,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-
+    public Optional<User> findUserByUserType(String userType) {
+        return userRepository.findByUserType(userType);
+    }
 }
