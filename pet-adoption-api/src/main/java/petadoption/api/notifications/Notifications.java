@@ -30,4 +30,7 @@ public class Notifications {
     @ManyToOne
     @JoinColumn(name = "USER_ID", referencedColumnName = "USER_ID")
     private petadoption.api.user.User user;
+
+    @Column(name = "REPLY_TEXT")
+    private String replyText;
 }

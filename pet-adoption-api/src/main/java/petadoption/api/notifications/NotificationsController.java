@@ -38,4 +38,9 @@ public class NotificationsController {
     public Notifications markNotificationAsRead(@PathVariable Long notificationId) {
         return notificationsService.markAsRead(notificationId);
     }
+
+    @PostMapping("/reply")
+    public Notifications replyToNotification(@RequestBody NotificationsReplyRequest request) {
+        return notificationsService.replyToNotification(request.getNotificationId(), request.getReply());
+    }
 }

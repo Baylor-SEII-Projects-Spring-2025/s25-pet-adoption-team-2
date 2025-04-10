@@ -20,8 +20,8 @@ import {
   Box,
   Alert,
 } from "@mui/material";
+import NotificationsTab from "../Components/NotificationsTab";
 
-// Simple TabPanel component
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
@@ -43,7 +43,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
 
-  // State variables for profile fields
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -51,15 +50,9 @@ export default function Profile() {
   const [address, setAddress] = useState("");
   const [shelterName, setShelterName] = useState("");
 
-  // State for update messages
   const [updateMessage, setUpdateMessage] = useState("");
   const [updateError, setUpdateError] = useState("");
 
-  // State for notifications (only used for Adoption Center accounts)
-  const [notifications, setNotifications] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
-
-  // Fetch latest user info from backend on mount
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
@@ -69,12 +62,10 @@ export default function Profile() {
         router.push("/login");
         return;
       }
-      // Fetch latest user info from backend
       fetch(`http://localhost:8080/users/${userId}`)
           .then((response) => response.json())
           .then((data) => {
             setUser(data);
-            // Update fields from backend data
             setEmail(data.emailAddress || data.email);
             if (data.userType === "SHELTER") {
               setShelterName(data.shelterName || "");
@@ -85,7 +76,6 @@ export default function Profile() {
             setPhone(data.phone || "");
             setAddress(data.address || "");
             setLoading(false);
-            // Also update session storage with fresh data
             sessionStorage.setItem("user", JSON.stringify(data));
           })
           .catch((error) => {
@@ -96,48 +86,6 @@ export default function Profile() {
       router.push("/login");
     }
   }, [router]);
-
-  // When the Adoption Center's Notifications tab is selected, fetch notifications
-  useEffect(() => {
-    if (user && user.userType === "SHELTER" && tabValue === 3) {
-      fetchNotifications();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, tabValue]);
-
-  // Function to fetch unread notifications for the Adoption Center account
-  const fetchNotifications = async () => {
-    setLoadingNotifications(true);
-    try {
-      // This endpoint should return unread notifications for a specific user.
-      // Adjust the URL as necessary for your backend.
-      const response = await fetch(`http://localhost:8080/api/notifications/user/${user.id}`);
-      const data = await response.json();
-      setNotifications(data);
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-    } finally {
-      setLoadingNotifications(false);
-    }
-  };
-
-  // Function to mark a notification as read
-  const markNotificationAsRead = async (notificationId) => {
-    try {
-      // Assuming your endpoint to mark a notification as read uses a POST call.
-      const response = await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
-        method: "POST",
-      });
-      if (response.ok) {
-        // Remove the notification from the list after marking as read
-        setNotifications(notifications.filter((n) => n.id !== notificationId));
-      } else {
-        console.error("Failed to mark notification as read");
-      }
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
-    }
-  };
 
   const handleLogout = () => {
     sessionStorage.removeItem("user");
@@ -150,15 +98,12 @@ export default function Profile() {
 
   const handleUpdateProfile = async () => {
     if (!user) return;
-
     const userId = user.id || user.userId;
     if (!userId) {
       setUpdateError("User ID is missing in stored user object");
       return;
     }
-
     let updatePayload = { id: userId, email };
-
     if (user.userType === "SHELTER") {
       updatePayload.shelterName = shelterName;
       updatePayload.phone = phone;
@@ -169,7 +114,6 @@ export default function Profile() {
       updatePayload.phone = phone;
       updatePayload.address = address;
     }
-
     try {
       const response = await fetch("http://localhost:8080/api/user", {
         method: "PUT",
@@ -182,16 +126,13 @@ export default function Profile() {
         sessionStorage.setItem("user", JSON.stringify(data));
         setUpdateMessage("Profile updated successfully!");
         setUpdateError("");
-        console.log("Profile updated successfully", data);
       } else {
         setUpdateError(data.error || "Failed to update profile");
         setUpdateMessage("");
-        console.error("Failed to update profile:", data.error);
       }
     } catch (error) {
       setUpdateError("Error updating profile: " + error.message);
       setUpdateMessage("");
-      console.error("Error updating profile:", error);
     }
   };
 
@@ -209,7 +150,6 @@ export default function Profile() {
         </Container>
     );
   }
-
   if (!user) return null;
 
   return (
@@ -229,7 +169,9 @@ export default function Profile() {
                     alignItems: "center",
                   }}
               >
-                <Avatar sx={{ width: 80, height: 80, bgcolor: "secondary.main", mr: 3 }}>
+                <Avatar
+                    sx={{ width: 80, height: 80, bgcolor: "secondary.main", mr: 3 }}
+                >
                   {(user.email || user.emailAddress || "").charAt(0).toUpperCase()}
                 </Avatar>
                 <Box>
@@ -241,19 +183,15 @@ export default function Profile() {
                   </Typography>
                 </Box>
               </Box>
-
-              {/* Tabs at the top of the profile */}
+              {/* Tabs at the top */}
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs value={tabValue} onChange={handleTabChange} aria-label="profile tabs">
                   <Tab label="Profile" />
                   <Tab label="My Pets" />
                   <Tab label="Settings" />
-                  {/* Only show the Notifications tab for Adoption Center accounts */}
                   {user.userType === "SHELTER" && <Tab label="Notifications" />}
                 </Tabs>
               </Box>
-
-              {/* Profile Tab Panel */}
               <TabPanel value={tabValue} index={0}>
                 <Stack spacing={3}>
                   <Card>
@@ -264,25 +202,40 @@ export default function Profile() {
                       <Divider sx={{ mb: 2 }} />
                       <List>
                         <ListItem>
-                          <ListItemText primary="Email Address" secondary={user.email || user.emailAddress} />
+                          <ListItemText
+                              primary="Email Address"
+                              secondary={user.email || user.emailAddress}
+                          />
                         </ListItem>
                         <ListItem>
                           <ListItemText primary="User Type" secondary={user.userType} />
                         </ListItem>
                         <ListItem>
-                          <ListItemText primary="User ID" secondary={user.id || user.userId} />
+                          <ListItemText
+                              primary="User ID"
+                              secondary={user.id || user.userId}
+                          />
                         </ListItem>
                         {user.userType === "SHELTER" ? (
                             <ListItem>
-                              <ListItemText primary="Shelter Name" secondary={user.shelterName || "Not Provided"} />
+                              <ListItemText
+                                  primary="Shelter Name"
+                                  secondary={user.shelterName || "Not Provided"}
+                              />
                             </ListItem>
                         ) : (
                             <>
                               <ListItem>
-                                <ListItemText primary="First Name" secondary={user.firstName || "Not Provided"} />
+                                <ListItemText
+                                    primary="First Name"
+                                    secondary={user.firstName || "Not Provided"}
+                                />
                               </ListItem>
                               <ListItem>
-                                <ListItemText primary="Last Name" secondary={user.lastName || "Not Provided"} />
+                                <ListItemText
+                                    primary="Last Name"
+                                    secondary={user.lastName || "Not Provided"}
+                                />
                               </ListItem>
                             </>
                         )}
@@ -305,8 +258,6 @@ export default function Profile() {
                   </Stack>
                 </Stack>
               </TabPanel>
-
-              {/* My Pets Tab Panel */}
               <TabPanel value={tabValue} index={1}>
                 <Box sx={{ p: 3, textAlign: "center" }}>
                   {user.userType === "SHELTER" ? (
@@ -317,15 +268,17 @@ export default function Profile() {
                         <Typography variant="body1" color="text.secondary">
                           Start sharing your available animals with potential adopters.
                         </Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => router.push("/post-animal")}>
+                        <Button
+                            variant="contained"
+                            sx={{ mt: 2 }}
+                            onClick={() => router.push("/post-animal")}
+                        >
                           Post an Animal for Adoption
                         </Button>
                       </>
                   ) : (
                       <>
-                        <Typography variant="h6" gutterBottom>
-                          No Pets Yet
-                        </Typography>
+                        <Typography variant="h6" gutterBottom>No Pets Yet</Typography>
                         <Typography variant="body1" color="text.secondary">
                           You have not adopted any pets yet.
                         </Typography>
@@ -336,17 +289,11 @@ export default function Profile() {
                   )}
                 </Box>
               </TabPanel>
-
-              {/* Settings Tab Panel */}
               <TabPanel value={tabValue} index={2}>
-                <Typography variant="h6" gutterBottom>
-                  Account Settings
-                </Typography>
+                <Typography variant="h6" gutterBottom>Account Settings</Typography>
                 <Divider sx={{ mb: 2 }} />
-
                 {updateMessage && <Alert severity="success">{updateMessage}</Alert>}
                 {updateError && <Alert severity="error">{updateError}</Alert>}
-
                 <TextField
                     label="Email Address"
                     value={email}
@@ -415,35 +362,9 @@ export default function Profile() {
                   Save Changes
                 </Button>
               </TabPanel>
-
-              {/* Notifications Tab Panel (only rendered for Adoption Center accounts) */}
               {user.userType === "SHELTER" && (
                   <TabPanel value={tabValue} index={3}>
-                    <Typography variant="h6" gutterBottom>
-                      Unread Notifications
-                    </Typography>
-                    {loadingNotifications ? (
-                        <Typography>Loading notifications...</Typography>
-                    ) : notifications.length > 0 ? (
-                        <List>
-                          {notifications.map((notification) => (
-                              <ListItem key={notification.id} divider>
-                                <ListItemText
-                                    primary={notification.text}
-                                    secondary={new Date(notification.createdAt).toLocaleString()}
-                                />
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => markNotificationAsRead(notification.id)}
-                                >
-                                  Mark as Read
-                                </Button>
-                              </ListItem>
-                          ))}
-                        </List>
-                    ) : (
-                        <Typography>No unread notifications.</Typography>
-                    )}
+                    <NotificationsTab user={user} />
                   </TabPanel>
               )}
             </Paper>

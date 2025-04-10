@@ -76,4 +76,15 @@ public class NotificationsService {
             return false;
         }
     }
+
+    public Notifications replyToNotification(Long notificationId, String replyText) {
+        Notifications notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        notification.setReplyText(replyText);
+
+        notification.setRead(true);
+
+        return notificationRepository.save(notification);
+    }
 }
