@@ -12,6 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+
+
+      - name: Run Unit Tests
+        run: ./gradlew test
+
       - name: Cleanup old Docker resources
         run: |
           docker system prune -a -f --filter "until=24h"
@@ -24,7 +29,7 @@ jobs:
         run: |
           docker compose -f docker/ci.docker-compose.yml down
           docker compose -f docker/ci.docker-compose.yml up -d --build
-          
+
       - name: Verify deployment
         run: |
           echo "Checking if containers are running..."
