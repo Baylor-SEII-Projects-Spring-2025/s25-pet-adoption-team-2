@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-deploy:
     runs-on: self-hosted
+    env:
+      JAVA_HOME: /home/axeljd0sniffers/.sdkman/candidates/java/22.0.2-oracle
+      PATH: /home/axeljd0sniffers/.sdkman/candidates/java/22.0.2-oracle/bin:/usr/bin:/bin
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
