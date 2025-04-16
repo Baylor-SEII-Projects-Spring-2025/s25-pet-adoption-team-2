@@ -24,6 +24,7 @@ repositories {
 dependencies {
 	// Spring dependencies
 	// The versions of all of these are managed by Spring's dependency management Gradle plugin
+	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compileOnly 'org.projectlombok:lombok'
@@ -39,8 +40,17 @@ dependencies {
 	// Utility libraries
 	implementation 'com.google.guava:guava:33.0.0-jre'
 	implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'com.h2database:h2'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+test {
+	testLogging {
+		events "passed", "failed", "skipped"
+	}
 }
