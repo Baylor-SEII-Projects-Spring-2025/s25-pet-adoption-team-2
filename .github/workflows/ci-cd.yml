@@ -15,6 +15,7 @@ jobs:
 
 
       - name: Run Unit Tests
+        working-directory: pet-adoption-api
         run: ./gradlew test
 
       - name: Cleanup old Docker resources
