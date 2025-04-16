@@ -5,15 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import petadoption.api.pet.PetRepository;
 import petadoption.api.user.User;
 import petadoption.api.user.UserRepository;
 import petadoption.api.user.UserService;
-
-import org.springframework.web.bind.annotation.*;
-import petadoption.api.pet.Pet;
-
-
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,10 +22,6 @@ public class UserEndpoint {
 
     @Autowired
     private UserRepository userRepository;
-
-
-    @Autowired
-    private PetRepository petRepository;
 
     @GetMapping("/users/{id}")
     public User findUserById(@PathVariable Long id) {
@@ -155,57 +145,6 @@ public class UserEndpoint {
         }
     }
 
-    @PutMapping("/api/user/rate")
-    public ResponseEntity<?> updateUserRating(@RequestBody Map<String, String> request) {
-        try {
-            // getting the parameters
-            String userIdStr = request.get("userId");
-            String petIdStr = request.get("petId");
-            String ratingStr = request.get("rating");
-
-            if (userIdStr == null || petIdStr == null || ratingStr == null) {
-                log.warn("Rate request missing one or more required fields: userId, petId, rating");
-                return ResponseEntity.badRequest().body(Map.of("error", "userId, petId, and rating are required"));
-            }
-
-            Long userId = Long.parseLong(userIdStr);
-            Long petId = Long.parseLong(petIdStr);
-            double rating = Double.parseDouble(ratingStr);
-
-            // getting the user
-            Optional<User> userOpt = userService.findUser(userId);
-            if (userOpt.isEmpty()) {
-                log.warn("User with id {} not found", userId);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
-            }
-            User user = userOpt.get();
-
-            // getting the pet
-            Optional<Pet> petOpt = petRepository.findById(petId);
-            if (petOpt.isEmpty()) {
-                log.warn("Pet with id {} not found", petId);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Pet not found"));
-            }
-            Pet pet = petOpt.get();
-
-            // this method does all the actual work
-            User updatedUser = userService.updatePreferencesAfterRating(user, pet, rating);
-
-            log.info("Updated preferences for user {} after rating pet {} with rating {}", userId, petId, rating);
-
-            // returning the updated user
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "User preferences updated successfully");
-            response.put("user", updatedUser);
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error updating user rating/preferences", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to update preferences: " + e.getMessage()));
-        }
-    }
 
     @PostMapping("/api/echo")
     public ResponseEntity<?> echo(@RequestBody Map<String, String> request) {

@@ -1,4 +1,4 @@
-// Components/Recommendations.jsx
+// components/Recommendations.jsx
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -12,7 +12,7 @@ import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Image from 'next/image';
 
-const Recommendations = ({ userId, refreshKey, onRatePet }) => {
+const Recommendations = ({ userId }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -33,7 +33,7 @@ const Recommendations = ({ userId, refreshKey, onRatePet }) => {
       }
     }
     fetchRecommendations();
-  }, [userId, refreshKey]);
+  }, [userId]);
 
   const handleNext = () => {
     if (recommendations.length > 0) {
@@ -46,19 +46,6 @@ const Recommendations = ({ userId, refreshKey, onRatePet }) => {
       setCurrentIndex(
         (prevIndex) => (prevIndex - 1 + recommendations.length) % recommendations.length
       );
-    }
-  };
-
-
-  const handleRatingChange = (event, newValue) => {
-    if (onRatePet && newValue != null && currentPet && currentPet.id != null) {
-      const updatedRecommendations = [...recommendations];
-      updatedRecommendations[currentIndex] = {
-        ...currentPet,
-        rating: newValue,
-      };
-      setRecommendations(updatedRecommendations);
-      onRatePet(currentPet.id, newValue);
     }
   };
 
@@ -103,39 +90,13 @@ const Recommendations = ({ userId, refreshKey, onRatePet }) => {
           />
         </Box>
         <CardContent>
-          {/* Pet Name and Basic Info */}
-          <Typography variant="h5" gutterBottom>
-            {currentPet.name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {currentPet.breed} • {currentPet.gender} • {currentPet.species}
-          </Typography>
-
-          {/* Age and Weight */}
-          <Box sx={{ my: 1 }}>
-            <Typography variant="body2">
-              Age: {currentPet.age} years | Weight: {currentPet.weight} lbs
-            </Typography>
-          </Box>
-
-          {/* Health and Coat */}
-          <Typography variant="body2">
-            Health Status: {currentPet.healthStatus} | Coat: {currentPet.coatLength}
-          </Typography>
-
-          {/* Description */}
-          <Box sx={{ mt: 1, mb: 2 }}>
-            <Typography variant="body2">
-              {currentPet.description}
-            </Typography>
-          </Box>
-
-          {/* Rating Component */}
+          <Typography variant="body1">{currentPet.description}</Typography>
           <Rating
-            key={currentPet.id} // Helps force re-mount for a new pet if needed.
             name={`rating-${currentPet.id}`}
-            value={currentPet.rating || 0}
-            onChange={handleRatingChange}
+            value={currentPet.rating}
+            onChange={(event, newValue) =>
+              console.log(`Pet ${currentPet.id} rated ${newValue}`)
+            }
           />
         </CardContent>
       </Card>
