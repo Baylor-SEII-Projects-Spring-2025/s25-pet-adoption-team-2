@@ -55,6 +55,37 @@ export default function HomePage() {
     handleMenuClose();
   };
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRatePet = async (petId, rating) => {
+    if (!user || !user.id) {
+      console.error("User ID is missing, cannot rate pet.");
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost:8080/api/user/rate', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, petId, rating }),
+      });
+
+      if (response.ok) {
+        const jsonResponse = await response.json();
+        const updatedUser = jsonResponse.user ? jsonResponse.user : jsonResponse;
+        setUser(updatedUser);
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log("Rating processed; user preferences updated.");
+        setRefreshKey(prev => prev + 1);
+      } else {
+        console.error("Failed to update rating and preferences");
+      }
+    } catch (error) {
+      console.error("Error updating rating:", error);
+    }
+  };
+
+
+
   return (
     <>
       <Head>
@@ -220,7 +251,7 @@ export default function HomePage() {
           <Typography variant="h4" align="center" gutterBottom>
             Recommended Pets
           </Typography>
-          <Recommendations userId={user.id} />
+          <Recommendations userId={user.id} refreshKey={refreshKey} onRatePet={handleRatePet} />
         </Container>
       )}
 

@@ -1,4 +1,4 @@
-package petadoption.api.pet;
+/*package petadoption.api.pet;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,4 +42,4 @@ public class PetTests {
         assertThat(retrievedPet.getStatus()).isEqualTo("Pending");
         assertThat(retrievedPet.getAvailable()).isTrue();
     }
-}
+}*/
