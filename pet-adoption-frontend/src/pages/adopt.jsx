@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Stack,
-  Typography,
-} from "@mui/material";
-import PetCard from "../Components/PetCard";
+import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import PetCard from "../components/PetCard";
 
 export default function Adopt() {
   const [pets, setPets] = useState([]);
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
   // Define fetchPets as a reusable function
   const fetchPets = useCallback(async () => {
@@ -65,12 +57,7 @@ export default function Adopt() {
               <Typography variant="h3" align="center">
                 Adopt
               </Typography>
-              <Stack
-                direction="row"
-                justifyContent="center"
-                spacing={2}
-                sx={{ mt: 2 }}
-              >
+              <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 2 }}>
                 <Link href="/addPet" passHref>
                   <Button variant="contained">Add a Pet</Button>
                 </Link>
@@ -80,9 +67,7 @@ export default function Adopt() {
               </Stack>
             </CardContent>
           </Card>
-          <Box
-            sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}
-          >
+          <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
             {pets.map((pet) => (
               <PetCard key={pet.id} pet={pet} />
             ))}
