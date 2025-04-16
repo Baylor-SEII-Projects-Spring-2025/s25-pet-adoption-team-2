@@ -52,10 +52,8 @@ public class RecommendationService {
             }
             else {
                 // adding some randomness so the user has a chance to change their mind about species
-                Random random = new Random();
-                double randomDouble = random.nextDouble(); // between 0.0 and 1.0
-                randomDouble *= 60;
-                score += randomDouble;
+                // had to make it deterministic so the comparator was happy
+                score += (pet.getId() % 50);
             }
         } else {
             score += 25; // decided on 25 as the neutral bonus
@@ -106,6 +104,11 @@ public class RecommendationService {
             if (pet.getHealthStatus() != null && pet.getHealthStatus().equalsIgnoreCase(user.getPreferredHealthStatus())) {
                 score += 5;
             }
+        }
+
+        // checking for silly values
+        if (Double.isNaN(score) || Double.isInfinite(score)) {
+            return 0;
         }
 
         return score;

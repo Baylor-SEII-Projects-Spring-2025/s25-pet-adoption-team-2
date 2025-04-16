@@ -58,8 +58,8 @@ export default function HomePage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleRatePet = async (petId, rating) => {
-    if (!user || !user.id || !petId || rating == null) {
-      console.error("Missing required fields for rating:", { userId: user ? user.id : null, petId, rating });
+    if (!user || !user.id) {
+      console.error("User ID is missing, cannot rate pet.");
       return;
     }
     try {
@@ -68,8 +68,10 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, petId, rating }),
       });
+
       if (response.ok) {
-        const updatedUser = await response.json();
+        const jsonResponse = await response.json();
+        const updatedUser = jsonResponse.user ? jsonResponse.user : jsonResponse;
         setUser(updatedUser);
         sessionStorage.setItem('user', JSON.stringify(updatedUser));
         console.log("Rating processed; user preferences updated.");
@@ -81,6 +83,7 @@ export default function HomePage() {
       console.error("Error updating rating:", error);
     }
   };
+
 
 
   return (

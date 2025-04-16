@@ -48,6 +48,19 @@ const Recommendations = ({ userId, refreshKey, onRatePet }) => {
     }
   };
 
+
+  const handleRatingChange = (event, newValue) => {
+    if (onRatePet && newValue != null && currentPet && currentPet.id != null) {
+      const updatedRecommendations = [...recommendations];
+      updatedRecommendations[currentIndex] = {
+        ...currentPet,
+        rating: newValue,
+      };
+      setRecommendations(updatedRecommendations);
+      onRatePet(currentPet.id, newValue);
+    }
+  };
+
   if (recommendations.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
@@ -85,16 +98,39 @@ const Recommendations = ({ userId, refreshKey, onRatePet }) => {
           style={{ width: "100%", height: 200, objectFit: "cover" }}
         />
         <CardContent>
-          <Typography variant="body1">{currentPet.description}</Typography>
-          <Typography variant="body1">{currentPet.species}</Typography>
+          {/* Pet Name and Basic Info */}
+          <Typography variant="h5" gutterBottom>
+            {currentPet.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {currentPet.breed} • {currentPet.gender} • {currentPet.species}
+          </Typography>
+
+          {/* Age and Weight */}
+          <Box sx={{ my: 1 }}>
+            <Typography variant="body2">
+              Age: {currentPet.age} years | Weight: {currentPet.weight} lbs
+            </Typography>
+          </Box>
+
+          {/* Health and Coat */}
+          <Typography variant="body2">
+            Health Status: {currentPet.healthStatus} | Coat: {currentPet.coatLength}
+          </Typography>
+
+          {/* Description */}
+          <Box sx={{ mt: 1, mb: 2 }}>
+            <Typography variant="body2">
+              {currentPet.description}
+            </Typography>
+          </Box>
+
+          {/* Rating Component */}
           <Rating
+            key={currentPet.id} // Helps force re-mount for a new pet if needed.
             name={`rating-${currentPet.id}`}
-            value={currentPet.rating}
-            onChange={(event, newValue) => {
-              if (onRatePet && newValue != null) {
-                onRatePet(currentPet.id, newValue);
-              }
-            }}
+            value={currentPet.rating || 0}
+            onChange={handleRatingChange}
           />
         </CardContent>
       </Card>
