@@ -1,230 +1,103 @@
 import React, { useState } from "react";
 import Head from "next/head";
 import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Stack,
-    TextField,
-    Typography,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
+    Box, Button, Card, CardContent, Stack,
+    TextField, Typography, FormControl,
+    InputLabel, Select, MenuItem
 } from "@mui/material";
 
 export default function AddPet() {
     const [pet, setPet] = useState({
-        name: "",
-        age: "",
-        species: "",
-        breed: "",
-        gender: "",
-        healthStatus: "",
-        coatLength: "",
-        weight: "",
-        description: "",
-        adoptionCenterId: "",
+        name: "", age: "", species: "", breed: "",
+        gender: "", healthStatus: "", coatLength: "",
+        weight: "", description: "", adoptionCenterId: ""
     });
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [file, setFile] = useState(null);
 
-    // Dropdown options
-    const speciesOptions = ["Dog", "Cat"];
-    const genderOptions = ["Male", "Female", "Other"];
-    const healthStatusOptions = ["Excellent", "Good", "Fair", "Poor"];
-    const coatLengthOptions = ["Hairless", "Short", "Medium", "Long"];
+    const OPTIONS = {
+        species: ["Dog","Cat"],
+        gender: ["Male","Female","Other"],
+        healthStatus: ["Excellent","Good","Fair","Poor"],
+        coatLength: ["Hairless","Short","Medium","Long"]
+    };
 
-    const handleChange = (e) => {
+    const handleChange = e =>
         setPet({ ...pet, [e.target.name]: e.target.value });
-    };
 
-    const handleFileChange = (e) => {
-        setSelectedFile(e.target.files[0]);
-    };
+    const handleFile = e =>
+        setFile(e.target.files[0]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async e => {
         e.preventDefault();
-        const backendUrl =
-            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
-        const formData = new FormData();
+        const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+        const form = new FormData();
+        Object.entries(pet).forEach(([k,v]) => form.append(k, v));
+        if (file) form.append("image", file);
 
-        // Append pet details (breed is now just a text field)
-        formData.append("name", pet.name);
-        formData.append("age", pet.age);
-        formData.append("species", pet.species);
-        formData.append("breed", pet.breed);
-        formData.append("gender", pet.gender);
-        formData.append("healthStatus", pet.healthStatus);
-        formData.append("coatLength", pet.coatLength);
-        formData.append("weight", pet.weight);
-        formData.append("description", pet.description);
-        formData.append("adoptionCenterId", pet.adoptionCenterId);
+        const res = await fetch(`${URL}/api/pets/add`, {
+            method: "POST",
+            body: form
+        });
 
-        // Append the image file, if one was selected
-        if (selectedFile) {
-            formData.append("image", selectedFile);
-        }
-
-        try {
-            const response = await fetch(`${backendUrl}/api/pets/add`, {
-                method: "POST",
-                body: formData,
-            });
-            if (response.ok) {
-                const data = await response.json();
-                alert("Pet added successfully: " + JSON.stringify(data));
-                // Reset the form
-                setPet({
-                    name: "",
-                    age: "",
-                    species: "",
-                    breed: "",
-                    gender: "",
-                    healthStatus: "",
-                    coatLength: "",
-                    weight: "",
-                    description: "",
-                    adoptionCenterId: "",
-                });
-                setSelectedFile(null);
-            } else {
-                alert("Failed to add pet, status: " + response.status);
-            }
-        } catch (error) {
-            console.error("Error adding pet:", error);
-            alert("Error adding pet, please check the console for details.");
+        if (res.ok) {
+            alert("Added!");
+            setPet({ name:"",age:"",species:"",breed:"",gender:"",healthStatus:"",coatLength:"",weight:"",description:"",adoptionCenterId:"" });
+            setFile(null);
+        } else {
+            alert("Error: " + res.status);
         }
     };
 
     return (
         <>
-            <Head>
-                <title>Add Pet</title>
-            </Head>
-            <Stack sx={{ padding: 4 }} alignItems="center">
+            <Head><title>Add Pet</title></Head>
+            <Stack p={4} alignItems="center">
                 <Card sx={{ width: 600 }} elevation={4}>
                     <CardContent>
                         <Typography variant="h4" align="center" gutterBottom>
                             Add a New Pet
                         </Typography>
-                        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }} noValidate>
+                        <Box component="form" onSubmit={handleSubmit} noValidate>
                             <Stack spacing={2}>
-                                <TextField
-                                    label="Name"
-                                    name="name"
-                                    value={pet.name}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <TextField
-                                    label="Age"
-                                    name="age"
-                                    value={pet.age}
-                                    onChange={handleChange}
-                                    required
-                                    type="number"
-                                />
-                                {/* Species Dropdown */}
-                                <FormControl fullWidth required>
-                                    <InputLabel>Species</InputLabel>
-                                    <Select
-                                        label="Species"
-                                        name="species"
-                                        value={pet.species}
-                                        onChange={handleChange}
-                                    >
-                                        {speciesOptions.map((option) => (
-                                            <MenuItem key={option} value={option}>
-                                                {option}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                {/* Breed as a free-text field */}
-                                <TextField
-                                    label="Breed"
-                                    name="breed"
-                                    value={pet.breed}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                {/* Gender Dropdown */}
-                                <FormControl fullWidth required>
-                                    <InputLabel>Gender</InputLabel>
-                                    <Select
-                                        label="Gender"
-                                        name="gender"
-                                        value={pet.gender}
-                                        onChange={handleChange}
-                                    >
-                                        {genderOptions.map((option) => (
-                                            <MenuItem key={option} value={option}>
-                                                {option}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                {/* Health Status Dropdown */}
-                                <FormControl fullWidth required>
-                                    <InputLabel>Health Status</InputLabel>
-                                    <Select
-                                        label="Health Status"
-                                        name="healthStatus"
-                                        value={pet.healthStatus}
-                                        onChange={handleChange}
-                                    >
-                                        {healthStatusOptions.map((option) => (
-                                            <MenuItem key={option} value={option}>
-                                                {option}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                {/* Coat Length Dropdown */}
-                                <FormControl fullWidth required>
-                                    <InputLabel>Coat Length</InputLabel>
-                                    <Select
-                                        label="Coat Length"
-                                        name="coatLength"
-                                        value={pet.coatLength}
-                                        onChange={handleChange}
-                                    >
-                                        {coatLengthOptions.map((option) => (
-                                            <MenuItem key={option} value={option}>
-                                                {option}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                {/* Weight Input */}
-                                <TextField
-                                    label="Weight (lbs)"
-                                    name="weight"
-                                    value={pet.weight}
-                                    onChange={handleChange}
-                                    required
-                                    type="number"
-                                />
-                                <TextField
-                                    label="Description"
-                                    name="description"
-                                    value={pet.description}
-                                    onChange={handleChange}
-                                    multiline
-                                    rows={3}
-                                />
-                                <TextField
-                                    label="Adoption Center ID"
-                                    name="adoptionCenterId"
-                                    value={pet.adoptionCenterId}
-                                    onChange={handleChange}
-                                    required
-                                    type="number"
-                                />
-                                {/* File Input */}
-                                <input type="file" onChange={handleFileChange} />
-                                <Button variant="contained" type="submit">
+                                <TextField label="Name" name="name" value={pet.name}
+                                           onChange={handleChange} required />
+                                <TextField label="Age" name="age" value={pet.age}
+                                           onChange={handleChange} type="number" required />
+
+                                {/* Dropdowns */}
+                                {["species","gender","healthStatus","coatLength"].map(field => (
+                                    <FormControl fullWidth required key={field}>
+                                        <InputLabel>{field}</InputLabel>
+                                        <Select
+                                            label={field}
+                                            name={field}
+                                            value={pet[field]}
+                                            onChange={handleChange}
+                                        >
+                                            {OPTIONS[field].map(opt => (
+                                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                ))}
+
+                                <TextField label="Breed" name="breed" value={pet.breed}
+                                           onChange={handleChange} required />
+                                <TextField label="Weight (lbs)" name="weight"
+                                           value={pet.weight} type="number"
+                                           onChange={handleChange} required />
+                                <TextField label="Description" name="description"
+                                           value={pet.description} onChange={handleChange}
+                                           multiline rows={3} />
+
+                                <TextField label="Adoption Center ID"
+                                           name="adoptionCenterId"
+                                           value={pet.adoptionCenterId}
+                                           onChange={handleChange}
+                                           type="number" required />
+
+                                <input type="file" onChange={handleFile} />
+                                <Button type="submit" variant="contained">
                                     Add Pet
                                 </Button>
                             </Stack>

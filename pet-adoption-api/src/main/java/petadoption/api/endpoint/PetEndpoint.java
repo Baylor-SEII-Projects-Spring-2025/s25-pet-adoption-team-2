@@ -22,15 +22,16 @@ public class PetEndpoint {
     private PetService petService;
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Pet> addPet(@ModelAttribute Pet pet,
-                                      @RequestPart(value = "image", required = false) MultipartFile image) {
+    public ResponseEntity<Pet> addPet(
+            @ModelAttribute Pet pet,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) {
         try {
             if (image != null && !image.isEmpty()) {
-                String storedPath = storeImage(image);
-                pet.setImageUrl(storedPath);
+                pet.setImageUrl(storeImage(image));
             }
-            Pet savedPet = petService.addPet(pet);
-            return ResponseEntity.ok(savedPet);
+            Pet saved = petService.addPet(pet);
+            return ResponseEntity.ok(saved);
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(500).build();
@@ -42,17 +43,17 @@ public class PetEndpoint {
         return ResponseEntity.ok(petService.getAllPets());
     }
 
-    // Helper method to store the uploaded image file
+    // --- helper to save file under `uploads/` + return “/uploads/…” URL ---
     private String storeImage(MultipartFile file) throws IOException {
         String uploadsDir = "uploads/";
-        File uploadDir = new File(uploadsDir);
-        if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-            throw new IOException("Failed to create uploads directory");
-        }
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path filePath = Paths.get(uploadsDir, fileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        // Return a URL path (adjust as needed for your hosting)
-        return "/" + uploadsDir + fileName;
+        File dir = new File(uploadsDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        String fname = System.currentTimeMillis()
+                + "_" + file.getOriginalFilename().replace(" ", "_");
+        Path dest = Paths.get(uploadsDir, fname);
+        Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
+
+        return "/uploads/" + fname;
     }
 }
