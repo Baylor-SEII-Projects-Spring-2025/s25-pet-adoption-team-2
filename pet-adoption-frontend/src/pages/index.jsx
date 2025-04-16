@@ -225,26 +225,36 @@ export default function HomePage() {
       )}
 
       {/* Conditional Buttons for Events */}
-      <Container>
-        {isLoggedIn && user?.userType === "SHELTER" && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push("/ShelterEventsPage")}
-          >
-            Add Events (Shelter)
-          </Button>
-        )}
-        {isLoggedIn && user?.userType !== "SHELTER" && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => router.push("/AdopterEventsPage")}
-          >
-            View Events (Adopter)
-          </Button>
-        )}
-      </Container>
+<Container>
+  {isLoggedIn && user?.userType === "SHELTER" && (
+    <>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => router.push("/ShelterEventsPage")}
+      >
+        Add Events (Shelter)
+      </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => router.push("/ManageEventsShelter")}
+        sx={{ ml: 2 }}
+      >
+        Manage My Events
+      </Button>
+    </>
+  )}
+  {isLoggedIn && user?.userType !== "SHELTER" && (
+    <Button
+      variant="contained"
+      color="secondary"
+      onClick={() => router.push("/AdopterEventsPage")}
+    >
+      View Events (Adopter)
+    </Button>
+  )}
+</Container>
     </>
   );
 }

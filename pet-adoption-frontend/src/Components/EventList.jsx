@@ -9,7 +9,7 @@ import {
   CardActions
 } from "@mui/material";
 
-const EventList = ({ events, onSchedule, actionLabel = "Schedule Event" }) => {
+const EventList = ({ events, onSchedule, onUpdate, onDelete, actionLabel = "Schedule Event" }) => {
   return (
     <Grid container spacing={4}>
       {events.map((event) => (
@@ -39,8 +39,8 @@ const EventList = ({ events, onSchedule, actionLabel = "Schedule Event" }) => {
                 </Typography>
               )}
             </CardContent>
-            {onSchedule && (
-              <CardActions>
+            <CardActions>
+              {onSchedule && (
                 <Button
                   size="small"
                   onClick={() => onSchedule(event)}
@@ -54,8 +54,38 @@ const EventList = ({ events, onSchedule, actionLabel = "Schedule Event" }) => {
                 >
                   {actionLabel}
                 </Button>
-              </CardActions>
-            )}
+              )}
+              {onUpdate && (
+                <Button
+                  size="small"
+                  onClick={() => onUpdate(event)}
+                  sx={{
+                    borderRadius: "20px",
+                    textTransform: "none",
+                    backgroundColor: "info.main",
+                    color: "white",
+                    "&:hover": { backgroundColor: "info.dark" }
+                  }}
+                >
+                  Update
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  size="small"
+                  onClick={() => onDelete(event)}
+                  sx={{
+                    borderRadius: "20px",
+                    textTransform: "none",
+                    backgroundColor: "error.main",
+                    color: "white",
+                    "&:hover": { backgroundColor: "error.dark" }
+                  }}
+                >
+                  Delete
+                </Button>
+              )}
+            </CardActions>
           </Card>
         </Grid>
       ))}
