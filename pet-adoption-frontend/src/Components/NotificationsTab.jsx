@@ -34,6 +34,9 @@ export default function NotificationsTab({ user }) {
         setLoadingNotifications(true);
         try {
             const response = await fetch(`http://localhost:8080/api/notifications/user/${user.id}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch notifications');
+            }
             const data = await response.json();
             setNotifications(data);
         } catch (err) {
@@ -46,9 +49,14 @@ export default function NotificationsTab({ user }) {
     const markNotificationAsRead = async (notificationId) => {
         try {
             const response = await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
-                method: "POST",
+                method: "PUT",
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             });
+            
             if (response.ok) {
+                // Remove the notification from the list
                 setNotifications(notifications.filter((n) => n.id !== notificationId));
             } else {
                 console.error("Failed to mark notification as read");
@@ -94,7 +102,7 @@ export default function NotificationsTab({ user }) {
     return (
         <Box>
             <Typography variant="h6" gutterBottom>
-                Unread Notifications
+                {user.userType === "SHELTER" ? "Adoption Requests" : "My Notifications"}
             </Typography>
             {loadingNotifications ? (
                 <Typography>Loading notifications...</Typography>
@@ -110,15 +118,17 @@ export default function NotificationsTab({ user }) {
                                 <Button variant="outlined" onClick={() => markNotificationAsRead(notification.id)}>
                                     Mark as Read
                                 </Button>
-                                <Button variant="outlined" onClick={() => handleOpenReply(notification)}>
-                                    Reply
-                                </Button>
+                                {user.userType === "SHELTER" && (
+                                    <Button variant="outlined" onClick={() => handleOpenReply(notification)}>
+                                        Reply
+                                    </Button>
+                                )}
                             </Stack>
                         </ListItem>
                     ))}
                 </List>
             ) : (
-                <Typography>No unread notifications.</Typography>
+                <Typography>No notifications.</Typography>
             )}
 
             {/* Reply Dialog */}

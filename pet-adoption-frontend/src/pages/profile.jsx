@@ -189,7 +189,7 @@ export default function Profile() {
                   <Tab label="Profile" />
                   <Tab label="My Pets" />
                   <Tab label="Settings" />
-                  {user.userType === "SHELTER" && <Tab label="Notifications" />}
+                  <Tab label="Notifications" />
                 </Tabs>
               </Box>
               <TabPanel value={tabValue} index={0}>
@@ -362,11 +362,9 @@ export default function Profile() {
                   Save Changes
                 </Button>
               </TabPanel>
-              {user.userType === "SHELTER" && (
-                  <TabPanel value={tabValue} index={3}>
-                    <NotificationsTab user={user} />
-                  </TabPanel>
-              )}
+              <TabPanel value={tabValue} index={3}>
+                <NotificationsTab user={user} />
+              </TabPanel>
             </Paper>
           </Container>
         </main>

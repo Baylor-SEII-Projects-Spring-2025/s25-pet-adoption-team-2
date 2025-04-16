@@ -35,14 +35,16 @@ public class NotificationsService {
         return notificationRepository.save(notification);
     }
 
-    public Notifications createNotification(String text, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public Notifications createNotification(String text, Long userId, String displayName) {
+        // Find the shelter user based on the adoption center ID
+        User shelter = userRepository.findByUserType("SHELTER")
+                .orElseThrow(() -> new RuntimeException("Shelter user not found"));
+
         Notifications notification = new Notifications();
         notification.setText(text);
         notification.setRead(false);
         notification.setCreatedAt(LocalDateTime.now());
-        notification.setUser(user);
+        notification.setUser(shelter); // Set the notification to be sent to the shelter
         return notificationRepository.save(notification);
     }
 
@@ -55,17 +57,41 @@ public class NotificationsService {
     }
 
     public List<Notifications> getNotificationsByUserId(Long userId) {
-        return notificationRepository.findByUser_Id(userId);
+        // Return notifications for both shelter and regular users
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if ("SHELTER".equals(user.getUserType())) {
+            return notificationRepository.findByUserId(userId);
+        } else {
+            // For regular users, return notifications where they are the recipient
+            return notificationRepository.findByUserId(userId);
+        }
     }
 
-    public Notifications markAsRead(Long notificationId) {
-        Optional<Notifications> maybeNotification = notificationRepository.findById(notificationId);
-        if (maybeNotification.isPresent()) {
-            Notifications notification = maybeNotification.get();
-            notification.setRead(true);
-            return notificationRepository.save(notification);
+    public Notifications markAsRead(Long id) {
+        Notifications notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        notification.setRead(true);
+        return notificationRepository.save(notification);
+    }
+
+    public List<Notifications> getUnreadNotificationsByUserId(Long userId) {
+        // Return unread notifications for both shelter and regular users
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if ("SHELTER".equals(user.getUserType())) {
+            return notificationRepository.findByUserIdAndIsReadFalse(userId);
+        } else {
+            // For regular users, return unread notifications where they are the recipient
+            return notificationRepository.findByUserIdAndIsReadFalse(userId);
         }
-        throw new RuntimeException("Notification not found");
+    }
+
+    public Notifications createNotification(NotificationsRequest request) {
+        // ... existing code ...
+        return null; // Placeholder return, actual implementation needed
     }
 
     public boolean doesNotificationTableExist() {
@@ -78,13 +104,35 @@ public class NotificationsService {
     }
 
     public Notifications replyToNotification(Long notificationId, String replyText) {
-        Notifications notification = notificationRepository.findById(notificationId)
+        // Get the original notification
+        Notifications originalNotification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
 
-        notification.setReplyText(replyText);
+        // Extract the original user's ID from the notification text
+        // The text format is: "New adoption request from {displayName} (ID: {userId}) for pet ID {petId}"
+        String text = originalNotification.getText();
+        String[] parts = text.split("\\(");
+        if (parts.length < 2) {
+            throw new RuntimeException("Invalid notification format");
+        }
+        String userIdPart = parts[1].split("\\)")[0];
+        Long originalUserId = Long.parseLong(userIdPart.split(":")[1].trim());
 
-        notification.setRead(true);
+        // Get the original user
+        User originalUser = userRepository.findById(originalUserId)
+                .orElseThrow(() -> new RuntimeException("Original user not found"));
 
-        return notificationRepository.save(notification);
+        // Mark the original notification as read
+        originalNotification.setRead(true);
+        originalNotification.setReplyText(replyText);
+        notificationRepository.save(originalNotification);
+
+        // Create a new notification for the original user
+        Notifications userNotification = new Notifications();
+        userNotification.setText("Shelter response: " + replyText);
+        userNotification.setRead(false);
+        userNotification.setCreatedAt(LocalDateTime.now());
+        userNotification.setUser(originalUser); // Set to the original user who made the request
+        return notificationRepository.save(userNotification);
     }
 }
