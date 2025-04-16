@@ -14,13 +14,13 @@ import axios from "axios";
 import EventList from "./EventList";
 
 // This master list is used for available events.
-// Replace "your-image-url-here" with your actual image URLs.
 const masterEvents = [
   {
     title: "Themed Adoption Days",
     description:
       "Events based on popular themes, like 'Star Wars Pets' or 'Superhero Sidekicks,' where pets and staff dress accordingly.",
-    imageUrl: "https://i.etsystatic.com/25964056/r/il/df7583/4498673153/il_fullxfull.4498673153_c46g.jpg"
+    imageUrl:
+      "https://i.etsystatic.com/25964056/r/il/df7583/4498673153/il_fullxfull.4498673153_c46g.jpg"
   },
   {
     title: "Adoption Day Carnival",
@@ -85,6 +85,8 @@ const EventsShelter = () => {
   const [events, setEvents] = useState(masterEvents);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  
+  // For scheduling via dialog (only scheduling mode)
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [date, setDate] = useState("");
@@ -111,7 +113,7 @@ const EventsShelter = () => {
       alert("All fields (date, time, location) are required.");
       return;
     }
-    const newEvent = {
+    const eventData = {
       name: selectedEvent.title,
       imageUrl: selectedEvent.imageUrl,
       description: selectedEvent.description,
@@ -121,15 +123,15 @@ const EventsShelter = () => {
       location
     };
 
+    // Check for conflict before scheduling.
     try {
-      // Check for conflicts in scheduled events
       const getResponse = await axios.get("/api/events");
       const scheduledEvents = getResponse.data;
       const conflict = scheduledEvents.find(
         (e) =>
-          e.date === newEvent.date &&
-          e.time === newEvent.time &&
-          e.location === newEvent.location
+          e.date === eventData.date &&
+          e.time === eventData.time &&
+          e.location === eventData.location
       );
       if (conflict) {
         setErrorMsg("An event is already scheduled at the same date, time, and location.");
@@ -140,14 +142,13 @@ const EventsShelter = () => {
       }
     } catch (err) {
       console.error("Error checking scheduled events", err);
-      // Optionally handle this error
     }
 
     try {
-      const response = await axios.post("/api/events", newEvent);
+      const response = await axios.post("/api/events", eventData);
       console.log("Event scheduled", response.data);
       setSuccessMsg("Event scheduled successfully!");
-      setErrorMsg("");
+      // Optionally remove the scheduled event from the list.
       setEvents(events.filter((e) => e.title !== selectedEvent.title));
       handleDialogClose();
     } catch (error) {
@@ -160,11 +161,7 @@ const EventsShelter = () => {
       <Typography
         variant="h4"
         gutterBottom
-        sx={{
-          fontFamily: "'Montserrat', sans-serif",
-          fontWeight: "bold",
-          mb: 3
-        }}
+        sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", mb: 3 }}
       >
         Available Events
       </Typography>

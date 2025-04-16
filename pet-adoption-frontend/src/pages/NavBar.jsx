@@ -30,6 +30,7 @@ const pages = [
   { title: 'Adopt', path: '/adopt' },
   { title: 'Events', path: '/AdopterEventsPage' },
   {title: 'Events', path: '/ShelterEventsPage'},
+  { title: 'Events', path: '/ManageEventsShelter' },
   { title: 'About', path: '/about' },
 ];
 
