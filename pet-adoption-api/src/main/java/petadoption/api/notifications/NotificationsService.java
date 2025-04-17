@@ -9,6 +9,7 @@ import petadoption.api.user.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Service
 @Transactional
@@ -23,29 +24,42 @@ public class NotificationsService {
     }
 
     public Notifications createNotificationForAdoptionCenter(String text) {
-        User adoptionCenter = userRepository.findByUserType("SHELTER")
-                .orElseThrow(() -> new RuntimeException("Adoption Center account not found"));
-
-        Notifications notification = new Notifications();
-        notification.setText(text);
-        notification.setRead(false);
-        notification.setCreatedAt(LocalDateTime.now());
-        notification.setUser(adoptionCenter);
-
-        return notificationRepository.save(notification);
+        List<User> shelters = userRepository.findByUserType("SHELTER");
+        if (shelters.isEmpty()) {
+            throw new RuntimeException("No shelter accounts found");
+        }
+        // For now, send to all shelters
+        List<Notifications> notifications = new ArrayList<>();
+        for (User shelter : shelters) {
+            Notifications notification = new Notifications();
+            notification.setText(text);
+            notification.setRead(false);
+            notification.setCreatedAt(LocalDateTime.now());
+            notification.setUser(shelter);
+            notifications.add(notificationRepository.save(notification));
+        }
+        return notifications.get(0); // Return the first notification for backward compatibility
     }
 
     public Notifications createNotification(String text, Long userId, String displayName) {
-        // Find the shelter user based on the adoption center ID
-        User shelter = userRepository.findByUserType("SHELTER")
-                .orElseThrow(() -> new RuntimeException("Shelter user not found"));
-
-        Notifications notification = new Notifications();
-        notification.setText(text);
-        notification.setRead(false);
-        notification.setCreatedAt(LocalDateTime.now());
-        notification.setUser(shelter); // Set the notification to be sent to the shelter
-        return notificationRepository.save(notification);
+        // Send notification to all shelters
+        List<User> shelters = userRepository.findByUserType("SHELTER");
+        if (shelters.isEmpty()) {
+            throw new RuntimeException("No shelter users found");
+        }
+        
+        // Create notification for all shelters
+        List<Notifications> notifications = new ArrayList<>();
+        for (User shelter : shelters) {
+            Notifications notification = new Notifications();
+            notification.setText(text);
+            notification.setRead(false);
+            notification.setCreatedAt(LocalDateTime.now());
+            notification.setUser(shelter);
+            notifications.add(notificationRepository.save(notification));
+        }
+        
+        return notifications.get(0); // Return the first notification for backward compatibility
     }
 
     public List<Notifications> getAllNotifications() {

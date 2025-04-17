@@ -16,7 +16,7 @@ public class DataInitializer {
 
     @PostConstruct
     public void initAdoptionCenterAccount() {
-        boolean exists = userRepository.findByUserType("SHELTER").isPresent();
+        boolean exists = userRepository.existsByUserType("SHELTER");
         if (!exists) {
             User adoptionCenter = new User();
             adoptionCenter.setEmailAddress("shelter@example.com");
