@@ -66,7 +66,7 @@ export default function Profile() {
         return;
       }
       // Fetch latest user info from backend
-      fetch(`http://35.225.196.242:8080/users/${userId}`)
+      fetch(`http://localhost:8080/users/${userId}`)
         .then((response) => response.json())
         .then((data) => {
           setUser(data);
