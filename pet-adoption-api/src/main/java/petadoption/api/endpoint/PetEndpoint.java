@@ -66,4 +66,15 @@ public class PetEndpoint {
             return ResponseEntity.status(500).body("Error importing CSV file: " + e.getMessage());
         }
     }
+
+    @PostMapping("/import-csv")
+    public ResponseEntity<?> importCSV(@RequestBody String csvData) {
+        try {
+            List<Pet> importedPets = petService.importPetsFromCSVData(csvData);
+            return ResponseEntity.ok(importedPets);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error importing CSV data: " + e.getMessage());
+        }
+    }
 }

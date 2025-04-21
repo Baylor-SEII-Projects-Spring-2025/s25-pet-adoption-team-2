@@ -91,4 +91,144 @@ public class PetService {
         // Save all imported pets to the database.
         return petRepository.saveAll(pets);
     }
+
+    public List<Pet> importPetsFromCSVData(String csvData) throws IOException {
+        List<Pet> pets = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(
+                new java.io.StringReader(csvData))) {
+            // Parse CSV with Apache Commons CSV, using the first record as header
+            Iterable<CSVRecord> records = CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withIgnoreHeaderCase()
+                    .withTrim()
+                    .parse(reader);
+
+            // Print headers for debugging
+            System.out.println("CSV Headers: " + records.iterator().next().getParser().getHeaderNames());
+
+            for (CSVRecord record : records) {
+                try {
+                    System.out.println("Processing record: " + record.toString());
+                    Pet pet = new Pet();
+
+                    // Use safe getters that handle missing columns
+                    pet.setName(getValueOrDefault(record, "NAME", ""));
+                    pet.setAge(getIntValueOrDefault(record, "AGE", 0));
+                    pet.setSpecies(getValueOrDefault(record, "SPECIES", ""));
+                    pet.setBreed(getValueOrDefault(record, "BREED", ""));
+                    pet.setGender(getValueOrDefault(record, "GENDER", ""));
+                    pet.setHealthStatus(getValueOrDefault(record, "HEALTH_STATUS", ""));
+                    pet.setWeight(getIntValueOrDefault(record, "WEIGHT", 0));
+                    pet.setCoatLength(getValueOrDefault(record, "COAT_LENGTH", ""));
+
+                    // Handle image URL
+                    String imageUrl = getValueOrDefault(record, "IMAGE_URL", "");
+                    if (!imageUrl.isEmpty() && !imageUrl.startsWith("http")) {
+                        // Try to get the next columns until we find a non-URL part
+                        StringBuilder fullUrl = new StringBuilder(imageUrl);
+                        int currentIndex = 9; // IMAGE_URL is at index 9
+                        try {
+                            while (true) {
+                                String nextPart = record.get(currentIndex + 1);
+                                if (nextPart.matches("\\d+") || // Is a number
+                                    nextPart.matches("true|false") || // Is a boolean
+                                    nextPart.matches("Pending|Verified")) { // Is a status
+                                    break;
+                                }
+                                fullUrl.append(",").append(nextPart);
+                                currentIndex++;
+                            }
+                        } catch (IllegalArgumentException e) {
+                            // Reached the end of the record
+                        }
+                        imageUrl = fullUrl.toString();
+                    }
+                    pet.setImageUrl(imageUrl);
+
+                    // Handle description
+                    String description = getValueOrDefault(record, "DESCRIPTION", "");
+                    if (!description.isEmpty()) {
+                        // Try to get the next columns until we find a non-description part
+                        StringBuilder fullDesc = new StringBuilder(description);
+                        int currentIndex = 10; // DESCRIPTION is at index 10
+                        try {
+                            while (true) {
+                                String nextPart = record.get(currentIndex + 1);
+                                if (nextPart.matches("\\d+") || // Is a number
+                                    nextPart.matches("true|false") || // Is a boolean
+                                    nextPart.matches("Pending|Verified")) { // Is a status
+                                    break;
+                                }
+                                fullDesc.append(",").append(nextPart);
+                                currentIndex++;
+                            }
+                        } catch (IllegalArgumentException e) {
+                            // Reached the end of the record
+                        }
+                        description = fullDesc.toString();
+                    }
+                    pet.setDescription(description);
+
+                    // Set other fields
+                    try {
+                        pet.setAdoptionCenterId(Long.parseLong(getValueOrDefault(record, "ADOPTION_CENTER_ID", "0")));
+                    } catch (NumberFormatException e) {
+                        pet.setAdoptionCenterId(0L);
+                    }
+
+                    pet.setStatus(getValueOrDefault(record, "STATUS", "Pending"));
+
+                    try {
+                        pet.setAvailable(Boolean.parseBoolean(getValueOrDefault(record, "AVAILABLE", "true")));
+                    } catch (Exception e) {
+                        pet.setAvailable(true);
+                    }
+
+                    pets.add(pet);
+                } catch (Exception e) {
+                    System.err.println("Warning: Failed to parse record " + record.toString() + " due to: " + e.getMessage());
+                }
+            }
+        }
+        return petRepository.saveAll(pets);
+    }
+
+    private String getValueOrDefault(CSVRecord record, String header, String defaultValue) {
+        try {
+            return record.get(header);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Warning: Column '" + header + "' not found, using default value: " + defaultValue);
+            return defaultValue;
+        }
+    }
+
+    private int getIntValueOrDefault(CSVRecord record, String header, int defaultValue) {
+        try {
+            String value = record.get(header);
+            return value.isEmpty() ? defaultValue : Integer.parseInt(value);
+        } catch (Exception e) {
+            System.out.println("Warning: Could not parse integer for column '" + header + "', using default value: " + defaultValue);
+            return defaultValue;
+        }
+    }
+
+    private long getLongValueOrDefault(CSVRecord record, String header, long defaultValue) {
+        try {
+            String value = record.get(header);
+            return value.isEmpty() ? defaultValue : Long.parseLong(value);
+        } catch (Exception e) {
+            System.out.println("Warning: Could not parse long for column '" + header + "', using default value: " + defaultValue);
+            return defaultValue;
+        }
+    }
+
+    private boolean getBooleanValueOrDefault(CSVRecord record, String header, boolean defaultValue) {
+        try {
+            String value = record.get(header);
+            return value.isEmpty() ? defaultValue : Boolean.parseBoolean(value);
+        } catch (Exception e) {
+            System.out.println("Warning: Could not parse boolean for column '" + header + "', using default value: " + defaultValue);
+            return defaultValue;
+        }
+    }
 }

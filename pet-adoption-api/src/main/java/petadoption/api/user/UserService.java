@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import petadoption.api.pet.Pet;
 
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,6 +21,9 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public List<User> findUserByUserType(String userType) {
+        return userRepository.findByUserType(userType);
+    }
     public User updatePreferencesAfterRating(User user, Pet pet, double rating) {
         // making a learning rate so I can tune it later
         double learningRate = 0.1;
