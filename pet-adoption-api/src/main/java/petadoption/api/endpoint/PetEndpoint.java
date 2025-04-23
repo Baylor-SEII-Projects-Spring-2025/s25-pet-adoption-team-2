@@ -55,4 +55,26 @@ public class PetEndpoint {
         // Return a URL path (adjust as needed for your hosting)
         return "/" + uploadsDir + fileName;
     }
+
+    @GetMapping("/import-csv")
+    public ResponseEntity<?> importCSV() {
+        try {
+            List<Pet> importedPets = petService.importPetsFromCSV();
+            return ResponseEntity.ok(importedPets);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error importing CSV file: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/import-csv")
+    public ResponseEntity<?> importCSV(@RequestBody String csvData) {
+        try {
+            List<Pet> importedPets = petService.importPetsFromCSVData(csvData);
+            return ResponseEntity.ok(importedPets);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error importing CSV data: " + e.getMessage());
+        }
+    }
 }

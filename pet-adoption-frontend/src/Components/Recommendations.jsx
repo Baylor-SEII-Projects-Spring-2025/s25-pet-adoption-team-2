@@ -1,117 +1,114 @@
 // components/Recommendations.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
+  Box,
   Card,
   CardContent,
   Typography,
-  Box,
   Rating,
   IconButton,
 } from "@mui/material";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import Image from 'next/image';
+import Image from "next/image";
+import PetCard from "../Components/PetCard"; // or "./PetCard" depending on your folder
 
-const Recommendations = ({ userId }) => {
-  const [recommendations, setRecommendations] = useState([]);
+export default function Recommendations({ userId, refreshKey, onRatePet }) {
+  const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    async function fetchRecommendations() {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
-      try {
-        const response = await fetch(`${backendUrl}/api/recommendations/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setRecommendations(data);
-          setCurrentIndex(0); // resetting index when new data arrives
-        } else {
-          console.error("Failed to fetch recommendations, status:", response.status);
-        }
-      } catch (error) {
-        console.error("Error fetching recommendations", error);
+  // 1) Extract fetch into a stable callback
+  const fetchRecommendations = useCallback(async () => {
+    if (!userId) return;
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+    try {
+      const res = await fetch(`${backendUrl}/api/recommendations/${userId}`);
+      if (!res.ok) {
+        console.error("Failed to fetch recs:", res.status);
+        return;
       }
+      const data = await res.json();
+      setPets(data);
+      setCurrentIndex(0);
+    } catch (err) {
+      console.error("Error fetching recs:", err);
     }
-    fetchRecommendations();
   }, [userId]);
 
+  // 2) Call it on mount, userId change, or refreshKey bump
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations, refreshKey]);
+
   const handleNext = () => {
-    if (recommendations.length > 0) {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % recommendations.length);
-    }
+    setCurrentIndex((i) => (i + 1) % pets.length);
   };
-
   const handlePrev = () => {
-    if (recommendations.length > 0) {
-      setCurrentIndex(
-        (prevIndex) => (prevIndex - 1 + recommendations.length) % recommendations.length
-      );
-    }
+    setCurrentIndex((i) => (i - 1 + pets.length) % pets.length);
   };
 
-  if (recommendations.length === 0) {
+  const currentPet = pets[currentIndex];
+
+  // 3) After you rate, call the parent AND re–fetch immediately
+  const handleRatingChange = async (_, rating) => {
+    if (!currentPet || rating == null) return;
+    await onRatePet(currentPet.id, rating);
+    // now force a fresh load
+    fetchRecommendations();
+  };
+
+  if (!pets.length) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <Typography>No recommendations available.</Typography>
       </Box>
     );
   }
 
-  const currentPet = recommendations[currentIndex];
-
   return (
     <Box
       sx={{
         position: "relative",
-        width: "100%",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
       }}
     >
-      <IconButton
-        onClick={handlePrev}
-        sx={{
-          position: "absolute",
-          left: 0,
-          zIndex: 2,
-        }}
-      >
+      <IconButton onClick={handlePrev} sx={{ position: "absolute", left: 0 }}>
         <ArrowBackIosIcon />
       </IconButton>
-      <Card sx={{ minWidth: 250, maxWidth: 400, position: "relative" }}>
-        {/* Container for the Image if you want to use 'fill' */}
-        <Box sx={{ position: "relative", width: "100%", height: 200 }}>
+
+      <Card sx={{ maxWidth: 360, mx: 2 }}>
+        <Box sx={{ position: "relative", height: 200, width: "100%" }}>
           <Image
-            src={currentPet.imageUrl}
-            alt="pet"
+            src={currentPet.imageUrl || "/images/no-photo.png"}
+            alt={currentPet.name}
             fill
+            unoptimized
             style={{ objectFit: "cover" }}
           />
         </Box>
         <CardContent>
-          <Typography variant="body1">{currentPet.description}</Typography>
+          <Typography variant="h6">{currentPet.name}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {currentPet.breed} • {currentPet.gender} • {currentPet.species}
+          </Typography>
           <Rating
-            name={`rating-${currentPet.id}`}
-            value={currentPet.rating}
-            onChange={(event, newValue) =>
-              console.log(`Pet ${currentPet.id} rated ${newValue}`)
-            }
+            name="rating"
+            value={currentPet.rating || 0}
+            onChange={handleRatingChange}
+            sx={{ mt: 1 }}
           />
         </CardContent>
       </Card>
+
       <IconButton
         onClick={handleNext}
-        sx={{
-          position: "absolute",
-          right: 0,
-          zIndex: 2,
-        }}
+        sx={{ position: "absolute", right: 0 }}
       >
         <ArrowForwardIosIcon />
       </IconButton>
     </Box>
   );
-};
-
-export default Recommendations;
+}

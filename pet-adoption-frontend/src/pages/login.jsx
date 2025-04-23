@@ -39,7 +39,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch('http://35.225.196.242:8080/api/login', {
+      const response = await fetch('http://localhost:8080/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,12 +56,16 @@ export default function Login() {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Store user info in localStorage or sessionStorage
+      // Store user data in sessionStorage
       sessionStorage.setItem('user', JSON.stringify({
         id: data.userId,
         email: data.email,
         userType: data.userType,
-        isLoggedIn: true
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        address: data.address,
+        shelterName: data.shelterName
       }));
 
       // Redirect to profile or home page
