@@ -11,7 +11,7 @@ import {
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Image from "next/image";
-import PetCard from "../Components/PetCard"; // or "./PetCard" depending on your folder
+//import PetCard from "../Components/PetCard"; // or "./PetCard" depending on your folder
 
 export default function Recommendations({ userId, refreshKey, onRatePet }) {
   const [pets, setPets] = useState([]);
