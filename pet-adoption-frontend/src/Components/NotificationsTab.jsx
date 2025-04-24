@@ -33,7 +33,7 @@ export default function NotificationsTab({ user }) {
     const fetchNotifications = async () => {
         setLoadingNotifications(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/notifications/user/${user.id}`);
+            const response = await fetch(`http://35.225.196.242:8080/api/notifications/user/${user.id}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch notifications');
             }
@@ -48,7 +48,7 @@ export default function NotificationsTab({ user }) {
 
     const markNotificationAsRead = async (notificationId) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
+            const response = await fetch(`http://35.225.196.242:8080/api/notifications/${notificationId}/read`, {
                 method: "PUT",
                 headers: {
                     'Content-Type': 'application/json'
@@ -80,7 +80,7 @@ export default function NotificationsTab({ user }) {
 
     const handleSendReply = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/api/notifications/reply`, {
+            const response = await fetch(`http://35.225.196.242:8080/api/notifications/reply`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -46,7 +46,7 @@ export default function AddPet() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const backendUrl =
-            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+            process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
         const formData = new FormData();
 
         // Append pet details (breed is now just a text field)

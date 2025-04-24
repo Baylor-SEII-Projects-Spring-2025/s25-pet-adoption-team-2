@@ -62,7 +62,7 @@ export default function Profile() {
         router.push("/login");
         return;
       }
-      fetch(`http://localhost:8080/users/${userId}`)
+      fetch(`http://35.225.196.242:8080/users/${userId}`)
           .then((response) => response.json())
           .then((data) => {
             setUser(data);

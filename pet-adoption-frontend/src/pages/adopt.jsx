@@ -40,7 +40,7 @@ export default function Adopt() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
 
   // load logged‑in user (if any)
   useEffect(() => {

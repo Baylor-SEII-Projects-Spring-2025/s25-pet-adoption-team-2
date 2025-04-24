@@ -63,7 +63,7 @@ export default function HomePage() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:8080/api/user/rate', {
+      const response = await fetch('http://35.225.196.242:8080/api/user/rate', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, petId, rating }),
