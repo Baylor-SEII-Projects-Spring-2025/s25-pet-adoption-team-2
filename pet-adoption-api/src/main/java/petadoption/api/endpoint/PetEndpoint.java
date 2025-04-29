@@ -101,7 +101,7 @@ public class PetEndpoint {
         var pg = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("id"));
         return ResponseEntity.ok(petService.getAllPets(pg));
     }
-    
+
     /** GET /api/pets/all → returns List<Pet> */
     @GetMapping("/all")
     public ResponseEntity<List<Pet>> getAllPets() {

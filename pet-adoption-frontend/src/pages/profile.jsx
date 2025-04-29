@@ -301,38 +301,59 @@ export default function Profile() {
 
             {/* My Pets (for shelters) */}
             <TabPanel value={tabValue} index={1}>
-              {loadingPets ? (
-                <Box sx={{ textAlign: "center", p: 4 }}>
-                  <CircularProgress />
-                </Box>
-              ) : petsError ? (
-                <Alert severity="error">{petsError}</Alert>
-              ) : shelterPets.length > 0 ? (
-                <Grid container spacing={3}>
-                  {shelterPets.map((pet) => (
-                    <Grid item xs={12} sm={6} md={4} key={pet.id}>
-                      <PetCard pet={pet} />
+                {user.userType === "SHELTER" ? (
+                  // ——— Shelter’s “My Pets” ———
+                  loadingPets ? (
+                    <Box sx={{ textAlign: "center", p: 4 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : petsError ? (
+                    <Alert severity="error">{petsError}</Alert>
+                  ) : shelterPets.length > 0 ? (
+                    <Grid container spacing={3}>
+                      {shelterPets.map((pet) => (
+                        <Grid item xs={12} sm={6} md={4} key={pet.id}>
+                          <PetCard pet={pet} />
+                        </Grid>
+                      ))}
                     </Grid>
-                  ))}
-                </Grid>
-              ) : (
-                <Box textAlign="center" sx={{ p: 4 }}>
-                  <Typography variant="h6" gutterBottom>
-                    You haven’t posted any animals yet.
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Start sharing your available pets with adopters.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    sx={{ mt: 2 }}
-                    onClick={() => router.push("/addPet")}
-                  >
-                    Post an Animal
-                  </Button>
-                </Box>
-              )}
+                  ) : (
+                    <Box textAlign="center" sx={{ p: 4 }}>
+                      <Typography variant="h6" gutterBottom>
+                        You haven’t posted any animals yet.
+                      </Typography>
+                      <Typography color="text.secondary">
+                        Start sharing your available pets with adopters.
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        sx={{ mt: 2 }}
+                        onClick={() => router.push("/addPet")}
+                      >
+                        Post an Animal
+                      </Button>
+                    </Box>
+                  )
+                ) : (
+                  // ——— Adopter’s “My Pets” ———
+                  <Box textAlign="center" sx={{ p: 4 }}>
+                    <Typography variant="h6" gutterBottom>
+                      You haven’t adopted any pets yet.
+                    </Typography>
+                    <Typography color="text.secondary">
+                      Browse our available pets and find your new best friend!
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      sx={{ mt: 2 }}
+                      onClick={() => router.push("/adopt")}
+                    >
+                      Browse Available Pets
+                    </Button>
+                  </Box>
+                )}
             </TabPanel>
+
 
             {/* Settings */}
             <TabPanel value={tabValue} index={2}>
