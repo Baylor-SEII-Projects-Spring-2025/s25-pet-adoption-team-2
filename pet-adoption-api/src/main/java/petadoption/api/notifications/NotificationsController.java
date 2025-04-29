@@ -43,7 +43,18 @@ public class NotificationsController {
 
     @GetMapping("/user/{userId}")
     public List<Notifications> getNotificationsByUser(@PathVariable Long userId) {
-        return notificationsService.getUnreadNotificationsByUserId(userId);
+        System.out.println("Fetching notifications for user ID: " + userId);
+
+        // Use the service layer rather than trying to access the repository directly
+        List<Notifications> notifications = notificationsService.getUnreadNotificationsByUserId(userId);
+
+        // Log how many we found
+        System.out.println("Found " + notifications.size() + " unread notifications for user " + userId);
+
+        // Sort by creation date (newest first)
+        notifications.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        return notifications;
     }
 
     @PostMapping
@@ -230,4 +241,5 @@ public class NotificationsController {
                     .body("Error processing adopter response: " + e.getMessage());
         }
     }
+
 }

@@ -33,16 +33,21 @@ public class NotificationsService {
     }
 
     public List<Notifications> getNotificationsByUserId(Long userId) {
-        // Return notifications for both shelter and regular users
+        // Get the user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if ("SHELTER".equals(user.getUserType())) {
-            return notificationRepository.findByUserId(userId);
-        } else {
-            // For regular users, return notifications where they are the recipient
-            return notificationRepository.findByUserId(userId);
-        }
+        // Log for debugging
+        System.out.println("Getting notifications for user: " + userId +
+                ", User type: " + user.getUserType());
+
+        // Retrieve ALL notifications for this user, not just unread ones
+        List<Notifications> notifications = notificationRepository.findByUser_Id(userId);
+
+        // Log the results
+        System.out.println("Found " + notifications.size() + " notifications");
+
+        return notifications;
     }
 
     public Notifications markAsRead(Long id) {
@@ -80,65 +85,69 @@ public class NotificationsService {
             // ADOPTER REPLYING TO SHELTER
             System.out.println("Adopter is replying to shelter message");
 
-            // Find all shelter users (simpler approach)
-            List<User> shelters = userRepository.findByUserType("SHELTER");
-            if (shelters.isEmpty()) {
-                throw new RuntimeException("No shelter users found in the system");
+            try {
+                // Find shelters specifically by userType
+                List<User> shelters = userRepository.findByUserType("SHELTER");
+                if (shelters.isEmpty()) {
+                    throw new RuntimeException("No shelter users found in the system");
+                }
+
+                // Get the first shelter (or ideally the shelter that sent the original message)
+                User shelter = shelters.get(0);
+
+                // Mark original notification as read
+                originalNotification.setRead(true);
+                originalNotification.setReplyText(replyText);
+                notificationRepository.save(originalNotification);
+
+                // Create a new notification for the shelter with a consistent prefix
+                Notifications shelterNotification = new Notifications();
+                shelterNotification.setText("Response from adopter: " + replyText);
+                shelterNotification.setRead(false);
+                shelterNotification.setCreatedAt(LocalDateTime.now());
+                shelterNotification.setUser(shelter);
+
+                // Debug info
+                System.out.println("Creating notification for shelter ID: " + shelter.getId());
+
+                // Save the new notification
+                Notifications saved = notificationRepository.save(shelterNotification);
+                System.out.println("Created shelter notification with ID: " + saved.getId());
+
+                return saved;
+            } catch (Exception e) {
+                System.err.println("Error in adopter reply: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Failed to send reply: " + e.getMessage());
             }
-
-            // Get the first shelter (or ideally the one that sent the original message)
-            User shelter = shelters.get(0);
-
-            // Mark original notification as read
-            originalNotification.setRead(true);
-            originalNotification.setReplyText(replyText);
-            notificationRepository.save(originalNotification);
-
-            // Debug log
-            System.out.println("Creating notification for shelter: " + shelter.getId());
-
-            // Create a new notification for the shelter with a distinctive prefix
-            Notifications shelterNotification = new Notifications();
-            shelterNotification.setText("ADOPTER RESPONSE: " + replyText);
-            shelterNotification.setRead(false);
-            shelterNotification.setCreatedAt(LocalDateTime.now());
-            shelterNotification.setUser(shelter);
-
-            // Save and return the new notification
-            Notifications saved = notificationRepository.save(shelterNotification);
-            System.out.println("Created notification ID: " + saved.getId() + " for shelter ID: " + shelter.getId());
-            return saved;
         } else {
             // SHELTER REPLYING TO ADOPTER
             System.out.println("Shelter is replying to adopter message");
 
             try {
                 // Try to extract the user ID from the notification text
-                Long adopterId = null;
+                final Long extractedAdopterId;
 
                 // If the notification text contains a reference to a specific user ID, use that
                 Pattern pattern = Pattern.compile("\\(ID: (\\d+)\\)");
                 Matcher matcher = pattern.matcher(originalNotification.getText());
                 if (matcher.find()) {
-                    adopterId = Long.parseLong(matcher.group(1));
-                    System.out.println("Extracted adopter ID: " + adopterId);
-                }
-
-                // If we couldn't extract an ID, find a non-shelter user
-                if (adopterId == null) {
+                    extractedAdopterId = Long.parseLong(matcher.group(1));
+                    System.out.println("Extracted adopter ID: " + extractedAdopterId);
+                } else {
+                    // If we couldn't extract an ID, find a non-shelter user
                     List<User> adopters = userRepository.findByUserTypeNot("SHELTER");
                     if (!adopters.isEmpty()) {
-                        adopterId = adopters.get(0).getId();
-                        System.out.println("Using fallback adopter ID: " + adopterId);
+                        extractedAdopterId = adopters.get(0).getId();
+                        System.out.println("Using fallback adopter ID: " + extractedAdopterId);
                     } else {
                         throw new RuntimeException("No adopter users found");
                     }
                 }
 
                 // Get the adopter user
-                Long finalAdopterId = adopterId;
-                User adopter = userRepository.findById(adopterId)
-                        .orElseThrow(() -> new RuntimeException("Adopter user not found with ID: " + finalAdopterId));
+                User adopter = userRepository.findById(extractedAdopterId)
+                        .orElseThrow(() -> new RuntimeException("Adopter user not found with ID: " + extractedAdopterId));
 
                 // Mark original notification as read
                 originalNotification.setRead(true);

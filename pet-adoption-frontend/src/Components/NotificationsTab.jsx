@@ -29,34 +29,34 @@ export default function NotificationsTab({ user }) {
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [adoptionMessage, setAdoptionMessage] = useState("");
     
-    // Add refresh interval for notifications
-    const [refreshCounter, setRefreshCounter] = useState(0);
+    // Manual refresh state
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-    // Set up periodic refresh for notifications
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setRefreshCounter(prev => prev + 1);
-        }, 5000); // Refresh every 5 seconds
-        
-        return () => clearInterval(interval);
-    }, []);
-
-    // Fetch notifications when user changes or refreshCounter changes
+    // Initial load and manual refresh only - no automatic polling
     useEffect(() => {
         if (user && user.id) {
             fetchNotifications();
         }
-    }, [user, refreshCounter]);
+    }, [user, refreshTrigger]);
+
+    // Function to manually trigger refresh
+    const triggerRefresh = () => {
+        setRefreshTrigger(prev => prev + 1);
+    };
 
     const fetchNotifications = async () => {
         setLoadingNotifications(true);
         try {
-            const response = await fetch(`${BACKEND}/api/notifications/user/${user.id}`);
+            // Add a timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            
+            const response = await fetch(`${BACKEND}/api/notifications/user/${user.id}?t=${timestamp}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch notifications');
             }
+            
             const data = await response.json();
             setNotifications(data);
         } catch (err) {
@@ -78,6 +78,8 @@ export default function NotificationsTab({ user }) {
             if (response.ok) {
                 // Remove the notification from the list
                 setNotifications(notifications.filter((n) => n.id !== notificationId));
+                
+                // No need to trigger refresh since it should be gone from the server now
             } else {
                 console.error("Failed to mark notification as read");
             }
@@ -99,8 +101,12 @@ export default function NotificationsTab({ user }) {
     };
 
     const handleSendReply = async () => {
+        if (!replyMessage.trim()) {
+            alert("Please enter a message");
+            return;
+        }
+        
         try {
-            console.log("Sending reply to notification:", replyNotification.id);
             const response = await fetch(`${BACKEND}/api/notifications/reply`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -111,25 +117,27 @@ export default function NotificationsTab({ user }) {
             });
             
             if (response.ok) {
-                console.log("Reply sent successfully");
-                // Remove the notification and reload to see any new ones
+                // Remove the notification from the list since we've replied to it
                 setNotifications(notifications.filter((n) => n.id !== replyNotification.id));
                 handleCloseReply();
                 
-                // Force immediate refresh
-                fetchNotifications();
+                // Show success message
+                alert("Reply sent successfully!");
+                
+                // Trigger manual refresh after a short delay to see new notifications
+                setTimeout(() => {
+                    triggerRefresh();
+                }, 1000);
             } else {
                 const errorText = await response.text();
-                console.error("Failed to send reply:", errorText);
                 alert("Failed to send reply: " + errorText);
             }
         } catch (err) {
-            console.error("Error sending reply:", err);
             alert("Error sending reply: " + err.message);
         }
     };
 
-    // New functions for adoption approval
+    // Functions for adoption approval
     const handleOpenApproveAdoption = (notification) => {
         setSelectedNotification(notification);
         setAdoptionMessage("");
@@ -146,16 +154,34 @@ export default function NotificationsTab({ user }) {
         try {
             // Extract pet ID and user ID from notification text
             const notification = selectedNotification;
-            const petIdMatch = notification.text.match(/pet '.*?' \(ID: (\d+)\)/);
-            const userIdMatch = notification.text.match(/from .* \(ID: (\d+)\)/);
             
-            if (!petIdMatch || !userIdMatch) {
-                console.error("Could not extract pet ID or user ID from notification");
-                return;
+            // Handle both formats:
+            // "...for pet 'Raven' (ID: 11602)" or "...for pet ID 11602"
+            let petId = null;
+            let adopterId = null;
+            
+            // Try the format with pet name first
+            const petNameMatch = notification.text.match(/pet '.*?' \(ID: (\d+)\)/);
+            if (petNameMatch) {
+                petId = petNameMatch[1];
+            } else {
+                // Try the format with just "pet ID"
+                const petIdMatch = notification.text.match(/pet ID (\d+)/);
+                if (petIdMatch) {
+                    petId = petIdMatch[1];
+                }
             }
             
-            const petId = petIdMatch[1];
-            const adopterId = userIdMatch[1];
+            // Get the adopter ID
+            const userIdMatch = notification.text.match(/from .* \(ID: (\d+)\)/);
+            if (userIdMatch) {
+                adopterId = userIdMatch[1];
+            }
+            
+            if (!petId || !adopterId) {
+                alert("Could not extract pet ID or adopter ID from the notification");
+                return;
+            }
 
             const response = await fetch(`${BACKEND}/api/notifications/approve-adoption`, {
                 method: "POST",
@@ -170,15 +196,19 @@ export default function NotificationsTab({ user }) {
             });
             
             if (response.ok) {
+                // Remove the notification from the list
                 setNotifications(notifications.filter((n) => n.id !== notification.id));
                 handleCloseApproveAdoption();
                 alert("Adoption approval sent successfully!");
+                
+                // Refresh to get any new notifications
+                setTimeout(() => {
+                    triggerRefresh();
+                }, 1000);
             } else {
-                console.error("Failed to approve adoption");
                 alert("Failed to approve adoption. Please try again.");
             }
         } catch (err) {
-            console.error("Error approving adoption:", err);
             alert("Error approving adoption: " + err.message);
         }
     };
@@ -196,14 +226,18 @@ export default function NotificationsTab({ user }) {
             });
             
             if (response.ok) {
+                // Remove the notification from the list
                 setNotifications(notifications.filter((n) => n.id !== notification.id));
                 alert(accepted ? "You've accepted the adoption offer!" : "You've declined the adoption offer.");
+                
+                // Refresh to get any new notifications
+                setTimeout(() => {
+                    triggerRefresh();
+                }, 1000);
             } else {
-                console.error("Failed to send response");
                 alert("Failed to send response. Please try again.");
             }
         } catch (err) {
-            console.error("Error sending response:", err);
             alert("Error sending response: " + err.message);
         }
     };
@@ -220,19 +254,38 @@ export default function NotificationsTab({ user }) {
     
     // Helper function to determine if a notification is from adopter
     const isAdopterResponse = (text) => {
-        return text && (text.startsWith("Adopter response:") || text.startsWith("ADOPTER RESPONSE:"));
+        return text && (
+            text.startsWith("Adopter response:") || 
+            text.startsWith("ADOPTER RESPONSE:") || 
+            text.startsWith("Response from adopter:")
+        );
     };
+
+    // Get sorted notifications - newest first
+    const sortedNotifications = [...notifications]
+        .sort((a, b) => {
+            if (!a.createdAt && !b.createdAt) return 0;
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
 
     return (
         <Box>
-            <Typography variant="h6" gutterBottom>
-                {user.userType === "SHELTER" ? "Adoption Requests" : "My Notifications"}
-            </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                    {user.userType === "SHELTER" ? "Adoption Requests" : "My Notifications"}
+                </Typography>
+                <Button variant="outlined" onClick={triggerRefresh} disabled={loadingNotifications}>
+                    {loadingNotifications ? "Loading..." : "Refresh"}
+                </Button>
+            </Stack>
+            
             {loadingNotifications ? (
                 <Typography>Loading notifications...</Typography>
-            ) : notifications.length > 0 ? (
+            ) : sortedNotifications.length > 0 ? (
                 <List>
-                    {notifications.map((notification) => (
+                    {sortedNotifications.map((notification) => (
                         <Paper 
                             key={notification.id} 
                             elevation={2} 
@@ -258,7 +311,7 @@ export default function NotificationsTab({ user }) {
                                     secondary={
                                         <>
                                             <Typography variant="caption" display="block">
-                                                {new Date(notification.createdAt).toLocaleString()}
+                                                {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Unknown date'}
                                             </Typography>
                                             {notification.replyText && (
                                                 <Box mt={1} p={1} bgcolor="background.paper" borderLeft="3px solid #ccc">

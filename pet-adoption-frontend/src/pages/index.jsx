@@ -11,7 +11,7 @@ import {
   Typography 
 } from "@mui/material";
 import Image from "next/image";
-import NavBar from "./NavBar";           // point to your shared NavBar file
+import NavBar from "./NavBar";           
 import Recommendations from "../Components/Recommendations";
 
 export default function HomePage() {
