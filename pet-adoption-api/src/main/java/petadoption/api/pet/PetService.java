@@ -32,8 +32,8 @@ public class PetService {
         return petRepository.save(pet);
     }
 
-    public List<Pet> getAllPets() {
-        return petRepository.findAll();
+    public org.springframework.data.domain.Page<Pet> getAllPets(org.springframework.data.domain.Pageable pg) {
+        return petRepository.findAll(pg);
     }
 
     public String storeImage(MultipartFile file) throws IOException {
@@ -230,5 +230,9 @@ public class PetService {
             System.out.println("Warning: Could not parse boolean for column '" + header + "', using default value: " + defaultValue);
             return defaultValue;
         }
+    }
+
+    public void deleteAllPets() {
+        petRepository.deleteAll();      // ← inherited from JpaRepository
     }
 }

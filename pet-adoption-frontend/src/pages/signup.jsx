@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import {
   Button,
@@ -13,6 +14,8 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Box,
+  Divider,
 } from "@mui/material";
 
 export default function Signup() {
@@ -21,39 +24,31 @@ export default function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
-    userType: "ADOPTER", 
+    userType: "ADOPTER",
     firstName: "",
     lastName: "",
     phone: "",
     address: "",
-    shelterName: "", // only relevant if userType = SHELTER
+    shelterName: "",
   });
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Basic password match check
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-
     setIsLoading(true);
     setError("");
     setSuccess("");
-
     try {
       const response = await fetch("http://localhost:8080/api/signup", {
         method: "POST",
@@ -69,16 +64,12 @@ export default function Signup() {
           shelterName: formData.shelterName,
         }),
       });
-
-      //const data = await response.json();
-
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Request failed: ${errorText}`);
+        const text = await response.text();
+        throw new Error(text || "Sign up failed");
       }
       const data = await response.json();
-
-      setSuccess(`Account created successfully! Welcome, ${data.email}`);
+      setSuccess(`Account created! Welcome, ${data.email}`);
       setFormData({
         email: "",
         password: "",
@@ -90,13 +81,8 @@ export default function Signup() {
         address: "",
         shelterName: "",
       });
-
-      // Automatically redirect to the login page after 2 seconds
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+      setTimeout(() => router.push("/login"), 2000);
     } catch (err) {
-      console.error("Error:", err);
       setError(err.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -104,14 +90,27 @@ export default function Signup() {
   };
 
   return (
-    <main>
-      <Stack sx={{ paddingTop: 4, paddingX: 2 }} alignItems="center" gap={2}>
-        <Card sx={{ width: { xs: "100%", sm: 600 } }} elevation={4}>
+    <>
+      <Head>
+        <title>Sign Up - Pet Adoption</title>
+      </Head>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundImage: "url('/images/wSignupBackground.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 2,
+        }}
+      >
+        <Card sx={{ width: { xs: "100%", sm: 600 }, opacity: 0.95 }} elevation={4}>
           <CardContent>
             <Typography variant="h4" align="center" gutterBottom>
               Create Your Account
             </Typography>
-
             {success && (
               <Alert severity="success" sx={{ mb: 3 }}>
                 {success}
@@ -122,7 +121,6 @@ export default function Signup() {
                 {error}
               </Alert>
             )}
-
             <form onSubmit={handleSubmit}>
               <Stack spacing={3}>
                 <TextField
@@ -135,7 +133,6 @@ export default function Signup() {
                   required
                   disabled={isLoading}
                 />
-
                 <TextField
                   label="Password"
                   type="password"
@@ -146,7 +143,6 @@ export default function Signup() {
                   required
                   disabled={isLoading}
                 />
-
                 <TextField
                   label="Confirm Password"
                   type="password"
@@ -157,17 +153,16 @@ export default function Signup() {
                   required
                   disabled={isLoading}
                   error={
-                    formData.confirmPassword !== "" &&
+                    formData.confirmPassword &&
                     formData.password !== formData.confirmPassword
                   }
                   helperText={
-                    formData.confirmPassword !== "" &&
+                    formData.confirmPassword &&
                     formData.password !== formData.confirmPassword
                       ? "Passwords don't match"
                       : ""
                   }
                 />
-
                 <FormControl fullWidth disabled={isLoading}>
                   <InputLabel>User Type</InputLabel>
                   <Select
@@ -181,8 +176,6 @@ export default function Signup() {
                     <MenuItem value="ADMIN">Administrator</MenuItem>
                   </Select>
                 </FormControl>
-
-                {/* Show first/last name, phone, address if user is ADOPTER or ADMIN */}
                 {(formData.userType === "ADOPTER" ||
                   formData.userType === "ADMIN") && (
                   <>
@@ -220,8 +213,6 @@ export default function Signup() {
                     />
                   </>
                 )}
-
-                {/* Show shelter name if user is SHELTER */}
                 {formData.userType === "SHELTER" && (
                   <>
                     <TextField
@@ -251,7 +242,6 @@ export default function Signup() {
                     />
                   </>
                 )}
-
                 <Button
                   type="submit"
                   variant="contained"
@@ -259,15 +249,14 @@ export default function Signup() {
                   size="large"
                   fullWidth
                   disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress size={20} /> : null}
                 >
-                  {isLoading ? "Creating Account..." : "Sign Up"}
+                  {isLoading ? <CircularProgress size={20} /> : "Sign Up"}
                 </Button>
               </Stack>
             </form>
           </CardContent>
         </Card>
-      </Stack>
-    </main>
+      </Box>
+    </>
   );
 }

@@ -37,10 +37,10 @@ public class PetEndpoint {
         }
     }
 
-    @GetMapping("/all")
+    /*@GetMapping("/all")
     public ResponseEntity<List<Pet>> getAllPets() {
-        return ResponseEntity.ok(petService.getAllPets());
-    }
+        ResponseEntity.ok(petService.getAllPets());
+    }*/
 
     // Helper method to store the uploaded image file
     private String storeImage(MultipartFile file) throws IOException {
@@ -76,5 +76,28 @@ public class PetEndpoint {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error importing CSV data: " + e.getMessage());
         }
+    }
+
+    /**
+     * DELETE /api/pets/all
+     * Deletes every pet in the database.
+     */
+    @DeleteMapping("/all")
+    public ResponseEntity<Void> deleteAllPets() {
+        petService.deleteAllPets();
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /api/pets?page=0&size=6
+     * returns a Page<Pet> JSON with content, totalPages, totalElements, etc.
+     */
+    @GetMapping
+    public ResponseEntity<org.springframework.data.domain.Page<Pet>> getPets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        var pg = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("id"));
+        return ResponseEntity.ok(petService.getAllPets(pg));
     }
 }

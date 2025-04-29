@@ -1,27 +1,25 @@
-/**
- * The _app.js helps to initiatize pages. This includes things like:
- *  - layout elements (e.g., global header/footer)
- *  - context wrapping (e.g., theme, redux)
- *  - HTML <head> injection (e.g., page title, external stylesheets that can't be imported via npm)
- */
-
 import React from "react";
 import Head from "next/head";
 import { Provider as ReduxProvider } from "react-redux";
+import { useRouter } from "next/router";
 
 import { AppCacheProvider } from "@mui/material-nextjs/v15-pagesRouter";
 import { CssBaseline } from "@mui/material";
 
 import { PetAdoptionThemeProvider } from "@/utils/theme";
 import { buildStore } from "@/utils/redux";
+import NavBar from "@/pages/NavBar";
 
 import "@/styles/globals.css";
-// 
+
 // Initialize Redux
 let initialState = {};
 let reduxStore = buildStore(initialState);
 
 export default function App({ Component, pageProps }) {
+  const router = useRouter();
+  const hideNavPaths = ["/", "/login", "/signup"];
+
   return (
     <ReduxProvider store={reduxStore}>
       <AppCacheProvider>
@@ -37,6 +35,10 @@ export default function App({ Component, pageProps }) {
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
 
+          {/* Global Navigation Bar: hidden on homepage, login, signup */}
+          {!hideNavPaths.includes(router.pathname) && <NavBar />}
+
+          {/* Page Content */}
           <Component {...pageProps} />
         </PetAdoptionThemeProvider>
       </AppCacheProvider>

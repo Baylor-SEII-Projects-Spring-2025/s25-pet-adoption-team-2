@@ -1,4 +1,3 @@
-// pages/adopt.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -17,6 +16,12 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Box,
+  Pagination,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import PetCard from "../Components/PetCard";
 
@@ -39,10 +44,15 @@ export default function Adopt() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // pagination state
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize, setPageSize] = useState(6);
+
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-  // load logged‑in user (if any)
+  // load logged‑in user
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
@@ -50,24 +60,32 @@ export default function Adopt() {
     }
   }, []);
 
-  const fetchPets = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${backendUrl}/api/pets/all`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
-      setPets(data);
-    } catch (err) {
-      setError("Error fetching pets: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [backendUrl]);
+  const fetchPets = useCallback(
+    async (pageToFetch = page, size = pageSize) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `${backendUrl}/api/pets?page=${pageToFetch}&size=${size}`
+        );
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const pageData = await res.json();
+        setPets(pageData.content);
+        setTotalPages(pageData.totalPages);
+      } catch (err) {
+        setError("Error fetching pets: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [backendUrl, page, pageSize]
+  );
 
+  // initial load & pageSize change
   useEffect(() => {
-    fetchPets();
-  }, [fetchPets]);
+    fetchPets(0, pageSize);
+    setPage(0);
+  }, [fetchPets, pageSize]);
 
   const handleImportCSV = async () => {
     try {
@@ -75,10 +93,25 @@ export default function Adopt() {
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       alert(`Imported ${data.length} pets successfully!`);
-      fetchPets();
+      fetchPets(page, pageSize);
     } catch (err) {
       console.error(err);
       alert("Failed to import CSV: " + err.message);
+    }
+  };
+
+  const handleDeleteAllPets = async () => {
+    if (!window.confirm("Are you sure you want to delete ALL pets?")) return;
+    try {
+      const res = await fetch(`${backendUrl}/api/pets/all`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      alert("All pets deleted!");
+      fetchPets(0, pageSize);
+      setPage(0);
+    } catch (err) {
+      alert("Failed to delete pets: " + err.message);
     }
   };
 
@@ -107,7 +140,7 @@ export default function Adopt() {
       });
       setOpenDialog(true);
     },
-    [user, router],
+    [user, router]
   );
 
   const handleSubmit = async () => {
@@ -115,7 +148,6 @@ export default function Adopt() {
     setIsSubmitting(true);
 
     try {
-      // create adoption request
       let res = await fetch(`${backendUrl}/api/adoption-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,7 +155,6 @@ export default function Adopt() {
       });
       if (!res.ok) throw new Error("Adoption request failed");
 
-      // create notification
       res = await fetch(`${backendUrl}/api/notifications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -163,6 +194,32 @@ export default function Adopt() {
                   <Button variant="contained" onClick={handleImportCSV}>
                     Import Pets CSV
                   </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={handleDeleteAllPets}
+                  >
+                    Delete All Pets
+                  </Button>
+                  <FormControl sx={{ minWidth: 120 }} size="small">
+                    <InputLabel id="page-size-label">Page Size</InputLabel>
+                    <Select
+                      labelId="page-size-label"
+                      value={pageSize}
+                      label="Page Size"
+                      onChange={(e) => {
+                        const newSize = parseInt(e.target.value, 10);
+                        setPageSize(newSize);
+                        setPage(0);
+                      }}
+                    >
+                      {[3, 6, 9, 12].map((size) => (
+                        <MenuItem key={size} value={size}>
+                          {size}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Stack>
                 {error && <Alert severity="error">{error}</Alert>}
               </Stack>
@@ -172,21 +229,35 @@ export default function Adopt() {
           {loading ? (
             <CircularProgress />
           ) : (
-            <Grid container spacing={3} justifyContent="center">
-              {pets.map((pet) => (
-                <Grid item xs={12} sm={6} md={4} key={pet.id}>
-                  <PetCard pet={pet}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      onClick={() => handleInterestClick(pet)}
-                    >
-                      Interested!
-                    </Button>
-                  </PetCard>
-                </Grid>
-              ))}
-            </Grid>
+            <>
+              <Grid container spacing={3} justifyContent="center">
+                {pets.map((pet) => (
+                  <Grid item xs={12} sm={6} md={4} key={pet.id}>
+                    <PetCard pet={pet}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        onClick={() => handleInterestClick(pet)}
+                      >
+                        Interested!
+                      </Button>
+                    </PetCard>
+                  </Grid>
+                ))}
+              </Grid>
+
+              <Box sx={{ mt: 4, mb: 2 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page + 1}
+                  onChange={(_, value) => {
+                    const newPage = value - 1;
+                    setPage(newPage);
+                    fetchPets(newPage, pageSize);
+                  }}
+                />
+              </Box>
+            </>
           )}
         </Stack>
 
@@ -198,10 +269,7 @@ export default function Adopt() {
                 label="Your Name"
                 value={formData.displayName}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    displayName: e.target.value,
-                  }))
+                  setFormData((prev) => ({ ...prev, displayName: e.target.value }))
                 }
                 fullWidth
                 required
@@ -240,10 +308,7 @@ export default function Adopt() {
                 label="Additional Notes"
                 value={formData.additionalNotes}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    additionalNotes: e.target.value,
-                  }))
+                  setFormData((prev) => ({ ...prev, additionalNotes: e.target.value }))
                 }
                 multiline
                 rows={4}

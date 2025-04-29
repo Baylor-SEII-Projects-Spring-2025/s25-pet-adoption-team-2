@@ -80,7 +80,10 @@ public class Pet {
 
     // Description (free text)
     @Lob
-    @Column(name = "DESCRIPTION")
+    @Column(
+            name            = "DESCRIPTION",
+            columnDefinition = "MEDIUMTEXT"   // or "LONGTEXT" if you really need 16 MB+ or up to 4 GB
+    )
     private String description;
 
     // Adoption Center ID: links this pet to its adoption center.

@@ -211,7 +211,7 @@ export default function HomePage() {
                 component="h1"
                 sx={{ fontWeight: "bold", mb: 2 }}
               >
-                Find Your Forever Friend Scrum
+                Find Your Forever Friend
               </Typography>
               <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
                 Adopt a pet and change both your lives for the better
@@ -234,7 +234,7 @@ export default function HomePage() {
         <Card sx={{ width: "100%" }} elevation={4}>
           <CardContent>
             <Typography variant="h3" align="center">
-              Pet Adoption Spring 2025
+              Pet Adoption
             </Typography>
             <Typography variant="body1" color="text.secondary">
               {isLoggedIn && user?.userType === "SHELTER"

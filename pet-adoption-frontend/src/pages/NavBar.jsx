@@ -1,293 +1,98 @@
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import {
   AppBar,
   Box,
   Toolbar,
-  IconButton,
   Typography,
-  Menu,
-  Container,
-  Avatar,
   Button,
-  Tooltip,
+  Avatar,
+  Menu,
   MenuItem,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Pets as PetsIcon,
-} from '@mui/icons-material';
+} from "@mui/material";
+import Image from "next/image";
 
-const pages = [
-  { title: 'Home', path: '/' },
-  { title: 'Adopt', path: '/adopt' },
-  { title: 'Events', path: '/AdopterEventsPage' },
-  {title: 'Events', path: '/ShelterEventsPage'},
-  { title: 'About', path: '/about' },
-];
-
-const authPages = [
-  { title: 'Login', path: '/login' },
-  { title: 'Sign Up', path: '/signup' },
-];
-
-const userPages = [
-  { title: 'Profile', path: '/profile' },
-  { title: 'My Pets', path: '/profile?tab=1' },
-  { title: 'Logout', path: '/logout' },
-];
-
-function NavBar() {
+export default function NavBar() {
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in
-    const storedUser = sessionStorage.getItem('user');
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
     }
-  }, [router.pathname]); // Re-check when route changes
+  }, [router.pathname]);
 
   const handleLogout = () => {
-    sessionStorage.removeItem('user');
+    sessionStorage.removeItem("user");
     setIsLoggedIn(false);
     setUser(null);
-    handleCloseUserMenu();
-    router.push('/login');
-  };
-  
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
+    handleMenuClose();
+    router.push("/login");
   };
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
+  const handleProfileMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
-  const handleMenuClick = (path) => {
-    if (path === '/logout') {
-      handleLogout();
-    } else {
-      router.push(path);
-    }
-    handleCloseUserMenu();
-    setMobileOpen(false);
+  const handleProfileClick = () => {
+    router.push("/profile");
+    handleMenuClose();
   };
-
-  const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-      <Typography variant="h6" sx={{ my: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <PetsIcon sx={{ mr: 1 }} />
-        Pet Adoption
-      </Typography>
-      <Divider />
-      <List>
-        {pages.map((page) => (
-          <ListItem key={page.title} disablePadding>
-            <ListItemButton 
-              sx={{ textAlign: 'center' }}
-              onClick={() => handleMenuClick(page.path)}
-            >
-              <ListItemText primary={page.title} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-        <Divider />
-        {isLoggedIn ? (
-          userPages.map((page) => (
-            <ListItem key={page.title} disablePadding>
-              <ListItemButton 
-                sx={{ textAlign: 'center' }}
-                onClick={() => handleMenuClick(page.path)}
-              >
-                <ListItemText primary={page.title} />
-              </ListItemButton>
-            </ListItem>
-          ))
-        ) : (
-          authPages.map((page) => (
-            <ListItem key={page.title} disablePadding>
-              <ListItemButton 
-                sx={{ textAlign: 'center' }}
-                onClick={() => handleMenuClick(page.path)}
-              >
-                <ListItemText primary={page.title} />
-              </ListItemButton>
-            </ListItem>
-          ))
-        )}
-      </List>
-    </Box>
-  );
 
   return (
-    <>
-      <AppBar position="static">
-        <Container maxWidth="xl">
-          <Toolbar disableGutters>
-            {/* Logo - Desktop */}
-            <PetsIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
-            <Typography
-              variant="h6"
-              noWrap
-              component={Link}
-              href="/"
-              sx={{
-                mr: 2,
-                display: { xs: 'none', md: 'flex' },
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-            >
-              PET ADOPTION
+    <AppBar position="static">
+      <Toolbar>
+        <Link href="/" passHref>
+          <Box component="a" sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+            <Image
+              src="/images/Home_Fur_Good_Logo.jpeg"
+              alt="Home Fur Good Logo"
+              width={40}
+              height={40}
+            />
+          </Box>
+        </Link>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          Home Fur Good
+        </Typography>
+
+        {isLoggedIn ? (
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Typography variant="body1" sx={{ mr: 2 }}>
+              {user.email}
             </Typography>
-
-            {/* Mobile menu */}
-            <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-              <IconButton
-                size="large"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleDrawerToggle}
-                color="inherit"
-              >
-                <MenuIcon />
-              </IconButton>
-            </Box>
-
-            {/* Logo - Mobile */}
-            <PetsIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-            <Typography
-              variant="h5"
-              noWrap
-              component={Link}
-              href="/"
-              sx={{
-                mr: 2,
-                display: { xs: 'flex', md: 'none' },
-                flexGrow: 1,
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
+            <Avatar
+              sx={{ bgcolor: "secondary.main", cursor: "pointer" }}
+              onClick={handleProfileMenuOpen}
             >
-              PETS
-            </Typography>
-
-            {/* Desktop menu */}
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-              {pages.map((page) => (
-                <Button
-                  key={page.title}
-                  onClick={() => handleMenuClick(page.path)}
-                  sx={{ my: 2, color: 'white', display: 'block' }}
-                >
-                  {page.title}
-                </Button>
-              ))}
-            </Box>
-
-            {/* User menu */}
-            <Box sx={{ flexGrow: 0 }}>
-              {isLoggedIn ? (
-                <>
-                  <Tooltip title="Open settings">
-                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <Avatar alt={user?.email}>
-                        {user?.email?.charAt(0).toUpperCase()}
-                      </Avatar>
-                    </IconButton>
-                  </Tooltip>
-                  <Menu
-                    sx={{ mt: '45px' }}
-                    id="menu-appbar"
-                    anchorEl={anchorElUser}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
-                    }}
-                    keepMounted
-                    transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
-                    }}
-                    open={Boolean(anchorElUser)}
-                    onClose={handleCloseUserMenu}
-                  >
-                    {userPages.map((page) => (
-                      <MenuItem key={page.title} onClick={() => handleMenuClick(page.path)}>
-                        <Typography textAlign="center">{page.title}</Typography>
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </>
-              ) : (
-                <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                  {authPages.map((page) => (
-                    <Button
-                      key={page.title}
-                      color="inherit"
-                      component={Link}
-                      href={page.path}
-                      sx={{ mx: 1 }}
-                    >
-                      {page.title === 'Sign Up' ? (
-                        <strong>{page.title}</strong>
-                      ) : (
-                        page.title
-                      )}
-                    </Button>
-                  ))}
-                </Box>
-              )}
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
-
-      {/* Mobile drawer */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true, // Better open performance on mobile
-        }}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
-        }}
-      >
-        {drawer}
-      </Drawer>
-    </>
+              {user.email.charAt(0).toUpperCase()}
+            </Avatar>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
+              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            </Menu>
+          </Box>
+        ) : (
+          <Box>
+            <Button color="inherit" onClick={() => router.push("/login")}>Login</Button>
+            <Button color="inherit" onClick={() => router.push("/signup")}>Sign Up</Button>
+          </Box>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 }
-
-export default NavBar;
