@@ -5,29 +5,45 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = User.TABLE_NAME)
 public class User {
+    public static final String TABLE_NAME = "USERS";
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @SequenceGenerator(
+            name = TABLE_NAME + "_GENERATOR",
+            sequenceName = TABLE_NAME + "_SEQUENCE",
+            allocationSize = 1    // <- fetch one value at a time
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = TABLE_NAME + "_GENERATOR"
+    )
+    @Column(name = "USER_ID")
     private Long id;
 
-    @Column(name = "email_address", nullable = false, unique = true)
+    @Column(name = "EMAIL_ADDRESS")
     private String emailAddress;
 
-    @Column(nullable = false)
+    @Column(name = "PASSWORD")
     private String password;
 
-    @Column(name = "first_name")
+    @Column(name = "USER_TYPE")
+    private String userType;
+
+    @Column(name = "FIRST_NAME")
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(name = "LAST_NAME")
     private String lastName;
 
+    @Column(name = "PHONE")
     private String phone;
+
+    @Column(name = "ADDRESS")
     private String address;
 
-    @Column(name = "shelter_name")
+    @Column(name = "SHELTER_NAME")
     private String shelterName;
 
     @Column(name = "user_type")

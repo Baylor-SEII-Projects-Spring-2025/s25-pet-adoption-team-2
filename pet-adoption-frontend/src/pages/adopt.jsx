@@ -53,13 +53,21 @@ export default function Adopt() {
   const fetchPets = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const token = localStorage.getItem('jwtToken');
     try {
-      const res = await fetch(`${backendUrl}/api/pets/all`);
+      const res = await fetch(`${backendUrl}/api/pets/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       setPets(data);
     } catch (err) {
       setError("Error fetching pets: " + err.message);
+      if (err.message.includes("401")) {
+        console.log("Unauthorized to fetch pets.");
+      }
     } finally {
       setLoading(false);
     }
@@ -70,8 +78,13 @@ export default function Adopt() {
   }, [fetchPets]);
 
   const handleImportCSV = async () => {
+    const token = localStorage.getItem('jwtToken');
     try {
-      const res = await fetch(`${backendUrl}/api/pets/import-csv`);
+      const res = await fetch(`${backendUrl}/api/pets/import-csv`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       alert(`Imported ${data.length} pets successfully!`);
@@ -79,6 +92,9 @@ export default function Adopt() {
     } catch (err) {
       console.error(err);
       alert("Failed to import CSV: " + err.message);
+      if (err.message.includes("401")) {
+        console.log("Unauthorized to import CSV.");
+      }
     }
   };
 
@@ -113,12 +129,16 @@ export default function Adopt() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+    const token = localStorage.getItem('jwtToken');
 
     try {
       // create adoption request
       let res = await fetch(`${backendUrl}/api/adoption-requests`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
       if (!res.ok) throw new Error("Adoption request failed");
@@ -140,6 +160,9 @@ export default function Adopt() {
       alert("Adoption request submitted successfully!");
     } catch (err) {
       setError("Error submitting request: " + err.message);
+      if (err.message.includes("401")) {
+        console.log("Unauthorized to submit adoption request or notification.");
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -32,10 +32,19 @@ export default function NotificationsTab({ user }) {
 
     const fetchNotifications = async () => {
         setLoadingNotifications(true);
+        const token = localStorage.getItem('jwtToken');
         try {
-            const response = await fetch(`http://localhost:8080/api/notifications/user/${user.id}`);
+            const response = await fetch(`http://localhost:8080/api/notifications/user/${user.id}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+            });
             if (!response.ok) {
-                throw new Error('Failed to fetch notifications');
+                console.error('Failed to fetch notifications:', response.status);
+                if (response.status === 401) {
+                  console.log("Unauthorized to fetch notifications.");
+                }
+                return;
             }
             const data = await response.json();
             setNotifications(data);
@@ -47,19 +56,24 @@ export default function NotificationsTab({ user }) {
     };
 
     const markNotificationAsRead = async (notificationId) => {
+        const token = localStorage.getItem('jwtToken');
         try {
             const response = await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
                 method: "PUT",
                 headers: {
-                    'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`, // Include the token
                 }
-            });
+              });
             
             if (response.ok) {
                 // Remove the notification from the list
                 setNotifications(notifications.filter((n) => n.id !== notificationId));
             } else {
                 console.error("Failed to mark notification as read");
+                if (response.status === 401) {
+                    console.log("Unauthorized to mark notification as read.");
+                }
             }
         } catch (err) {
             console.error("Error marking notification as read:", err);
@@ -79,13 +93,17 @@ export default function NotificationsTab({ user }) {
     };
 
     const handleSendReply = async () => {
+        const token = localStorage.getItem('jwtToken');
         try {
             const response = await fetch(`http://localhost:8080/api/notifications/reply`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  'Authorization': `Bearer ${token}`,
+                },
                 body: JSON.stringify({
-                    notificationId: replyNotification.id,
-                    reply: replyMessage,
+                  notificationId: replyNotification.id,
+                  reply: replyMessage,
                 }),
             });
             if (response.ok) {
@@ -93,6 +111,9 @@ export default function NotificationsTab({ user }) {
                 handleCloseReply();
             } else {
                 console.error("Failed to send reply");
+                if (response.status === 401) {
+                    console.log("Unauthorized to send reply.");
+                }
             }
         } catch (err) {
             console.error("Error sending reply:", err);

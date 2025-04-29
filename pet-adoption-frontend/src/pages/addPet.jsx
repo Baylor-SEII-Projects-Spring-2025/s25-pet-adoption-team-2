@@ -48,6 +48,7 @@ export default function AddPet() {
         const backendUrl =
             process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
         const formData = new FormData();
+        const token = localStorage.getItem('jwtToken');
 
         // Append pet details (breed is now just a text field)
         formData.append("name", pet.name);
@@ -69,8 +70,11 @@ export default function AddPet() {
         try {
             const response = await fetch(`${backendUrl}/api/pets/add`, {
                 method: "POST",
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
                 body: formData,
-            });
+              });
             if (response.ok) {
                 const data = await response.json();
                 alert("Pet added successfully: " + JSON.stringify(data));
@@ -90,6 +94,9 @@ export default function AddPet() {
                 setSelectedFile(null);
             } else {
                 alert("Failed to add pet, status: " + response.status);
+                if (response.status === 401) {
+                    console.log("Unauthorized to add pet.");
+                }
             }
         } catch (error) {
             console.error("Error adding pet:", error);

@@ -12,11 +12,19 @@ const EventsAdopter = () => {
   }, []);
 
   const fetchScheduledEvents = async () => {
+    const token = localStorage.getItem('jwtToken'); 
     try {
-      const response = await axios.get("/api/events");
+      const response = await axios.get("/api/events", {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       setEvents(response.data);
     } catch (error) {
       console.error("Error fetching scheduled events", error);
+      if (error.response && error.response.status === 401) {
+        console.log("Unauthorized to fetch scheduled events.");
+      }
     }
   };
 

@@ -121,9 +121,15 @@ const EventsShelter = () => {
       location
     };
 
+    const token = localStorage.getItem('jwtToken');
+
     try {
       // Check for conflicts in scheduled events
-      const getResponse = await axios.get("/api/events");
+      const getResponse = await axios.get("/api/events", {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const scheduledEvents = getResponse.data;
       const conflict = scheduledEvents.find(
         (e) =>
@@ -140,11 +146,17 @@ const EventsShelter = () => {
       }
     } catch (err) {
       console.error("Error checking scheduled events", err);
-      // Optionally handle this error
+      if (err.response && err.response.status === 401) {
+        console.log("Unauthorized to check scheduled events.");
+      }
     }
 
     try {
-      const response = await axios.post("/api/events", newEvent);
+      const response = await axios.post("/api/events", newEvent, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       console.log("Event scheduled", response.data);
       setSuccessMsg("Event scheduled successfully!");
       setErrorMsg("");
@@ -152,6 +164,9 @@ const EventsShelter = () => {
       handleDialogClose();
     } catch (error) {
       console.error("Error scheduling event", error);
+      if (error.response && error.response.status === 401) {
+        console.log("Unauthorized to schedule event.");
+      }
     }
   };
 

@@ -62,10 +62,14 @@ export default function HomePage() {
       console.error("User ID is missing, cannot rate pet.");
       return;
     }
+    const token = localStorage.getItem('jwtToken');
     try {
       const response = await fetch('http://localhost:8080/api/user/rate', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ userId: user.id, petId, rating }),
       });
 
@@ -78,6 +82,9 @@ export default function HomePage() {
         setRefreshKey(prev => prev + 1);
       } else {
         console.error("Failed to update rating and preferences");
+        if (response.status === 401) {
+          console.log("Unauthorized to rate pet.");
+        }
       }
     } catch (error) {
       console.error("Error updating rating:", error);
