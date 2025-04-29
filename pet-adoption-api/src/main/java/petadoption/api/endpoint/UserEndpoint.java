@@ -4,16 +4,14 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import petadoption.api.pet.PetRepository;
 import petadoption.api.user.User;
 import petadoption.api.user.UserRepository;
 import petadoption.api.user.UserService;
-
-import org.springframework.web.bind.annotation.*;
 import petadoption.api.pet.Pet;
-
-
+import petadoption.api.util.JwtUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +19,6 @@ import java.util.Optional;
 
 @Log4j2
 @RestController
-@CrossOrigin(origins = "*")
 public class UserEndpoint {
     @Autowired
     private UserService userService;
@@ -29,6 +26,11 @@ public class UserEndpoint {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     private PetRepository petRepository;
@@ -94,6 +96,7 @@ public class UserEndpoint {
         try {
             String email = signupRequest.get("email");
             String password = signupRequest.get("password");
+            String confirmPassword = signupRequest.get("confirmPassword");
             String userType = signupRequest.getOrDefault("userType", "ADOPTER");
 
             String firstName = signupRequest.get("firstName");
@@ -102,9 +105,16 @@ public class UserEndpoint {
             String address = signupRequest.get("address");
             String shelterName = signupRequest.get("shelterName"); // only relevant if userType=SHELTER
 
-            if (email == null || password == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Email and password are required"));
+            if (!isValidEmail(email)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid email format"));
+            }
+
+            if (password == null || password.length() < 8) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 8 characters"));
+            }
+
+            if (!password.equals(confirmPassword)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Passwords do not match"));
             }
 
             if (userRepository.existsByEmailAddress(email)) {
@@ -114,11 +124,14 @@ public class UserEndpoint {
 
             User newUser = new User();
             newUser.setEmailAddress(email);
-            newUser.setPassword(password);
+            newUser.setPassword(passwordEncoder.encode(password));
             newUser.setUserType(userType);
 
             switch (userType) {
                 case "SHELTER":
+                    if (shelterName == null || shelterName.isEmpty()) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Shelter name is required for shelters"));
+                    }
                     newUser.setPhone(phone);
                     newUser.setAddress(address);
                     newUser.setShelterName(shelterName);
@@ -153,6 +166,10 @@ public class UserEndpoint {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to create user: " + e.getMessage()));
         }
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
     }
 
     @PutMapping("/api/user/rate")
@@ -236,21 +253,27 @@ public class UserEndpoint {
                         .body(Map.of("error", "Email and password are required"));
             }
 
+            // Find the user by email
             User user = userRepository.findByEmailAddress(email);
 
-            if (user == null || !password.equals(user.getPassword())) {
+            if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
                 log.warn("Failed login attempt for email: {}", email);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid email or password"));
             }
 
+            // Generate the JWT token
+            String token = jwtUtil.generateToken(user.getEmailAddress());
+
             log.info("User logged in successfully: {}", email);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Login successful");
             response.put("userId", user.getId());
             response.put("email", user.getEmailAddress());
             response.put("userType", user.getUserType());
+            response.put("token", token);  // Include the JWT token in the response
 
             return ResponseEntity.ok(response);
 

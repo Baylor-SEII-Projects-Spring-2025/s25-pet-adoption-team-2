@@ -56,6 +56,8 @@ export default function Login() {
         throw new Error(data.error || 'Login failed');
       }
 
+      localStorage.setItem('jwtToken', data.token);
+
       // Store user data in sessionStorage
       sessionStorage.setItem('user', JSON.stringify({
         id: data.userId,
@@ -69,8 +71,9 @@ export default function Login() {
       }));
 
       // Redirect to profile or home page
+      console.log('Redirecting to /profile');
       router.push('/profile');
-      
+      console.log('Router:', router);
     } catch (err) {
       console.error('Error:', err);
       setError(err.message || 'An unexpected error occurred');

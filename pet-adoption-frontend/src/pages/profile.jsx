@@ -54,16 +54,33 @@ export default function Profile() {
   const [updateError, setUpdateError] = useState("");
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      const userObj = JSON.parse(storedUser);
-      const userId = userObj.id || userObj.userId;
-      if (!userId) {
-        router.push("/login");
-        return;
-      }
-      fetch(`http://localhost:8080/users/${userId}`)
-          .then((response) => response.json())
+    setTimeout(() => {
+      const storedUser = sessionStorage.getItem("user");
+      const token = localStorage.getItem("jwtToken");
+  
+      console.log("Stored User: ", storedUser);  // Check storedUser
+      console.log("Token: ", token);  // Check token
+  
+      if (storedUser && token) {
+        const userObj = JSON.parse(storedUser);
+        const userId = userObj.id || userObj.userId;
+        if (!userId) {
+          router.push("/login");
+          return;
+        }
+        fetch(`http://localhost:8080/users/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to fetch user");
+            }
+            return response.json();
+          })
           .then((data) => {
             setUser(data);
             setEmail(data.emailAddress || data.email);
@@ -82,10 +99,12 @@ export default function Profile() {
             console.error("Error fetching user:", error);
             router.push("/login");
           });
-    } else {
-      router.push("/login");
-    }
-  }, [router]);
+      } else {
+        console.log("Stored User or Token not found. Redirecting to login.");
+        router.push("/login");
+      }
+    }, 100);  // Delay by 100ms to ensure storage has been populated
+  }, [router]);    
 
   const handleLogout = () => {
     sessionStorage.removeItem("user");
@@ -115,9 +134,13 @@ export default function Profile() {
       updatePayload.address = address;
     }
     try {
+      const token = localStorage.getItem("jwtToken");
       const response = await fetch("http://localhost:8080/api/user", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(updatePayload),
       });
       const data = await response.json();

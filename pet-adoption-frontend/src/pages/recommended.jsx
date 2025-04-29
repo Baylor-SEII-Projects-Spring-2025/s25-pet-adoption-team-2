@@ -9,8 +9,14 @@ export default function Recommendations({ userId }) {
   useEffect(() => {
     async function fetchRecommendations() {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+      const token = localStorage.getItem('jwtToken');
       try {
-        const response = await fetch(`${backendUrl}/api/recommendations/${userId}`);
+        const response = await fetch(`${backendUrl}/api/recommendations/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           setPets(data);

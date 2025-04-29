@@ -22,10 +22,20 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
     if (!userId) return;
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+    const token = localStorage.getItem('jwtToken');
+
     try {
-      const res = await fetch(`${backendUrl}/api/recommendations/${userId}`);
+      const res = await fetch(`${backendUrl}/api/recommendations/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (!res.ok) {
         console.error("Failed to fetch recs:", res.status);
+        if (res.status === 401) {
+          console.log("Unauthorized - please log in.");
+        }
         return;
       }
       const data = await res.json();
