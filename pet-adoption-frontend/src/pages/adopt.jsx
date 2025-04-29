@@ -1,3 +1,4 @@
+// pages/adopt.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -35,7 +36,6 @@ export default function Adopt() {
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
-    userName: "",
     userEmail: "",
     petId: "",
     adoptionCenterId: "",
@@ -44,101 +44,116 @@ export default function Adopt() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // pagination state
+  // pagination
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize, setPageSize] = useState(6);
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-  // load logged-in user
+  // load user
   useEffect(() => {
-    const stored = sessionStorage.getItem("user");
-    if (stored) setUser(JSON.parse(stored));
+    const s = sessionStorage.getItem("user");
+    if (s) setUser(JSON.parse(s));
   }, []);
 
   const isShelter = user?.userType === "SHELTER";
   const isAdopter = user && user.userType !== "SHELTER";
 
+  // fetch paged pets
   const fetchPets = useCallback(
-    async (pageToFetch = page, size = pageSize) => {
+    async (p = page, size = pageSize) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
-          `${backendUrl}/api/pets?page=${pageToFetch}&size=${size}`
-        );
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const pageData = await res.json();
-        setPets(pageData.content);
-        setTotalPages(pageData.totalPages);
-      } catch (err) {
-        setError("Error fetching pets: " + err.message);
+        const res = await fetch(`${BACKEND}/api/pets?page=${p}&size=${size}`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setPets(data.content);
+        setTotalPages(data.totalPages);
+      } catch (e) {
+        setError(`Fetch pets error: ${e.message}`);
       } finally {
         setLoading(false);
       }
     },
-    [backendUrl, page, pageSize]
+    [BACKEND, page, pageSize]
   );
 
-  // initial load & pageSize change
+  // initial & on pageSize change
   useEffect(() => {
     fetchPets(0, pageSize);
     setPage(0);
   }, [fetchPets, pageSize]);
 
+  // import/delete (shelter only)
   const handleImportCSV = async () => {
     try {
-      const res = await fetch(`${backendUrl}/api/pets/import-csv`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
-      alert(`Imported ${data.length} pets successfully!`);
+      const res = await fetch(`${BACKEND}/api/pets/import-csv`);
+      if (!res.ok) throw new Error(await res.text());
+      const imported = await res.json();
+      alert(`Imported ${imported.length} pets`);
       fetchPets(page, pageSize);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to import CSV: " + err.message);
+    } catch (e) {
+      alert("Import CSV error: " + e.message);
     }
   };
-
-  const handleDeleteAllPets = async () => {
-    if (!window.confirm("Are you sure you want to delete ALL pets?")) return;
+  const handleDeleteAll = async () => {
+    if (!confirm("Really delete ALL pets?")) return;
     try {
-      const res = await fetch(`${backendUrl}/api/pets/all`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const res = await fetch(`${BACKEND}/api/pets/all`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await res.text());
       alert("All pets deleted!");
       fetchPets(0, pageSize);
       setPage(0);
-    } catch (err) {
-      alert("Failed to delete pets: " + err.message);
+    } catch (e) {
+      alert("Delete all error: " + e.message);
     }
   };
 
-  const handleInterestClick = useCallback(
+  // open "Interested!" dialog
+  const handleInterest = useCallback(
     (pet) => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-      if (!pet.adoptionCenterId) {
-        setError("No adoption agencies available for this pet.");
-        return;
-      }
+      if (!user) return router.push("/login");
+      setError(null);
       setSelectedPet(pet);
+      
+      console.log("Pet data:", pet);
+      console.log("User data:", user);
+
+      // Check if pet has all required fields
+      if (!pet.id) {
+        setError("Invalid pet data: Missing pet ID");
+        return;
+      }
+      
+      if (!pet.adoptionCenterId) {
+        setError("This pet doesn't have an associated shelter. Please contact support.");
+        return;
+      }
+
+      // Build a displayName
+      const name =
+        user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : user.emailAddress || user.email || "Anonymous User";
+
+      // Ensure userId is available and valid
+      const userId = user.id || user.userId;
+      if (!userId) {
+        setError("User information is incomplete. Please log out and log back in.");
+        return;
+      }
+
       setFormData({
-        userId: user.id || "",
-        userName:
-          user.firstName && user.lastName
-            ? `${user.firstName} ${user.lastName}`
-            : "",
-        userEmail: user.emailAddress || "",
+        userId: userId,
+        userEmail: user.emailAddress || user.email || "",
         petId: pet.id,
         adoptionCenterId: pet.adoptionCenterId,
         additionalNotes: "",
-        displayName: "",
+        displayName: name,
       });
+
       setOpenDialog(true);
     },
     [user, router]
@@ -147,31 +162,59 @@ export default function Adopt() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-
+    setError(null);
+  
+    // Validate required fields before submission
+    if (!formData.userId || !formData.petId || !formData.adoptionCenterId) {
+      setError("Missing required fields. Please try again or contact support.");
+      setIsSubmitting(false);
+      return;
+    }
+  
+    // Create a complete adoption request with all possible fields
+    const adoptionRequestData = {
+      userId: formData.userId,
+      petId: formData.petId,
+      adoptionCenterId: formData.adoptionCenterId,
+      notes: formData.additionalNotes || "",
+      displayName: formData.displayName || ""
+    };
+  
+    console.log("Sending adoption request:", adoptionRequestData);
+  
     try {
-      let res = await fetch(`${backendUrl}/api/adoption-requests`, {
+      // Send only the adoption request
+      // The backend will handle creating the notification
+      const res = await fetch(`${BACKEND}/api/adoption-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(adoptionRequestData),
       });
-      if (!res.ok) throw new Error("Adoption request failed");
-
-      res = await fetch(`${backendUrl}/api/notifications`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: formData.petId.toString(),
-          userId: formData.userId,
-          displayName: formData.displayName,
-        }),
-      });
-      if (!res.ok) throw new Error("Notification failed");
-
+      
+      if (!res.ok) {
+        // Try to parse the error as JSON first
+        const errorText = await res.text();
+        let errorMessage = errorText;
+        try {
+          const errorObj = JSON.parse(errorText);
+          errorMessage = errorObj.error || errorObj.message || errorText;
+        } catch (parseError) {
+          // If not JSON, use the text directly
+          // Using parseError instead of e to avoid the unused variable warning
+          console.log("Could not parse error as JSON:", parseError.message);
+        }
+        
+        console.error("Adoption request error:", errorMessage);
+        throw new Error(`Failed to submit adoption request: ${errorMessage}`);
+      }
+  
+      // Success - close dialog and show confirmation
       setOpenDialog(false);
-      setError(null);
-      alert("Adoption request submitted successfully!");
-    } catch (err) {
-      setError("Error submitting request: " + err.message);
+      alert("Your interest has been sent!");
+    } catch (error) {
+      // Using 'error' instead of 'e' and making sure we use it
+      console.error("Error in handleSubmit:", error);
+      setError(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -183,47 +226,38 @@ export default function Adopt() {
         <title>Adopt a Pet</title>
       </Head>
       <main>
-        <Stack sx={{ pt: 4 }} alignItems="center" spacing={3}>
-          <Card sx={{ width: "90%", maxWidth: 1200 }} elevation={4}>
+        <Stack spacing={4} sx={{ pt: 4 }} alignItems="center">
+          <Card sx={{ width: "90%", maxWidth: 1200 }}>
             <CardContent>
               <Stack spacing={2} alignItems="center">
                 <Typography variant="h3">Adopt a Pet</Typography>
-                <Stack direction="row" spacing={2} justifyContent="center">
-                  {/** only shelter users get these */}
+                <Stack direction="row" spacing={2}>
                   {isShelter && (
                     <>
                       <Link href="/addPet" passHref>
-                        <Button variant="contained">Add a Pet</Button>
+                        <Button variant="contained">Add Pet</Button>
                       </Link>
                       <Button variant="contained" onClick={handleImportCSV}>
-                        Import Pets CSV
+                        Import CSV
                       </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={handleDeleteAllPets}
-                      >
-                        Delete All Pets
+                      <Button color="error" onClick={handleDeleteAll}>
+                        Delete All
                       </Button>
                     </>
                   )}
-
-                  {/** page size control for everyone */}
-                  <FormControl sx={{ minWidth: 120 }} size="small">
-                    <InputLabel id="page-size-label">Page Size</InputLabel>
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Page Size</InputLabel>
                     <Select
-                      labelId="page-size-label"
                       value={pageSize}
                       label="Page Size"
                       onChange={(e) => {
-                        const newSize = parseInt(e.target.value, 10);
-                        setPageSize(newSize);
+                        setPageSize(+e.target.value);
                         setPage(0);
                       }}
                     >
-                      {[3, 6, 9, 12].map((size) => (
-                        <MenuItem key={size} value={size}>
-                          {size}
+                      {[3, 6, 9, 12].map((n) => (
+                        <MenuItem key={n} value={n}>
+                          {n}
                         </MenuItem>
                       ))}
                     </Select>
@@ -242,12 +276,11 @@ export default function Adopt() {
                 {pets.map((pet) => (
                   <Grid item xs={12} sm={6} md={4} key={pet.id}>
                     <PetCard pet={pet}>
-                      {/** only adopters can express interest */}
                       {isAdopter && (
                         <Button
                           fullWidth
                           variant="contained"
-                          onClick={() => handleInterestClick(pet)}
+                          onClick={() => handleInterest(pet)}
                         >
                           Interested!
                         </Button>
@@ -256,15 +289,14 @@ export default function Adopt() {
                   </Grid>
                 ))}
               </Grid>
-
-              <Box sx={{ mt: 4, mb: 2 }}>
+              <Box sx={{ mt: 3 }}>
                 <Pagination
                   count={totalPages}
                   page={page + 1}
-                  onChange={(_, value) => {
-                    const newPage = value - 1;
-                    setPage(newPage);
-                    fetchPets(newPage, pageSize);
+                  onChange={(_, v) => {
+                    const np = v - 1;
+                    setPage(np);
+                    fetchPets(np, pageSize);
                   }}
                 />
               </Box>
@@ -273,23 +305,17 @@ export default function Adopt() {
         </Stack>
 
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-          <DialogTitle>Adoption Interest Form</DialogTitle>
+          <DialogTitle>Confirm Your Interest</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
               <TextField
-                label="User ID"
-                value={formData.userId}
+                label="Your Name"
+                value={formData.displayName}
                 disabled
                 fullWidth
               />
               <TextField
-                label="Name"
-                value={formData.userName}
-                disabled
-                fullWidth
-              />
-              <TextField
-                label="Email"
+                label="Your Email"
                 value={formData.userEmail}
                 disabled
                 fullWidth
@@ -301,22 +327,13 @@ export default function Adopt() {
                 fullWidth
               />
               <TextField
-                label="Adoption Center ID"
-                value={formData.adoptionCenterId}
-                disabled
-                fullWidth
-              />
-              <TextField
                 label="Additional Notes"
                 value={formData.additionalNotes}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    additionalNotes: e.target.value,
-                  }))
+                  setFormData((f) => ({ ...f, additionalNotes: e.target.value }))
                 }
                 multiline
-                rows={4}
+                rows={3}
                 fullWidth
               />
             </Stack>
@@ -324,8 +341,8 @@ export default function Adopt() {
           <DialogActions>
             <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
             <Button
-              onClick={handleSubmit}
               variant="contained"
+              onClick={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? <CircularProgress size={24} /> : "Submit"}

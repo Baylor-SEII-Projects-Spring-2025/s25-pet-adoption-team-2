@@ -1,10 +1,15 @@
 package petadoption.api.notifications;
 
-public class NotificationsRequest {
+import lombok.Data;
 
+@Data
+public class NotificationsRequest {
     private String text;
     private Long userId;
     private String displayName;
+    private Long petId;
+
+    // Getters and setters with null checks
 
     public String getText() {
         return text;
@@ -23,10 +28,28 @@ public class NotificationsRequest {
     }
 
     public String getDisplayName() {
-        return displayName;
+        return displayName != null ? displayName : "";
     }
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public Long getPetId() {
+        return petId;
+    }
+
+    public void setPetId(Long petId) {
+        this.petId = petId;
+    }
+
+    @Override
+    public String toString() {
+        return "NotificationsRequest{" +
+                "text='" + text + '\'' +
+                ", userId=" + userId +
+                ", displayName='" + displayName + '\'' +
+                ", petId=" + petId +
+                '}';
     }
 }
