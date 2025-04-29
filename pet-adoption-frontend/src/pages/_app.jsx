@@ -1,20 +1,19 @@
+import dynamic from "next/dynamic";
 import React from "react";
 import Head from "next/head";
-import { Provider as ReduxProvider } from "react-redux";
 import { useRouter } from "next/router";
-
+import { Provider as ReduxProvider } from "react-redux";
 import { AppCacheProvider } from "@mui/material-nextjs/v15-pagesRouter";
 import { CssBaseline } from "@mui/material";
-
 import { PetAdoptionThemeProvider } from "@/utils/theme";
 import { buildStore } from "@/utils/redux";
-import NavBar from "@/pages/NavBar";
+
+// instead of importing NavBar statically:
+const NavBar = dynamic(() => import("@/pages/NavBar"), { ssr: false });
 
 import "@/styles/globals.css";
 
-// Initialize Redux
-let initialState = {};
-let reduxStore = buildStore(initialState);
+let reduxStore = buildStore({});
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -32,13 +31,10 @@ export default function App({ Component, pageProps }) {
         </Head>
 
         <PetAdoptionThemeProvider>
-          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
 
-          {/* Global Navigation Bar: hidden on homepage, login, signup */}
           {!hideNavPaths.includes(router.pathname) && <NavBar />}
 
-          {/* Page Content */}
           <Component {...pageProps} />
         </PetAdoptionThemeProvider>
       </AppCacheProvider>

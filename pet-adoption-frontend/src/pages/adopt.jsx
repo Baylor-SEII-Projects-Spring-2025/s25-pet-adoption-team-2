@@ -52,13 +52,14 @@ export default function Adopt() {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-  // load logged‑in user
+  // load logged-in user
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const stored = sessionStorage.getItem("user");
+    if (stored) setUser(JSON.parse(stored));
   }, []);
+
+  const isShelter = user?.userType === "SHELTER";
+  const isAdopter = user && user.userType !== "SHELTER";
 
   const fetchPets = useCallback(
     async (pageToFetch = page, size = pageSize) => {
@@ -188,19 +189,26 @@ export default function Adopt() {
               <Stack spacing={2} alignItems="center">
                 <Typography variant="h3">Adopt a Pet</Typography>
                 <Stack direction="row" spacing={2} justifyContent="center">
-                  <Link href="/addPet" passHref>
-                    <Button variant="contained">Add a Pet</Button>
-                  </Link>
-                  <Button variant="contained" onClick={handleImportCSV}>
-                    Import Pets CSV
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={handleDeleteAllPets}
-                  >
-                    Delete All Pets
-                  </Button>
+                  {/** only shelter users get these */}
+                  {isShelter && (
+                    <>
+                      <Link href="/addPet" passHref>
+                        <Button variant="contained">Add a Pet</Button>
+                      </Link>
+                      <Button variant="contained" onClick={handleImportCSV}>
+                        Import Pets CSV
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={handleDeleteAllPets}
+                      >
+                        Delete All Pets
+                      </Button>
+                    </>
+                  )}
+
+                  {/** page size control for everyone */}
                   <FormControl sx={{ minWidth: 120 }} size="small">
                     <InputLabel id="page-size-label">Page Size</InputLabel>
                     <Select
@@ -234,13 +242,16 @@ export default function Adopt() {
                 {pets.map((pet) => (
                   <Grid item xs={12} sm={6} md={4} key={pet.id}>
                     <PetCard pet={pet}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={() => handleInterestClick(pet)}
-                      >
-                        Interested!
-                      </Button>
+                      {/** only adopters can express interest */}
+                      {isAdopter && (
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          onClick={() => handleInterestClick(pet)}
+                        >
+                          Interested!
+                        </Button>
+                      )}
                     </PetCard>
                   </Grid>
                 ))}
@@ -265,15 +276,6 @@ export default function Adopt() {
           <DialogTitle>Adoption Interest Form</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                label="Your Name"
-                value={formData.displayName}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, displayName: e.target.value }))
-                }
-                fullWidth
-                required
-              />
               <TextField
                 label="User ID"
                 value={formData.userId}
@@ -308,7 +310,10 @@ export default function Adopt() {
                 label="Additional Notes"
                 value={formData.additionalNotes}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, additionalNotes: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    additionalNotes: e.target.value,
+                  }))
                 }
                 multiline
                 rows={4}

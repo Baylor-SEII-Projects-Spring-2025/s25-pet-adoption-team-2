@@ -5,6 +5,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -234,5 +236,11 @@ public class PetService {
 
     public void deleteAllPets() {
         petRepository.deleteAll();      // ← inherited from JpaRepository
+    }
+
+
+    /** Un-paged fetch (for /api/pets/all) */
+    public List<Pet> getAllPetsList() {
+        return petRepository.findAll();
     }
 }

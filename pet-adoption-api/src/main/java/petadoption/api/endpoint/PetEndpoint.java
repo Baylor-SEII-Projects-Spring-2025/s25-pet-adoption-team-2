@@ -1,11 +1,14 @@
 package petadoption.api.endpoint;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import petadoption.api.pet.Pet;
+import petadoption.api.pet.PetRepository;
 import petadoption.api.pet.PetService;
 
 import java.io.File;
@@ -20,6 +23,9 @@ public class PetEndpoint {
 
     @Autowired
     private PetService petService;
+
+    @Autowired
+    private PetRepository petRepository;
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Pet> addPet(@ModelAttribute Pet pet,
@@ -36,11 +42,6 @@ public class PetEndpoint {
             return ResponseEntity.status(500).build();
         }
     }
-
-    /*@GetMapping("/all")
-    public ResponseEntity<List<Pet>> getAllPets() {
-        ResponseEntity.ok(petService.getAllPets());
-    }*/
 
     // Helper method to store the uploaded image file
     private String storeImage(MultipartFile file) throws IOException {
@@ -100,4 +101,13 @@ public class PetEndpoint {
         var pg = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("id"));
         return ResponseEntity.ok(petService.getAllPets(pg));
     }
+    
+    /** GET /api/pets/all → returns List<Pet> */
+    @GetMapping("/all")
+    public ResponseEntity<List<Pet>> getAllPets() {
+        List<Pet> list = petService.getAllPetsList();
+        return ResponseEntity.ok(list);
+    }
+
+
 }

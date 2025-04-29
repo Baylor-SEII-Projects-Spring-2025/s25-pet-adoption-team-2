@@ -10,15 +10,7 @@ public class User {
     public static final String TABLE_NAME = "USERS";
 
     @Id
-    @SequenceGenerator(
-            name = TABLE_NAME + "_GENERATOR",
-            sequenceName = TABLE_NAME + "_SEQUENCE",
-            allocationSize = 1    // <- fetch one value at a time
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = TABLE_NAME + "_GENERATOR"
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "USER_ID")
     private Long id;
 

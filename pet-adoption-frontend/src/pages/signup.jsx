@@ -15,7 +15,6 @@ import {
   FormControl,
   InputLabel,
   Box,
-  Divider,
 } from "@mui/material";
 
 export default function Signup() {

@@ -69,13 +69,13 @@ export default function NavBar() {
         {isLoggedIn ? (
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="body1" sx={{ mr: 2 }}>
-              {user.email}
+              {user.emailAddress}
             </Typography>
             <Avatar
               sx={{ bgcolor: "secondary.main", cursor: "pointer" }}
               onClick={handleProfileMenuOpen}
             >
-              {user.email.charAt(0).toUpperCase()}
+              {(user?.emailAddress || "").charAt(0).toUpperCase()}
             </Avatar>
             <Menu
               anchorEl={anchorEl}
