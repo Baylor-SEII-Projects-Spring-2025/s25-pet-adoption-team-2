@@ -8,5 +8,30 @@ spring:
     driverClassName: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: homefurgood25@gmail.com
+    password: oupb xeym nzda gtld
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+            trust: smtp.gmail.com
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+          connectiontimeout: 30000
+          timeout: 30000
+          writetimeout: 30000
+        debug: true
+        transport:
+          protocol: smtps
+        ssl:
+          debug: true
+          trustStore: ${JAVA_HOME}/lib/security/cacerts
+          trustStorePassword: changeit

@@ -5,42 +5,33 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = User.TABLE_NAME)
+@Table(name = "users")
 public class User {
-    public static final String TABLE_NAME = "USERS";
-
     @Id
-    @GeneratedValue(generator = TABLE_NAME + "_GENERATOR")
-    @SequenceGenerator(
-            name = TABLE_NAME + "_GENERATOR",
-            sequenceName = TABLE_NAME + "_SEQUENCE"
-    )
-    @Column(name = "USER_ID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
-    @Column(name = "EMAIL_ADDRESS")
+    @Column(name = "email_address", nullable = false, unique = true)
     private String emailAddress;
 
-    @Column(name = "PASSWORD")
+    @Column(nullable = false)
     private String password;
 
-    @Column(name = "USER_TYPE")
-    private String userType;
-
-    @Column(name = "FIRST_NAME")
+    @Column(name = "first_name")
     private String firstName;
 
-    @Column(name = "LAST_NAME")
+    @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "PHONE")
     private String phone;
-
-    @Column(name = "ADDRESS")
     private String address;
 
-    @Column(name = "SHELTER_NAME")
+    @Column(name = "shelter_name")
     private String shelterName;
+
+    @Column(name = "user_type")
+    private String userType;
 
     // Preference weights for species (scale 0.0 to 1.0)
     @Column(name = "PREFERRED_DOG_WEIGHT")

@@ -12,64 +12,51 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Divider,
 } from "@mui/material";
 
-export default function Login() {
+export default function ResetPassword() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  
+  const { token } = router.query;
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
-  };
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setSuccess("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch('http://localhost:8080/api/login', {
+      const response = await fetch('http://localhost:8080/api/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
+        body: JSON.stringify({ 
+          token,
+          newPassword: password 
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.error || 'Failed to reset password');
       }
 
-      // Store user data in sessionStorage
-      sessionStorage.setItem('user', JSON.stringify({
-        id: data.userId,
-        email: data.email,
-        userType: data.userType,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        address: data.address,
-        shelterName: data.shelterName
-      }));
-
-      // Redirect to profile or home page
-      router.push('/profile');
+      setSuccess('Password has been reset successfully. You can now login with your new password.');
+      setTimeout(() => {
+        router.push('/login');
+      }, 3000);
       
     } catch (err) {
       console.error('Error:', err);
@@ -79,10 +66,25 @@ export default function Login() {
     }
   };
 
+  if (!token) {
+    return (
+      <Box sx={{ padding: 4, textAlign: 'center' }}>
+        <Alert severity="error">Invalid or expired reset link</Alert>
+        <Box mt={2}>
+          <Link href="/forgot-password" passHref>
+            <Button variant="contained" color="primary">
+              Request New Reset Link
+            </Button>
+          </Link>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <>
       <Head>
-        <title>Login - Pet Adoption</title>
+        <title>Reset Password - Pet Adoption</title>
       </Head>
 
       <main>
@@ -90,7 +92,7 @@ export default function Login() {
           <Card sx={{ width: { xs: '100%', sm: 600 } }} elevation={4}>
             <CardContent>
               <Typography variant="h4" align="center" gutterBottom>
-                Login to Your Account
+                Set New Password
               </Typography>
               
               {error && (
@@ -99,25 +101,29 @@ export default function Login() {
                 </Alert>
               )}
               
+              {success && (
+                <Alert severity="success" sx={{ mb: 3 }}>
+                  {success}
+                </Alert>
+              )}
+              
               <form onSubmit={handleSubmit}>
                 <Stack spacing={3}>
                   <TextField
-                    label="Email Address"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
+                    label="New Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     fullWidth
                     required
                     disabled={isLoading}
                   />
                   
                   <TextField
-                    label="Password"
+                    label="Confirm New Password"
                     type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     fullWidth
                     required
                     disabled={isLoading}
@@ -132,37 +138,14 @@ export default function Login() {
                     disabled={isLoading}
                     startIcon={isLoading ? <CircularProgress size={20} /> : null}
                   >
-                    {isLoading ? 'Logging in...' : 'Login'}
-                  </Button>
-
-                  <Button
-                    variant="text"
-                    color="primary"
-                    size="small"
-                    fullWidth
-                    onClick={() => router.push('/forgot-password')}
-                  >
-                    Forgot password?
+                    {isLoading ? 'Resetting...' : 'Reset Password'}
                   </Button>
                 </Stack>
               </form>
-              
-              <Divider sx={{ my: 3 }} />
-              
-              <Box textAlign="center">
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  No account?
-                </Typography>
-                <Link href="/signup" passHref>
-                  <Button variant="outlined" color="secondary">
-                    Create an Account
-                  </Button>
-                </Link>
-              </Box>
             </CardContent>
           </Card>
         </Stack>
       </main>
     </>
   );
-}
+} 
