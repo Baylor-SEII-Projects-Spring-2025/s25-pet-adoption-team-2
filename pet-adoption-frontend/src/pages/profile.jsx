@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import {
@@ -22,9 +22,10 @@ import {
   Grid,
   CircularProgress,
 } from "@mui/material";
-import NotificationsTab from "../Components/NotificationsTab";
-import PetCard from "../Components/PetCard";
+import NotificationsTab from "../Components/NotificationsTab"; // Ensure this path is correct
+import PetCard from "../Components/PetCard"; // Ensure this path is correct
 
+// Helper component for Tabs
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
@@ -45,11 +46,12 @@ export default function Profile() {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
+  // User and loading state
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(0); // Default to Profile tab
 
-  // profile form fields
+  // Profile form fields state
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -57,128 +59,200 @@ export default function Profile() {
   const [address, setAddress] = useState("");
   const [shelterName, setShelterName] = useState("");
 
+  // Update status messages
   const [updateMessage, setUpdateMessage] = useState("");
   const [updateError, setUpdateError] = useState("");
 
-  // new: shelter's pets
-  const [shelterPets, setShelterPets] = useState([]);
-  const [loadingPets, setLoadingPets] = useState(false);
-  const [petsError, setPetsError] = useState("");
+  // State for pets displayed in "My Pets" tab
+  const [myPets, setMyPets] = useState([]); // Combined state for shelter's or adopter's pets
+  const [loadingMyPets, setLoadingMyPets] = useState(false);
+  const [myPetsError, setMyPetsError] = useState("");
 
-  // load user details on mount
+  // --- Fetch User Details ---
   useEffect(() => {
-    const stored = sessionStorage.getItem("user");
-    if (!stored) {
+    setLoading(true);
+    const storedUser = sessionStorage.getItem("user");
+    if (!storedUser) {
       router.push("/login");
       return;
     }
-    const u = JSON.parse(stored);
-    const userId = u.id || u.userId;
+    const parsedUser = JSON.parse(storedUser);
+    const userId = parsedUser?.id || parsedUser?.userId; // Handle potential variations in ID key
+
     if (!userId) {
+      console.error("User ID missing from session storage.");
+      sessionStorage.removeItem("user"); // Clear invalid session data
       router.push("/login");
       return;
     }
 
+    // Fetch full user details from backend to ensure data is up-to-date
     fetch(`${backendUrl}/users/${userId}`)
       .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}: Failed to fetch user details.`);
+        }
         return res.json();
       })
       .then((data) => {
-        setUser(data);
-        setEmail(data.emailAddress || data.email);
+        if (!data) {
+            // Handle case where backend returns null/empty for a valid ID (shouldn't happen ideally)
+            throw new Error("User data not found on backend.");
+        }
+        setUser(data); // Set the full user object
+        // Populate form fields
+        setEmail(data.emailAddress || data.email || ""); // Handle potential variations
+        setPhone(data.phone || "");
+        setAddress(data.address || "");
         if (data.userType === "SHELTER") {
           setShelterName(data.shelterName || "");
         } else {
           setFirstName(data.firstName || "");
           setLastName(data.lastName || "");
         }
-        setPhone(data.phone || "");
-        setAddress(data.address || "");
+        // Update session storage with potentially newer data from backend
         sessionStorage.setItem("user", JSON.stringify(data));
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Error fetching user details:", err);
+        // Clear session and redirect to login if fetch fails
+        sessionStorage.removeItem("user");
+        setUser(null); // Clear user state
         router.push("/login");
       })
-      .finally(() => setLoading(false));
-  }, [backendUrl, router]);
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [backendUrl, router]); // Rerun if backendUrl or router changes (usually stable)
 
-  // whenever the shelter user clicks "My Pets" tab, fetch their pets
+  // --- Fetch Pets for "My Pets" Tab ---
+  const fetchMyPets = useCallback(async () => {
+    if (!user || !user.id) return; // Ensure user and user ID are available
+
+    setLoadingMyPets(true);
+    setMyPetsError("");
+    setMyPets([]); // Clear previous pets
+
+    const userId = user.id;
+    let endpoint = "";
+
+    // Determine the correct endpoint based on user type
+    if (user.userType === "SHELTER") {
+      endpoint = `${backendUrl}/api/pets/shelter/${userId}`;
+      console.log(`Fetching pets for Shelter ID: ${userId} from ${endpoint}`);
+    } else { // Assume ADOPTER or other non-shelter types
+      endpoint = `${backendUrl}/api/pets/adopter/${userId}`;
+      console.log(`Fetching adopted pets for Adopter ID: ${userId} from ${endpoint}`);
+    }
+
+    try {
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP error ${res.status}: ${errorText}`);
+      }
+      const data = await res.json();
+      setMyPets(data || []); // Set pets, ensure it's an array even if response is null
+      console.log("Fetched 'My Pets':", data);
+    } catch (err) {
+      console.error(`Error fetching 'My Pets' from ${endpoint}:`, err);
+      setMyPetsError(`Failed to load pets: ${err.message}`);
+    } finally {
+      setLoadingMyPets(false);
+    }
+  }, [user, backendUrl]); // Depend on user and backendUrl
+
+  // Trigger fetchMyPets when the "My Pets" tab is selected (and user is loaded)
   useEffect(() => {
-    if (tabValue !== 1 || user?.userType !== "SHELTER") return;
+    // Only fetch if the "My Pets" tab (index 1) is active and user data is available
+    if (tabValue === 1 && user && user.id) {
+      fetchMyPets();
+    }
+  }, [tabValue, user, fetchMyPets]); // Rerun when tab, user, or the fetch function changes
 
-    setLoadingPets(true);
-    setPetsError("");
-
-    fetch(`${backendUrl}/api/pets/all`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((allPets) => {
-        setShelterPets(
-          allPets.filter((p) => p.adoptionCenterId === user.id)
-        );
-      })
-      .catch((err) => setPetsError(err.message))
-      .finally(() => setLoadingPets(false));
-  }, [tabValue, user, backendUrl]);
-
+  // --- Event Handlers ---
   const handleLogout = () => {
     sessionStorage.removeItem("user");
+    setUser(null); // Clear user state
     router.push("/login");
   };
+
   const handleTabChange = (_, newValue) => {
     setTabValue(newValue);
+    // Fetching for the "My Pets" tab is handled by the useEffect hook above
   };
 
-  const handleUpdateProfile = () => {
-    if (!user) return;
-    const userId = user.id || user.userId;
-    let payload = { id: userId, email };
+  const handleUpdateProfile = async () => {
+    if (!user || !user.id) return;
+
+    setUpdateMessage("");
+    setUpdateError("");
+
+    const userId = user.id;
+    let payload = {
+        id: userId,
+        // Include fields common to all or conditionally add them
+        emailAddress: email, // Use consistent field name
+        phone: phone,
+        address: address,
+    };
+
+    // Add type-specific fields
     if (user.userType === "SHELTER") {
-      payload = { ...payload, shelterName, phone, address };
-    } else {
-      payload = { ...payload, firstName, lastName, phone, address };
+      payload.shelterName = shelterName;
+    } else { // ADOPTER or other types
+      payload.firstName = firstName;
+      payload.lastName = lastName;
     }
-    fetch(`${backendUrl}/api/user`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
-      .then(({ ok, data }) => {
-        if (ok) {
-          setUser(data);
-          sessionStorage.setItem("user", JSON.stringify(data));
-          setUpdateMessage("Profile updated successfully!");
-          setUpdateError("");
-        } else {
-          throw new Error(data.error || "Update failed");
+
+    console.log("Updating profile with payload:", payload);
+
+    try {
+        const res = await fetch(`${backendUrl}/api/user`, { // Endpoint from UserEndpoint.java
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await res.json(); // Attempt to parse JSON regardless of status
+
+        if (!res.ok) {
+            throw new Error(data.error || `HTTP error ${res.status}`);
         }
-      })
-      .catch((err) => {
-        setUpdateError(err.message);
-        setUpdateMessage("");
-      });
+
+        // Update successful
+        setUser(data); // Update local user state with response from backend
+        sessionStorage.setItem("user", JSON.stringify(data)); // Update session storage
+        setUpdateMessage("Profile updated successfully!");
+        console.log("Profile update successful:", data);
+
+    } catch (err) {
+        console.error("Profile update failed:", err);
+        setUpdateError(`Update failed: ${err.message}`);
+    }
   };
 
+  // --- Render Logic ---
   if (loading) {
     return (
-      <Container
-        sx={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography>Loading…</Typography>
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
       </Container>
     );
   }
-  if (!user) return null;
+
+  // If loading is finished but user is still null (e.g., fetch failed, redirecting)
+  if (!user) {
+     return (
+        <Container sx={{ textAlign: 'center', mt: 5 }}>
+            <Typography>Redirecting to login...</Typography>
+        </Container>
+     );
+  }
+
+  // Determine user type for conditional rendering
+  const isShelter = user.userType === "SHELTER";
+  // REMOVED: const isAdopter = !isShelter; // This variable was unused
 
   return (
     <>
@@ -186,200 +260,167 @@ export default function Profile() {
         <title>My Profile – Pet Adoption</title>
       </Head>
       <main>
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Paper elevation={3}>
-            {/* header */}
+            {/* Profile Header */}
             <Box
               sx={{
-                p: 3,
+                p: { xs: 2, sm: 3 }, // Responsive padding
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
                 display: "flex",
                 alignItems: "center",
+                flexDirection: { xs: 'column', sm: 'row' }, // Stack on small screens
+                textAlign: { xs: 'center', sm: 'left' },
               }}
             >
-              <Avatar sx={{ width: 80, height: 80, mr: 3 }}>
-                {(user.email || user.emailAddress || "")
-                  .charAt(0)
-                  .toUpperCase()}
+              <Avatar sx={{ width: 80, height: 80, mb: { xs: 2, sm: 0 }, mr: { xs: 0, sm: 3 } }}>
+                {(user.emailAddress || user.email || "U").charAt(0).toUpperCase()}
               </Avatar>
               <Box>
-                <Typography variant="h4">Welcome Back</Typography>
-                <Typography variant="subtitle1">
-                  {user.email || user.emailAddress}
+                <Typography variant="h4" component="h1">
+                  {isShelter // Use isShelter directly
+                    ? user.shelterName || "Shelter Profile"
+                    : `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User Profile"}
                 </Typography>
+                <Typography variant="subtitle1">
+                  {user.emailAddress || user.email}
+                </Typography>
+                 <Typography variant="caption" display="block">
+                   User Type: {user.userType} (ID: {user.id})
+                 </Typography>
               </Box>
             </Box>
 
-            {/* tabs */}
+            {/* Tabs Navigation */}
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <Tabs value={tabValue} onChange={handleTabChange}>
-                <Tab label="Profile" />
-                <Tab label="My Pets" />
-                <Tab label="Settings" />
-                <Tab label="Notifications" />
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
+                variant="scrollable" // Allow scrolling on smaller screens
+                scrollButtons="auto" // Show scroll buttons automatically
+                aria-label="Profile sections"
+              >
+                <Tab label="Profile Info" id="profile-tab-0" aria-controls="profile-tabpanel-0" />
+                <Tab label="My Pets" id="profile-tab-1" aria-controls="profile-tabpanel-1" />
+                <Tab label="Edit Profile" id="profile-tab-2" aria-controls="profile-tabpanel-2" />
+                <Tab label="Notifications" id="profile-tab-3" aria-controls="profile-tabpanel-3" />
               </Tabs>
             </Box>
 
-            {/* Profile Info */}
+            {/* Tab Panels */}
+
+            {/* Profile Info Tab */}
             <TabPanel value={tabValue} index={0}>
-              <Stack spacing={3}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Account Information
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <List>
-                      <ListItem>
-                        <ListItemText
-                          primary="Email Address"
-                          secondary={user.email || user.emailAddress}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="User Type"
-                          secondary={user.userType}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="User ID"
-                          secondary={user.id || user.userId}
-                        />
-                      </ListItem>
-                      {user.userType === "SHELTER" ? (
-                        <ListItem>
-                          <ListItemText
-                            primary="Shelter Name"
-                            secondary={user.shelterName || "—"}
-                          />
-                        </ListItem>
-                      ) : (
-                        <>
-                          <ListItem>
-                            <ListItemText
-                              primary="First Name"
-                              secondary={user.firstName || "—"}
-                            />
-                          </ListItem>
-                          <ListItem>
-                            <ListItemText
-                              primary="Last Name"
-                              secondary={user.lastName || "—"}
-                            />
-                          </ListItem>
-                        </>
-                      )}
-                      <ListItem>
-                        <ListItemText
-                          primary="Phone"
-                          secondary={user.phone || "—"}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Address"
-                          secondary={user.address || "—"}
-                        />
-                      </ListItem>
-                    </List>
-                  </CardContent>
-                </Card>
-
-                <Stack direction="row" spacing={2}>
-                  <Button variant="outlined" onClick={() => router.push("/")}>
-                    Go to Home
-                  </Button>
-                  <Button variant="contained" color="error" onClick={handleLogout}>
-                    Logout
-                  </Button>
-                </Stack>
-              </Stack>
-            </TabPanel>
-
-            {/* My Pets (for shelters) */}
-            <TabPanel value={tabValue} index={1}>
-                {user.userType === "SHELTER" ? (
-                  // ——— Shelter’s “My Pets” ———
-                  loadingPets ? (
-                    <Box sx={{ textAlign: "center", p: 4 }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : petsError ? (
-                    <Alert severity="error">{petsError}</Alert>
-                  ) : shelterPets.length > 0 ? (
-                    <Grid container spacing={3}>
-                      {shelterPets.map((pet) => (
-                        <Grid item xs={12} sm={6} md={4} key={pet.id}>
-                          <PetCard pet={pet} />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Box textAlign="center" sx={{ p: 4 }}>
-                      <Typography variant="h6" gutterBottom>
-                        You haven’t posted any animals yet.
-                      </Typography>
-                      <Typography color="text.secondary">
-                        Start sharing your available pets with adopters.
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        sx={{ mt: 2 }}
-                        onClick={() => router.push("/addPet")}
-                      >
-                        Post an Animal
-                      </Button>
-                    </Box>
-                  )
+              <Typography variant="h6" gutterBottom>Account Information</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <List dense> {/* Use dense for slightly smaller spacing */}
+                <ListItem>
+                  <ListItemText primary="Email Address" secondary={user.emailAddress || user.email || "—"} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="User Type" secondary={user.userType || "—"} />
+                </ListItem>
+                {isShelter ? ( // Use isShelter
+                  <ListItem>
+                    <ListItemText primary="Shelter Name" secondary={user.shelterName || "Not Set"} />
+                  </ListItem>
                 ) : (
-                  // ——— Adopter’s “My Pets” ———
-                  <Box textAlign="center" sx={{ p: 4 }}>
-                    <Typography variant="h6" gutterBottom>
-                      You haven’t adopted any pets yet.
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Browse our available pets and find your new best friend!
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      sx={{ mt: 2 }}
-                      onClick={() => router.push("/adopt")}
-                    >
-                      Browse Available Pets
-                    </Button>
-                  </Box>
+                  <>
+                    <ListItem>
+                      <ListItemText primary="First Name" secondary={user.firstName || "Not Set"} />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary="Last Name" secondary={user.lastName || "Not Set"} />
+                    </ListItem>
+                  </>
                 )}
+                <ListItem>
+                  <ListItemText primary="Phone" secondary={user.phone || "Not Set"} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Address" secondary={user.address || "Not Set"} />
+                </ListItem>
+              </List>
+               <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+                  <Button variant="outlined" onClick={() => router.push("/")}>Go to Home</Button>
+                  <Button variant="contained" color="error" onClick={handleLogout}>Logout</Button>
+                </Stack>
             </TabPanel>
 
-
-            {/* Settings */}
-            <TabPanel value={tabValue} index={2}>
+            {/* My Pets Tab */}
+            <TabPanel value={tabValue} index={1}>
               <Typography variant="h6" gutterBottom>
-                Account Settings
+                {isShelter ? "Pets Listed by You" : "Your Adopted Pets"} {/* Use isShelter */}
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              {updateMessage && <Alert severity="success">{updateMessage}</Alert>}
-              {updateError && <Alert severity="error">{updateError}</Alert>}
+
+              {loadingMyPets ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : myPetsError ? (
+                <Alert severity="error">{myPetsError}</Alert>
+              ) : myPets.length > 0 ? (
+                <Grid container spacing={3}>
+                  {myPets.map((pet) => (
+                    <Grid item xs={12} sm={6} md={4} key={pet.id}>
+                      {/* Pass the whole pet object to PetCard */}
+                      <PetCard pet={pet} />
+                      {/* Add any specific actions for owned/adopted pets if needed */}
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                // Empty state message
+                <Box textAlign="center" sx={{ p: 4 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {isShelter // Use isShelter
+                      ? "You haven't listed any pets yet."
+                      : "You haven't adopted any pets yet."}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    {isShelter // Use isShelter
+                      ? "Add pets to make them available for adoption."
+                      : "Ready to find your new best friend?"}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    sx={{ mt: 2 }}
+                    onClick={() => router.push(isShelter ? "/addPet" : "/adopt")} // Use isShelter
+                  >
+                    {isShelter ? "Add a Pet" : "Browse Available Pets"} {/* Use isShelter */}
+                  </Button>
+                </Box>
+              )}
+            </TabPanel>
+
+            {/* Edit Profile Tab */}
+            <TabPanel value={tabValue} index={2}>
+              <Typography variant="h6" gutterBottom>Edit Your Profile</Typography>
+              <Divider sx={{ mb: 2 }} />
+              {/* Display update status messages */}
+              {updateMessage && <Alert severity="success" sx={{ mb: 2 }}>{updateMessage}</Alert>}
+              {updateError && <Alert severity="error" sx={{ mb: 2 }}>{updateError}</Alert>}
 
               <TextField
-                fullWidth
+                fullWidth required
                 label="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 margin="normal"
+                InputLabelProps={{ shrink: true }} // Keep label floated
               />
 
-              {user.userType === "SHELTER" ? (
+              {isShelter ? ( // Use isShelter
                 <>
                   <TextField
-                    fullWidth
+                    fullWidth required
                     label="Shelter Name"
                     value={shelterName}
                     onChange={(e) => setShelterName(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     fullWidth
@@ -387,6 +428,7 @@ export default function Profile() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     fullWidth
@@ -394,23 +436,26 @@ export default function Profile() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </>
-              ) : (
+              ) : ( // Adopter fields
                 <>
                   <TextField
-                    fullWidth
+                    fullWidth required
                     label="First Name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
-                    fullWidth
+                    fullWidth required
                     label="Last Name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     fullWidth
@@ -418,6 +463,7 @@ export default function Profile() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     fullWidth
@@ -425,6 +471,7 @@ export default function Profile() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     margin="normal"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </>
               )}
@@ -438,10 +485,13 @@ export default function Profile() {
               </Button>
             </TabPanel>
 
-            {/* Notifications */}
+            {/* Notifications Tab */}
             <TabPanel value={tabValue} index={3}>
-              <NotificationsTab user={user} />
+              {/* Pass the user object to the NotificationsTab component */}
+              {/* Ensure user object is fully loaded before rendering NotificationsTab */}
+              {user && <NotificationsTab user={user} />}
             </TabPanel>
+
           </Paper>
         </Container>
       </main>

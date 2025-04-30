@@ -15,10 +15,16 @@ import {
   FormControl,
   InputLabel,
   Box,
+  useTheme,
 } from "@mui/material";
+import { useColorMode } from "@/utils/theme";
 
 export default function Signup() {
   const router = useRouter();
+  const theme = useTheme();
+  const colorMode = useColorMode();
+  const isDarkMode = theme.palette.mode === 'dark';
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -87,6 +93,11 @@ export default function Signup() {
       setIsLoading(false);
     }
   };
+  
+  // Select the appropriate background image based on the theme
+  const backgroundImage = isDarkMode 
+    ? "url('/images/dSignupBackground.png')" 
+    : "url('/images/wSignupBackground.png')";
 
   return (
     <>
@@ -96,16 +107,26 @@ export default function Signup() {
       <Box
         sx={{
           minHeight: "100vh",
-          backgroundImage: "url('/images/wSignupBackground.png')",
+          backgroundImage: backgroundImage,
           backgroundSize: "cover",
           backgroundPosition: "center",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           p: 2,
+          transition: "background-image 0.3s ease-in-out",
         }}
       >
-        <Card sx={{ width: { xs: "100%", sm: 600 }, opacity: 0.95 }} elevation={4}>
+        <Card 
+          sx={{ 
+            width: { xs: "100%", sm: 600 }, 
+            opacity: 0.95,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            transition: "all 0.3s ease"
+          }} 
+          elevation={4}
+        >
           <CardContent>
             <Typography variant="h4" align="center" gutterBottom>
               Create Your Account

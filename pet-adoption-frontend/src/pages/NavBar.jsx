@@ -12,7 +12,6 @@ import {
   MenuItem,
 } from "@mui/material";
 import Image from "next/image";
-
 export default function NavBar() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -53,7 +52,14 @@ export default function NavBar() {
     <AppBar position="static">
       <Toolbar>
         <Link href="/" passHref>
-          <Box component="a" sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+          <Box 
+            sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              mr: 2,
+              textDecoration: "none" 
+            }}
+          >
             <Image
               src="/images/Home_Fur_Good_Logo.jpeg"
               alt="Home Fur Good Logo"
@@ -65,7 +71,7 @@ export default function NavBar() {
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Home Fur Good
         </Typography>
-
+        
         {isLoggedIn ? (
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="body1" sx={{ mr: 2 }}>

@@ -1,12 +1,56 @@
+# application.yml
+
+# Server port configuration
 server:
   port: 8080
+
+# Spring Boot configuration
 spring:
+  # Database connection details
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/petadoption
-    username: root
-    password: password
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/petadoption # Use environment variable MYSQL_HOST or default to localhost
+    username: root # Consider using environment variables for credentials
+    password: password # Use environment variables or secrets management in production
     driverClassName: com.mysql.cj.jdbc.Driver
+
+  # JPA and Hibernate settings
   jpa:
     hibernate:
-      ddl-auto: update
+      # IMPORTANT: Change ddl-auto for production/GCP.
+      # Use 'validate' to check schema against entities on startup.
+      # Use 'none' if using Flyway/Liquibase or managing schema manually.
+      # Avoid 'update' or 'create' outside of very early development.
+      ddl-auto: validate
+    # Enable SQL logging (optional, helpful for debugging)
     show-sql: true
+    # Optional: Format SQL logs for better readability
+    # properties:
+    #   hibernate:
+    #     format_sql: true
+
+  flyway:
+    enabled: true
+    # Where Flyway will look for your SQL files:
+    locations: classpath:db/migration
+    # If you’re baselining an existing schema:
+    baseline-on-migrate: true
+    baseline-version: 1
+
+  # --- MULTIPART CONFIGURATION ---
+  # Settings for handling file uploads
+  servlet:
+    multipart:
+      # Maximum size for a single file (e.g., 10 Megabytes)
+      max-file-size: 10MB
+      # Maximum size for the total request (files + form data)
+      # Must be >= max-file-size (e.g., 15 Megabytes)
+      max-request-size: 15MB
+      # Optional: Threshold after which files are written to disk during upload
+      # file-size-threshold: 2KB
+      # Optional: Location for temporary upload files
+      # location: /tmp/myapp-uploads
+
+# Custom application settings
+pet:
+  upload:
+    base-path: D:/petAdaptWebsite/s25-pet-adoption-team-2/pet-adoption-api/uploads

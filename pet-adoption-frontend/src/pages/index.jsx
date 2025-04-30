@@ -1,17 +1,16 @@
-// pages/index.jsx
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { 
-  Box, 
-  Button, 
-  Container, 
-  Card, 
-  CardContent, 
-  Typography 
+import {
+  Box,
+  Button,
+  Container,
+  Card,
+  CardContent,
+  Typography,
 } from "@mui/material";
 import Image from "next/image";
-import NavBar from "./NavBar";           
+import NavBar from "./NavBar";
 import Recommendations from "../Components/Recommendations";
 
 export default function HomePage() {
@@ -20,7 +19,6 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Load user from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
     if (stored) {
@@ -29,7 +27,6 @@ export default function HomePage() {
     }
   }, []);
 
-  // Rating handler
   const handleRatePet = async (petId, rating) => {
     if (!user?.id) return console.error("No user ID");
     try {
@@ -55,11 +52,9 @@ export default function HomePage() {
         <title>Pet Adoption – Home</title>
       </Head>
 
-      {/* your shared NavBar */}
       <NavBar />
 
       <main>
-        {/* Hero section */}
         <Box
           sx={{
             height: 400,
@@ -71,15 +66,7 @@ export default function HomePage() {
             bgcolor: "primary.light",
           }}
         >
-          {/* background image */}
-          <Box
-            sx={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              zIndex: 1,
-            }}
-          >
+          <Box sx={{ position: "absolute", width: "100%", height: "100%", zIndex: 1 }}>
             <Image
               src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg"
               alt="Hero"
@@ -89,7 +76,6 @@ export default function HomePage() {
             />
           </Box>
 
-          {/* overlay text & button */}
           <Box
             sx={{
               position: "relative",
@@ -109,14 +95,24 @@ export default function HomePage() {
                 <Typography variant="h5" gutterBottom>
                   Post an Animal for Adoption Today!
                 </Typography>
-                <Button
-                  variant="contained"
-                  size="large"
-                  color="secondary"
-                  onClick={() => router.push("/addPet")}
-                >
-                  Post Animal
-                </Button>
+                <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    color="secondary"
+                    onClick={() => router.push("/addPet")}
+                  >
+                    Post Animal
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    color="secondary"
+                    onClick={() => router.push("/adopt")}
+                  >
+                    See All Future Pets
+                  </Button>
+                </Box>
               </>
             ) : (
               <>
@@ -139,18 +135,13 @@ export default function HomePage() {
           </Box>
         </Box>
 
-        {/* Info card */}
         <Container maxWidth="lg" sx={{ mb: 4 }}>
           <Card elevation={4}>
             <CardContent>
               <Typography variant="h3" align="center">
                 Pet Adoption
               </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                align="center"
-              >
+              <Typography variant="body1" color="text.secondary" align="center">
                 {isLoggedIn && user.userType === "SHELTER"
                   ? "Post animals for adoption and help them find a loving home."
                   : "Browse through pets available for adoption and find your new best friend."}
@@ -159,21 +150,15 @@ export default function HomePage() {
           </Card>
         </Container>
 
-        {/* Recommendations */}
         {isLoggedIn && user.userType !== "SHELTER" && (
           <Container maxWidth="lg" sx={{ mb: 4 }}>
             <Typography variant="h4" align="center" gutterBottom>
               Recommended Pets
             </Typography>
-            <Recommendations
-              userId={user.id}
-              refreshKey={refreshKey}
-              onRatePet={handleRatePet}
-            />
+            <Recommendations userId={user.id} refreshKey={refreshKey} onRatePet={handleRatePet} />
           </Container>
         )}
 
-        {/* Events buttons */}
         <Container sx={{ textAlign: "center", mb: 4 }}>
           {isLoggedIn && user.userType === "SHELTER" && (
             <Button
@@ -189,8 +174,7 @@ export default function HomePage() {
             <Button
               variant="contained"
               color="secondary"
-              onClick={() => router.push("/AdopterEventsPage")}
-            >
+              onClick={() => router.push("/AdopterEventsPage")}>
               View Events (Adopter)
             </Button>
           )}

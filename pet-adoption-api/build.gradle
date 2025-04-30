@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.2'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id("org.flywaydb.flyway") version "11.8.0"
 }
 
 group = 'petadoption'
@@ -48,6 +49,8 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'com.h2database:h2'
+	implementation 'org.flywaydb:flyway-core:11.8.0'
+	implementation 'org.flywaydb:flyway-mysql:11.8.0'
 }
 
 tasks.named('test') {
@@ -58,4 +61,14 @@ test {
 	testLogging {
 		events "passed", "failed", "skipped"
 	}
+}
+
+flyway {
+	// JDBC URL for your Docker-hosted database
+	url = 'jdbc:mysql://${MYSQL_HOST:localhost}:3307/petadoption'
+	user = 'root'
+	password = 'password'
+
+	// Where your SQL migration scripts live
+	locations = ['classpath:db/migration']
 }

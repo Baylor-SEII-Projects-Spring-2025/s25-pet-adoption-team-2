@@ -13,10 +13,16 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  useTheme,
 } from "@mui/material";
+import { useColorMode } from "@/utils/theme";
 
 export default function Login() {
   const router = useRouter();
+  const theme = useTheme();
+  const colorMode = useColorMode();
+  const isDarkMode = theme.palette.mode === 'dark';
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -65,6 +71,11 @@ export default function Login() {
     }
   };
 
+  // Select the appropriate background image based on the theme
+  const backgroundImage = isDarkMode 
+    ? "url('/images/dLoginBackground.png')" 
+    : "url('/images/wLoginBackground.png')";
+
   return (
     <>
       <Head>
@@ -75,16 +86,26 @@ export default function Login() {
       <Box
         sx={{
           minHeight: "100vh",
-          backgroundImage: "url('/images/wLoginBackground.png')", // replace 'background.jpg' with your file name
+          backgroundImage: backgroundImage,
           backgroundSize: "cover",
           backgroundPosition: "center",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           p: 2,
+          transition: "background-image 0.3s ease-in-out",
         }}
       >
-        <Card sx={{ width: { xs: '100%', sm: 400 }, opacity: 0.95 }} elevation={4}>
+        <Card 
+          sx={{ 
+            width: { xs: '100%', sm: 400 }, 
+            opacity: 0.95,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            transition: "all 0.3s ease"
+          }} 
+          elevation={4}
+        >
           <CardContent>
             <Typography variant="h4" align="center" gutterBottom>
               Login to Your Account

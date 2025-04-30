@@ -33,3 +33,22 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* Theme-related styles */
+body.light-mode {
+  background-image: url('/images/light-paw-background.png');
+  background-size: cover;
+  background-repeat: repeat;
+  background-color: #fff8e1 !important;
+  color: #424242;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode {
+  background-image: url('/images/dark-paw-background.png');
+  background-size: cover;
+  background-repeat: repeat;
+  background-color: #0d1b2a !important;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
