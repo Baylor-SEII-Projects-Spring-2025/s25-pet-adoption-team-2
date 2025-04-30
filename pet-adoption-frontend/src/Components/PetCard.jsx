@@ -1,38 +1,42 @@
-// components/PetCard.jsx
 import React from 'react';
 import { Card, CardContent, Typography, CardMedia, Box } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 export default function PetCard({ pet, children }) {
-  // Base URL for images on backend
+  // Access MUI theme for light/dark mode
+  const theme = useTheme();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
-  // Determine the correct image URL
-  const getImageUrl = () => {
-    // 1) No image → default placeholder on backend
-    if (!pet.imageUrl || pet.imageUrl.trim() === '') {
-      return `${backendUrl}/images/no-photo.png`;
-    }
+  // Theme-specific placeholder image URLs
+  const placeholderUrl =
+    theme.palette.mode === 'dark'
+      ? `${backendUrl}/images/no-photo-dark.png`
+      : `${backendUrl}/images/no-photo-light.png`;
 
-    // 2) Absolute URL → return as-is
-    if (pet.imageUrl.startsWith('http')) {
+  // Compute the correct image URL (custom, absolute, or relative)
+  const getImageUrl = () => {
+    if (!pet.imageUrl || pet.imageUrl.trim() === '') {
+      return placeholderUrl;
+    }
+    if (/^https?:\/\//.test(pet.imageUrl)) {
       return pet.imageUrl;
     }
-
-    // 3) Relative path → prefix with backend URL
     return `${backendUrl}${pet.imageUrl}`;
   };
+
+  const imgUrl = getImageUrl();
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }} elevation={3}>
       <CardMedia
         component="img"
         height="200"
-        image={getImageUrl()}
+        image={imgUrl}
         alt={pet.name || 'Pet'}
         sx={{ objectFit: 'cover' }}
-        onError={e => {
+        onError={(e) => {
           e.target.onerror = null;
-          e.target.src = `${backendUrl}/images/no-photo.png`;
+          e.target.src = placeholderUrl;
         }}
       />
       <CardContent sx={{ flexGrow: 1 }}>
@@ -55,18 +59,16 @@ export default function PetCard({ pet, children }) {
           Weight: {pet.weight}
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-        Health: {pet.healthStatus}
+          Health: {pet.healthStatus}
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-        Description: {pet.description}
+          Description: {pet.description}
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-        Available: {pet.available ? 'Yes' : 'No'}
+          Available: {pet.available ? 'Yes' : 'No'}
         </Typography>
-        {/* Additional fields... */}
-        <Box sx={{ mt: 2 }}>
-          {children}
-        </Box>
+        {/* Extra content (e.g., action buttons) */}
+        <Box sx={{ mt: 2 }}>{children}</Box>
       </CardContent>
     </Card>
   );
