@@ -49,7 +49,6 @@ public class PasswordResetService {
         passwordResetTokenRepository.deleteByUserEmail(email);
         passwordResetTokenRepository.save(passwordResetToken);
 
-        // Send email outside of transaction
         String resetLink = "http://localhost:3000/reset-password?token=" + token;
         mailService.sendPasswordResetEmail(user.getEmailAddress(), resetLink);
     }
@@ -64,7 +63,6 @@ public class PasswordResetService {
         PasswordResetToken resetToken = optionalToken.get();
         String email = resetToken.getUser().getEmailAddress();
         
-        // Update password and delete token in a single transaction
         userService.updatePassword(email, newPassword);
         passwordResetTokenRepository.delete(resetToken);
     }
