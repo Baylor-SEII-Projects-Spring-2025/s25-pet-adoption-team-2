@@ -164,6 +164,7 @@ export default function NotificationsTab({ user }) {
   };
 
   // Adopter response to confirmation
+  {/*
   const handleAdopterResponse = async (notification, accepted) => {
     setLoadingNotifications(true);
     try {
@@ -185,7 +186,7 @@ export default function NotificationsTab({ user }) {
     } finally {
       setLoadingNotifications(false);
     }
-  };
+  };*/}
 
   const sortedNotifications = [...notifications].sort((a, b) =>
     new Date(b.createdAt) - new Date(a.createdAt)
