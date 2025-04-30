@@ -26,40 +26,46 @@ public class PasswordResetService {
 
     @Autowired
     private EmailService mailService;
+
     @Autowired
     private UserService userService;
 
-    @Transactional
+    @Transactional(timeout = 5)
     public void processForgotPassword(String email) {
-        String token = UUID.randomUUID().toString();
-
-        passwordResetTokenRepository.deleteByUserEmail(email);
-
+        // First, find the user
         User user = userRepository.findByEmailAddress(email);
         if (user == null) {
             return;
         }
 
+        // Generate new token
+        String token = UUID.randomUUID().toString();
         PasswordResetToken passwordResetToken = new PasswordResetToken();
         passwordResetToken.setToken(token);
         passwordResetToken.setUser(user);
-        passwordResetToken.setExpiryDate(LocalDateTime.now().plusHours(24)); // Token expires in 24 hours
+        passwordResetToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+
+        // Delete existing tokens and save new one in a single transaction
+        passwordResetTokenRepository.deleteByUserEmail(email);
         passwordResetTokenRepository.save(passwordResetToken);
 
+        // Send email outside of transaction
         String resetLink = "http://localhost:3000/reset-password?token=" + token;
         mailService.sendPasswordResetEmail(user.getEmailAddress(), resetLink);
     }
 
-    @Transactional
+    @Transactional(timeout = 5)
     public void resetPassword(String token, String newPassword) {
         Optional<PasswordResetToken> optionalToken = passwordResetTokenRepository.findByToken(token);
         if (optionalToken.isEmpty() || optionalToken.get().getExpiryDate().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Invalid token");
         }
 
-        String email = optionalToken.get().getUser().getEmailAddress();
+        PasswordResetToken resetToken = optionalToken.get();
+        String email = resetToken.getUser().getEmailAddress();
+        
+        // Update password and delete token in a single transaction
         userService.updatePassword(email, newPassword);
-
-        passwordResetTokenRepository.delete(optionalToken.get());
+        passwordResetTokenRepository.delete(resetToken);
     }
 } 
