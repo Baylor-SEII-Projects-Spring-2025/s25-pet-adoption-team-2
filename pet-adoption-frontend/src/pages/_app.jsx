@@ -9,7 +9,7 @@ import { PetAdoptionThemeProvider } from "@/utils/theme";
 import { buildStore } from "@/utils/redux";
 // Dynamic imports
 const NavBar = dynamic(() => import("@/pages/NavBar"), { ssr: false });
-const FloatingThemeToggle = dynamic(() => import("@/components/FloatingThemeToggle"), { ssr: false });
+const FloatingThemeToggle = dynamic(() => import("@/Components/FloatingThemeToggle"), { ssr: false });
 import "@/styles/globals.css";
 
 let reduxStore = buildStore({});

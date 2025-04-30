@@ -17,12 +17,12 @@ import {
   Box,
   useTheme,
 } from "@mui/material";
-import { useColorMode } from "@/utils/theme";
+//import { useColorMode } from "@/utils/theme";
 
 export default function Signup() {
   const router = useRouter();
   const theme = useTheme();
-  const colorMode = useColorMode();
+  //const colorMode = useColorMode();
   const isDarkMode = theme.palette.mode === 'dark';
   
   const [formData, setFormData] = useState({
