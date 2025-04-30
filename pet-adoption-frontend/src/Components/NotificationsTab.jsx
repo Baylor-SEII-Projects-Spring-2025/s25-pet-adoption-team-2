@@ -233,8 +233,7 @@ export default function NotificationsTab({ user }) {
                 )}
                 {user.userType !== "SHELTER" && isAdoptionConfirmation(notification.text) && (
                   <>
-                    <Button variant="contained" color="success" onClick={() => handleAdopterResponse(notification,true)}>Confirm</Button>
-                    <Button color="error" onClick={() => handleAdopterResponse(notification,false)}>Decline</Button>
+                      
                   </>
                 )}
                 {user.userType !== "SHELTER" && isShelterResponse(notification.text) && (
