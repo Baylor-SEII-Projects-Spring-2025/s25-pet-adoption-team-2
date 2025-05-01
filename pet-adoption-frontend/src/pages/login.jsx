@@ -154,6 +154,15 @@ export default function Login() {
                 >
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>
+                <Button
+                     variant="text"
+                     color="primary"
+                     size="small"
+                     fullWidth
+                     onClick={() => router.push('/forgot-password')}
+                   >
+                     Forgot password?
+                   </Button>
               </Stack>
             </form>
 
