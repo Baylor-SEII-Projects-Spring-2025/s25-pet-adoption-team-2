@@ -24,11 +24,12 @@ public class SecurityConfig {
         http
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests()
-                .requestMatchers("/api/login", "/api/signup").permitAll()  // Update antMatchers() to requestMatchers()
+                .requestMatchers("/api/login", "/api/signup", "/api/forgot-password", "/api/reset-password").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .anyRequest().authenticated()  // Protect all other endpoints
+                .anyRequest().authenticated()
                 .and()
-                .csrf().disable(); // Disable CSRF for simplicity
+                .csrf().disable()
+                .cors(); // Enable CORS
 
         return http.build();
     }

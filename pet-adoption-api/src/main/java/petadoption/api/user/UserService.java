@@ -1,6 +1,11 @@
 package petadoption.api.user;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import petadoption.api.pet.Pet;
 
@@ -12,6 +17,9 @@ import java.util.Optional;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public Optional<User> findUser(Long userId) {
         return userRepository.findById(userId);
@@ -44,7 +52,6 @@ public class UserService {
             user.setTargetWeight(pet.getWeight());
         }
 
-        // these are kind of discrete so if they rate them high enough, they get a new fav
         if (rating >= 4) {
             user.setPreferredSpecies(pet.getSpecies());
             user.setPreferredGender(pet.getGender());
@@ -54,5 +61,25 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public ResponseEntity<String> updatePassword (String email, String password) {
+        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmailAddress(email));
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
+            try{
+                user.setPassword(passwordEncoder.encode(password));
+                userRepository.save(user);
+
+                return new ResponseEntity<>("Password updated", HttpStatus.OK);
+            }
+            catch (Exception e) {
+                return new ResponseEntity<>("Password update failed", HttpStatus.BAD_REQUEST);
+            }
+        }
+        return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
     }
 }

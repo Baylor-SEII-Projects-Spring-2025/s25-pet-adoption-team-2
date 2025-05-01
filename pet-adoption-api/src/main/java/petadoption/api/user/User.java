@@ -45,7 +45,6 @@ public class User {
 
     @Column(name = "SHELTER_NAME")
     private String shelterName;
-
     // Preference weights for species (scale 0.0 to 1.0)
     @Column(name = "PREFERRED_DOG_WEIGHT")
     private Double preferredDogWeight = 0.5; // 50/50 dog cat by default

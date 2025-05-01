@@ -28,7 +28,7 @@ public class Notifications {
     private java.time.LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "USER_ID", referencedColumnName = "USER_ID")
+    @JoinColumn(name = "user_id")
     private petadoption.api.user.User user;
 
     @Column(name = "REPLY_TEXT")
