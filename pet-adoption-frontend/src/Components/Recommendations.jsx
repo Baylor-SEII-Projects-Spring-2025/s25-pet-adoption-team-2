@@ -1,4 +1,5 @@
 // components/Recommendations.jsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Box, IconButton, Rating, Typography } from "@mui/material";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
@@ -13,9 +14,21 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
     if (!userId) return;
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+    const token = localStorage.getItem("jwtToken");
+    const headers = token
+      ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+      : { "Content-Type": "application/json" };
+
     try {
-      const res = await fetch(`${backendUrl}/api/recommendations/${userId}`);
-      if (!res.ok) throw new Error(res.statusText);
+      const res = await fetch(
+        `${backendUrl}/api/recommendations/${userId}`,
+        { headers }
+      );
+      if (!res.ok) {
+        console.error("Failed to fetch recs:", res.status);
+        if (res.status === 401) console.log("Unauthorized - please log in.");
+        return;
+      }
       const data = await res.json();
       setPets(data);
       setCurrentIndex(0);
@@ -29,9 +42,7 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
   }, [fetchRecommendations, refreshKey]);
 
   const handleNext = () =>
-    setCurrentIndex((i) =>
-      pets.length ? (i + 1) % pets.length : 0
-    );
+    setCurrentIndex((i) => (pets.length ? (i + 1) % pets.length : 0));
   const handlePrev = () =>
     setCurrentIndex((i) =>
       pets.length ? (i - 1 + pets.length) % pets.length : 0
@@ -60,7 +71,7 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        py: 2,
+        py: 2
       }}
     >
       <IconButton
@@ -71,7 +82,6 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
         <ArrowBackIosIcon />
       </IconButton>
 
-      {/* ↓ Narrow wrapper to make the card smaller */}
       <Box sx={{ width: 280 }}>
         <PetCard pet={currentPet}>
           <Box sx={{ textAlign: "center", mt: 1 }}>

@@ -34,15 +34,18 @@ export default function AddPet() {
     weight: "",
     description: "",
   });
-  const speciesOptions = ["Dog", "Cat"];
-  const genderOptions = ["Male", "Female", "Other"];
-  const healthStatusOptions = ["Excellent", "Good", "Fair", "Poor"];
-  const coatLengthOptions = ["Hairless", "Short", "Medium", "Long"];
   const [selectedFile, setSelectedFile] = useState(null);
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [openSuccess, setOpenSuccess] = useState(false);
 
+  // Dropdown options
+  const speciesOptions = ["Dog", "Cat"];
+  const genderOptions = ["Male", "Female", "Other"];
+  const healthStatusOptions = ["Excellent", "Good", "Fair", "Poor"];
+  const coatLengthOptions = ["Hairless", "Short", "Medium", "Long"];
+
+  // Guard: only allow logged-in shelter users
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
     if (!stored) {
@@ -60,9 +63,11 @@ export default function AddPet() {
   const handleChange = (e) => {
     setPet((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
+
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
+
   const resetForm = () => {
     setPet({
       name: "",
@@ -81,21 +86,41 @@ export default function AddPet() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     if (!user?.id) {
       setError("Shelter ID not found. Please log in again.");
       return;
     }
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
     const formData = new FormData();
-    Object.entries(pet).forEach(([k, v]) => formData.append(k, v));
+
+    // Append pet fields
+    Object.entries(pet).forEach(([key, val]) => {
+      formData.append(key, val);
+    });
+    // Use shelter’s own ID
     formData.append("adoptionCenterId", user.id);
-    if (selectedFile) formData.append("image", selectedFile);
+
+    if (selectedFile) {
+      formData.append("image", selectedFile);
+    }
+
     try {
+      const token = localStorage.getItem("jwtToken");
       const res = await fetch(`${backendUrl}/api/pets/add`, {
         method: "POST",
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
         body: formData,
       });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
+
+      if (!res.ok) {
+        throw new Error(`Status ${res.status}`);
+      }
+
       await res.json();
       setOpenSuccess(true);
     } catch (err) {
@@ -108,31 +133,58 @@ export default function AddPet() {
     setOpenSuccess(false);
     resetForm();
   };
+
   const handleSeeFuture = () => {
     router.push("/adopt");
   };
 
-  if (!user) return null;
+  if (!user) {
+    // while the redirect is in flight
+    return null;
+  }
 
   return (
     <>
       <Head>
         <title>Add Pet</title>
       </Head>
+
       <Stack sx={{ p: 4 }} alignItems="center">
         <Card sx={{ width: 600 }} elevation={4}>
           <CardContent>
             <Typography variant="h4" align="center" gutterBottom>
               Add a New Pet
             </Typography>
+
             {error && <Alert severity="error">{error}</Alert>}
+
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }} noValidate>
               <Stack spacing={2}>
-                <TextField label="Name" name="name" value={pet.name} onChange={handleChange} required />
-                <TextField label="Age" name="age" type="number" value={pet.age} onChange={handleChange} required />
+                <TextField
+                  label="Name"
+                  name="name"
+                  value={pet.name}
+                  onChange={handleChange}
+                  required
+                />
+
+                <TextField
+                  label="Age"
+                  name="age"
+                  type="number"
+                  value={pet.age}
+                  onChange={handleChange}
+                  required
+                />
+
                 <FormControl fullWidth required>
                   <InputLabel>Species</InputLabel>
-                  <Select label="Species" name="species" value={pet.species} onChange={handleChange}>
+                  <Select
+                    label="Species"
+                    name="species"
+                    value={pet.species}
+                    onChange={handleChange}
+                  >
                     {speciesOptions.map((o) => (
                       <MenuItem key={o} value={o}>
                         {o}
@@ -140,10 +192,23 @@ export default function AddPet() {
                     ))}
                   </Select>
                 </FormControl>
-                <TextField label="Breed" name="breed" value={pet.breed} onChange={handleChange} required />
+
+                <TextField
+                  label="Breed"
+                  name="breed"
+                  value={pet.breed}
+                  onChange={handleChange}
+                  required
+                />
+
                 <FormControl fullWidth required>
                   <InputLabel>Gender</InputLabel>
-                  <Select label="Gender" name="gender" value={pet.gender} onChange={handleChange}>
+                  <Select
+                    label="Gender"
+                    name="gender"
+                    value={pet.gender}
+                    onChange={handleChange}
+                  >
                     {genderOptions.map((o) => (
                       <MenuItem key={o} value={o}>
                         {o}
@@ -151,6 +216,7 @@ export default function AddPet() {
                     ))}
                   </Select>
                 </FormControl>
+
                 <FormControl fullWidth required>
                   <InputLabel>Health Status</InputLabel>
                   <Select
@@ -166,6 +232,7 @@ export default function AddPet() {
                     ))}
                   </Select>
                 </FormControl>
+
                 <FormControl fullWidth required>
                   <InputLabel>Coat Length</InputLabel>
                   <Select
@@ -181,6 +248,7 @@ export default function AddPet() {
                     ))}
                   </Select>
                 </FormControl>
+
                 <TextField
                   label="Weight (lbs)"
                   name="weight"
@@ -189,6 +257,7 @@ export default function AddPet() {
                   onChange={handleChange}
                   required
                 />
+
                 <TextField
                   label="Description"
                   name="description"
@@ -197,7 +266,9 @@ export default function AddPet() {
                   multiline
                   rows={3}
                 />
+
                 <input type="file" onChange={handleFileChange} />
+
                 <Button variant="contained" type="submit">
                   Add Pet
                 </Button>
@@ -208,14 +279,14 @@ export default function AddPet() {
       </Stack>
 
       <Dialog open={openSuccess} onClose={handleAddMore}>
-        <DialogTitle>Future Pet Uploaded!</DialogTitle>
+        <DialogTitle>Pet Added!</DialogTitle>
         <DialogContent>
-          <Typography>Your pet has been successfully added as a future adoption.</Typography>
+          <Typography>Your pet has been successfully added.</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleAddMore}>Add More Future Pets</Button>
+          <Button onClick={handleAddMore}>Add Another</Button>
           <Button variant="contained" onClick={handleSeeFuture}>
-            See Future Pets
+            See Pets
           </Button>
         </DialogActions>
       </Dialog>

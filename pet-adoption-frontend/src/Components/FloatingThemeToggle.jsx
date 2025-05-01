@@ -110,7 +110,7 @@ const FloatingThemeToggle = () => {
         }}
       >
         <DialogTitle sx={{ m: 0, p: 2 }}>
-          Pet AI Chat
+          Fido AI Chat
           <IconButton
             aria-label='close'
             onClick={handleChatToggle}
@@ -129,16 +129,24 @@ const FloatingThemeToggle = () => {
                 sx={{ mb: 1 }}
               >
                 <Box
-                  sx={{
-                    p: 1,
-                    bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.300',
-                    color: msg.sender === 'user' ? 'primary.contrastText' : 'text.primary',
-                    borderRadius: 1,
-                    maxWidth: '70%'
-                  }}
-                >
-                  <Typography variant='body2'>{msg.text}</Typography>
-                </Box>
+                sx={(theme) => ({
+                  p: 1,
+                  bgcolor:
+                    msg.sender === 'user'
+                      ? theme.palette.primary.main
+                      : theme.palette.mode === 'dark'
+                      ? theme.palette.grey[800]
+                      : theme.palette.grey[300],
+                  color:
+                    msg.sender === 'user'
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.text.primary,
+                  borderRadius: 1,
+                  maxWidth: '70%',
+                })}
+              >
+                <Typography variant="body2">{msg.text}</Typography>
+              </Box>
               </Stack>
             ))}
           </Box>

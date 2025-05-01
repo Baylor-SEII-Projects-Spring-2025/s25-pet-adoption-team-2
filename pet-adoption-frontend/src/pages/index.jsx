@@ -4,10 +4,11 @@ import { useRouter } from "next/router";
 import {
   Box,
   Button,
-  Container,
   Card,
   CardContent,
+  Container,
   Typography,
+  Stack,
 } from "@mui/material";
 import Image from "next/image";
 import NavBar from "./NavBar";
@@ -19,6 +20,7 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Load user on mount
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
     if (stored) {
@@ -27,14 +29,25 @@ export default function HomePage() {
     }
   }, []);
 
+  // Pet‐rating callback
   const handleRatePet = async (petId, rating) => {
-    if (!user?.id) return console.error("No user ID");
+    if (!user?.id) {
+      console.error("No user ID");
+      return;
+    }
     try {
-      const res = await fetch("http://localhost:8080/api/user/rate", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, petId, rating }),
-      });
+      const token = localStorage.getItem("jwtToken");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/user/rate`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
+          body: JSON.stringify({ userId: user.id, petId, rating }),
+        }
+      );
       if (!res.ok) throw new Error(res.statusText);
       const json = await res.json();
       const updated = json.user || json;
@@ -46,15 +59,19 @@ export default function HomePage() {
     }
   };
 
+  const isShelter = user?.userType === "SHELTER";
+
   return (
     <>
       <Head>
         <title>Pet Adoption – Home</title>
       </Head>
 
+      {/* Use shared NavBar */}
       <NavBar />
 
       <main>
+        {/* Hero Section */}
         <Box
           sx={{
             height: 400,
@@ -66,7 +83,9 @@ export default function HomePage() {
             bgcolor: "primary.light",
           }}
         >
-          <Box sx={{ position: "absolute", width: "100%", height: "100%", zIndex: 1 }}>
+          <Box
+            sx={{ position: "absolute", width: "100%", height: "100%", zIndex: 1 }}
+          >
             <Image
               src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg"
               alt="Hero"
@@ -87,7 +106,7 @@ export default function HomePage() {
               borderRadius: 2,
             }}
           >
-            {user?.userType === "SHELTER" ? (
+            {isShelter ? (
               <>
                 <Typography variant="h2" gutterBottom>
                   Welcome, {user.shelterName || "Shelter"}!
@@ -95,7 +114,7 @@ export default function HomePage() {
                 <Typography variant="h5" gutterBottom>
                   Post an Animal for Adoption Today!
                 </Typography>
-                <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 2 }}>
+                <Stack direction="row" spacing={2} justifyContent="center">
                   <Button
                     variant="contained"
                     size="large"
@@ -112,7 +131,7 @@ export default function HomePage() {
                   >
                     See All Future Pets
                   </Button>
-                </Box>
+                </Stack>
               </>
             ) : (
               <>
@@ -135,49 +154,55 @@ export default function HomePage() {
           </Box>
         </Box>
 
+        {/* Info Card */}
         <Container maxWidth="lg" sx={{ mb: 4 }}>
           <Card elevation={4}>
             <CardContent>
               <Typography variant="h3" align="center">
-                Pet Adoption
+                Pet Adoption Spring 2025
               </Typography>
               <Typography variant="body1" color="text.secondary" align="center">
-                {isLoggedIn && user.userType === "SHELTER"
+                {isShelter
                   ? "Post animals for adoption and help them find a loving home."
-                  : "Browse through pets available for adoption and find your new best friend."}
+                  : "Browse pets available for adoption and find your new best friend."}
               </Typography>
             </CardContent>
           </Card>
         </Container>
 
-        {isLoggedIn && user.userType !== "SHELTER" && (
+        {/* Recommendations */}
+        {!isShelter && isLoggedIn && (
           <Container maxWidth="lg" sx={{ mb: 4 }}>
             <Typography variant="h4" align="center" gutterBottom>
               Recommended Pets
             </Typography>
-            <Recommendations userId={user.id} refreshKey={refreshKey} onRatePet={handleRatePet} />
+            <Recommendations
+              userId={user.id}
+              refreshKey={refreshKey}
+              onRatePet={handleRatePet}
+            />
           </Container>
         )}
 
+        {/* Event Buttons */}
         <Container sx={{ textAlign: "center", mb: 4 }}>
-          {isLoggedIn && user.userType === "SHELTER" && (
+          {isShelter ? (
             <Button
               variant="contained"
               color="primary"
               onClick={() => router.push("/ShelterEventsPage")}
-              sx={{ mr: 2 }}
             >
               Add Events (Shelter)
             </Button>
-          )}
-          {isLoggedIn && user.userType !== "SHELTER" && (
+          ) : isLoggedIn ? (
             <Button
               variant="contained"
               color="secondary"
-              onClick={() => router.push("/AdopterEventsPage")}>
+              onClick={() => router.push("/AdopterEventsPage")}
+            >
               View Events (Adopter)
             </Button>
-          )}
+          ) : null}
         </Container>
       </main>
     </>

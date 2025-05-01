@@ -12,19 +12,26 @@ const EventsAdopter = () => {
   }, []);
 
   const fetchScheduledEvents = async () => {
+    const token = localStorage.getItem("jwtToken");
     try {
-      const response = await axios.get("/api/events");
+      const response = await axios.get("/api/events", {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {},
+      });
       setEvents(response.data);
     } catch (error) {
       console.error("Error fetching scheduled events", error);
+      if (error.response?.status === 401) {
+        console.log("Unauthorized to fetch scheduled events.");
+      }
     }
   };
 
   const addEvent = (event) => {
     console.log("Adopter selected event:", event);
     setSuccessMsg(`Event "${event.name}" added successfully!`);
-    // Remove only the selected event using its unique id.
-    setEvents(events.filter((e) => e.id !== event.id));
+    setEvents((prev) => prev.filter((e) => e.id !== event.id));
   };
 
   return (
@@ -35,13 +42,23 @@ const EventsAdopter = () => {
         sx={{
           fontFamily: "'Montserrat', sans-serif",
           fontWeight: "bold",
-          mb: 3
+          mb: 3,
         }}
       >
         Scheduled Events
       </Typography>
-      {successMsg && <Alert severity="success" sx={{ mb: 2 }}>{successMsg}</Alert>}
-      <EventList events={events} onSchedule={addEvent} actionLabel="Add Event" />
+
+      {successMsg && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMsg}
+        </Alert>
+      )}
+
+      <EventList
+        events={events}
+        onSchedule={addEvent}
+        actionLabel="Add Event"
+      />
     </Container>
   );
 };

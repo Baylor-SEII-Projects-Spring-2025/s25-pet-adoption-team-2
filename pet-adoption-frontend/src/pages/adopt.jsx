@@ -51,7 +51,7 @@ export default function Adopt() {
 
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-  // load user
+  // load user from sessionStorage
   useEffect(() => {
     const s = sessionStorage.getItem("user");
     if (s) setUser(JSON.parse(s));
@@ -60,19 +60,28 @@ export default function Adopt() {
   const isShelter = user?.userType === "SHELTER";
   const isAdopter = user && user.userType !== "SHELTER";
 
-  // fetch paged pets
+  // fetch paged pets with auth if available
   const fetchPets = useCallback(
     async (p = page, size = pageSize) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${BACKEND}/api/pets?page=${p}&size=${size}`);
-        if (!res.ok) throw new Error(await res.text());
+        const token = localStorage.getItem("jwtToken");
+        const res = await fetch(
+          `${BACKEND}/api/pets?page=${p}&size=${size}`,
+          token
+            ? { headers: { Authorization: `Bearer ${token}` } }
+            : {}
+        );
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text);
+        }
         const data = await res.json();
         setPets(data.content);
         setTotalPages(data.totalPages);
       } catch (e) {
-        setError(`Fetch pets error: ${e.message}`);
+        setError(`Error fetching pets: ${e.message}`);
       } finally {
         setLoading(false);
       }
@@ -80,17 +89,23 @@ export default function Adopt() {
     [BACKEND, page, pageSize]
   );
 
-  // initial & on pageSize change
+  // initial load & when pageSize changes
   useEffect(() => {
     fetchPets(0, pageSize);
     setPage(0);
   }, [fetchPets, pageSize]);
 
-  // import/delete (shelter only)
+  // shelter-only: import CSV
   const handleImportCSV = async () => {
     try {
-      const res = await fetch(`${BACKEND}/api/pets/import-csv`);
-      if (!res.ok) throw new Error(await res.text());
+      const token = localStorage.getItem("jwtToken");
+      const res = await fetch(`${BACKEND}/api/pets/import-csv`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
       const imported = await res.json();
       alert(`Imported ${imported.length} pets`);
       fetchPets(page, pageSize);
@@ -98,123 +113,114 @@ export default function Adopt() {
       alert("Import CSV error: " + e.message);
     }
   };
+
+  // shelter-only: delete all pets
   const handleDeleteAll = async () => {
-    if (!confirm("Really delete ALL pets?")) return;
+    if (!confirm("Are you sure you want to delete ALL pets?")) return;
     try {
-      const res = await fetch(`${BACKEND}/api/pets/all`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+      const token = localStorage.getItem("jwtToken");
+      const res = await fetch(`${BACKEND}/api/pets/all`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
       alert("All pets deleted!");
       fetchPets(0, pageSize);
       setPage(0);
     } catch (e) {
-      alert("Delete all error: " + e.message);
+      alert("Delete error: " + e.message);
     }
   };
 
-  // open "Interested!" dialog
+  // open “Interested!” dialog
   const handleInterest = useCallback(
     (pet) => {
       if (!user) return router.push("/login");
       setError(null);
       setSelectedPet(pet);
-      
-      console.log("Pet data:", pet);
-      console.log("User data:", user);
 
-      // Check if pet has all required fields
       if (!pet.id) {
-        setError("Invalid pet data: Missing pet ID");
+        setError("Invalid pet data: missing ID.");
         return;
       }
-      
       if (!pet.adoptionCenterId) {
-        setError("This pet doesn't have an associated shelter. Please contact support.");
+        setError("This pet has no shelter assigned.");
         return;
       }
 
-      // Build a displayName
       const name =
         user.firstName && user.lastName
           ? `${user.firstName} ${user.lastName}`
-          : user.emailAddress || user.email || "Anonymous User";
+          : user.emailAddress || user.email || "Anonymous";
 
-      // Ensure userId is available and valid
       const userId = user.id || user.userId;
       if (!userId) {
-        setError("User information is incomplete. Please log out and log back in.");
+        setError("Your account is missing an ID. Please re-login.");
         return;
       }
 
       setFormData({
-        userId: userId,
+        userId,
         userEmail: user.emailAddress || user.email || "",
         petId: pet.id,
         adoptionCenterId: pet.adoptionCenterId,
         additionalNotes: "",
         displayName: name,
       });
-
       setOpenDialog(true);
     },
     [user, router]
   );
 
+  // submit adoption request
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-  
-    // Validate required fields before submission
-    if (!formData.userId || !formData.petId || !formData.adoptionCenterId) {
-      setError("Missing required fields. Please try again or contact support.");
+
+    const { userId, petId, adoptionCenterId } = formData;
+    if (!userId || !petId || !adoptionCenterId) {
+      setError("Missing required fields. Cannot submit.");
       setIsSubmitting(false);
       return;
     }
-  
-    // Create a complete adoption request with all possible fields
-    const adoptionRequestData = {
-      userId: formData.userId,
-      petId: formData.petId,
-      adoptionCenterId: formData.adoptionCenterId,
-      notes: formData.additionalNotes || "",
-      displayName: formData.displayName || ""
-    };
-  
-    console.log("Sending adoption request:", adoptionRequestData);
-  
+
     try {
-      // Send only the adoption request
-      // The backend will handle creating the notification
+      const payload = {
+        userId,
+        petId,
+        adoptionCenterId,
+        notes: formData.additionalNotes || "",
+        displayName: formData.displayName || "",
+      };
+
+      const token = localStorage.getItem("jwtToken");
       const res = await fetch(`${BACKEND}/api/adoption-requests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(adoptionRequestData),
+      method: "POST",
+      headers: {
+     "Content-Type": "application/json",
+     ...(token && { Authorization: `Bearer ${token}` })
+      },
+      body: JSON.stringify(payload),
       });
-      
       if (!res.ok) {
-        // Try to parse the error as JSON first
-        const errorText = await res.text();
-        let errorMessage = errorText;
+        const text = await res.text();
+        let msg = text;
         try {
-          const errorObj = JSON.parse(errorText);
-          errorMessage = errorObj.error || errorObj.message || errorText;
-        } catch (parseError) {
-          // If not JSON, use the text directly
-          // Using parseError instead of e to avoid the unused variable warning
-          console.log("Could not parse error as JSON:", parseError.message);
-        }
-        
-        console.error("Adoption request error:", errorMessage);
-        throw new Error(`Failed to submit adoption request: ${errorMessage}`);
+          const obj = JSON.parse(text);
+          msg = obj.error || obj.message || text;
+        } catch {// ignore JSON-parse errors
+          }
+        throw new Error(msg);
       }
-  
-      // Success - close dialog and show confirmation
+
       setOpenDialog(false);
-      alert("Your interest has been sent!");
-    } catch (error) {
-      // Using 'error' instead of 'e' and making sure we use it
-      console.error("Error in handleSubmit:", error);
-      setError(error.message);
+      alert("Your interest has been submitted!");
+    } catch (e) {
+      setError("Submission failed: " + e.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -225,6 +231,7 @@ export default function Adopt() {
       <Head>
         <title>Adopt a Pet</title>
       </Head>
+
       <main>
         <Stack spacing={4} sx={{ pt: 4 }} alignItems="center">
           <Card sx={{ width: "90%", maxWidth: 1200 }}>
@@ -251,7 +258,8 @@ export default function Adopt() {
                       value={pageSize}
                       label="Page Size"
                       onChange={(e) => {
-                        setPageSize(+e.target.value);
+                        const sz = Number(e.target.value);
+                        setPageSize(sz);
                         setPage(0);
                       }}
                     >
@@ -294,9 +302,9 @@ export default function Adopt() {
                   count={totalPages}
                   page={page + 1}
                   onChange={(_, v) => {
-                    const np = v - 1;
-                    setPage(np);
-                    fetchPets(np, pageSize);
+                    const next = v - 1;
+                    setPage(next);
+                    fetchPets(next, pageSize);
                   }}
                 />
               </Box>

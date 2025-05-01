@@ -61,6 +61,7 @@ export default function Signup() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
+          confirmPassword: formData.confirmPassword,
           userType: formData.userType,
           firstName: formData.firstName,
           lastName: formData.lastName,

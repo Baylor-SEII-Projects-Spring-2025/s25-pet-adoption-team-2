@@ -1,3 +1,5 @@
+// components/NotificationsTab.jsx
+
 import React, { useState, useEffect } from "react";
 import {
   Button,
@@ -19,89 +21,111 @@ import {
 
 export default function NotificationsTab({ user }) {
   const [notifications, setNotifications] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyNotification, setReplyNotification] = useState(null);
   const [replyMessage, setReplyMessage] = useState("");
-  const [approveAdoptionOpen, setApproveAdoptionOpen] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState(null);
-  const [adoptionMessage, setAdoptionMessage] = useState("");
+
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approveNotification, setApproveNotification] = useState(null);
+  const [approveMessage, setApproveMessage] = useState("");
 
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  const token = localStorage.getItem("jwtToken");
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // Helpers
+  // Helpers for notification types
   const isAdoptionRequest = (text) =>
-    Boolean(text && text.startsWith("New adoption request"));
-
-  const isAdoptionConfirmation = (text) =>
-    text && (
-      text.startsWith("Your adoption of") || 
-      text.startsWith("Adoption approval:") ||
-      text.includes("has been approved!")
-    );
-
-  const isShelterResponse = (text) =>
-    text && text.startsWith("Shelter response:");
-
+    Boolean(text?.startsWith("New adoption request"));
+    
   const isAdopterResponse = (text) =>
-    Boolean(text && (
-      text.startsWith("Adopter response:") ||
-      text.toUpperCase().startsWith("ADOPTER RESPONSE:") ||
-      text.startsWith("Response from")
-    ));
+    Boolean(
+      text?.startsWith("Adopter response:") ||
+      text?.toUpperCase().startsWith("ADOPTER RESPONSE:") ||
+      text?.startsWith("Response from")
+    );
+    
+  const isAdoptionConfirmation = (text) =>
+    text?.startsWith("Your adoption of") ||
+    text?.startsWith("Adoption approval:") ||
+    text?.includes("has been approved!");
+    
+  const isShelterResponse = (text) => text?.startsWith("Shelter response:");
 
-  // Fetch notifications
+  // Fetch notifications on mount & when user changes
   useEffect(() => {
-    if (user && user.id) fetchNotifications();
+    if (user?.id) fetchNotifications();
   }, [user]);
 
   const fetchNotifications = async () => {
-    setLoadingNotifications(true);
+    setLoading(true);
     try {
       const ts = new Date().getTime();
-      const res = await fetch(`${BACKEND}/api/notifications/user/${user.id}?t=${ts}`);
+      const res = await fetch(
+        `${BACKEND}/api/notifications/user/${user.id}?t=${ts}`,
+        { headers: authHeader }
+      );
       if (!res.ok) throw new Error("Failed to fetch notifications");
       setNotifications(await res.json());
     } catch (e) {
       console.error(e);
     } finally {
-      setLoadingNotifications(false);
+      setLoading(false);
     }
   };
 
-  const markNotificationAsRead = async (id) => {
+  const markAsRead = async (id) => {
     try {
-      const res = await fetch(`${BACKEND}/api/notifications/${id}/read`, { method: 'PUT' });
-      if (res.ok) setNotifications(prev => prev.filter(n => n.id !== id));
+      const res = await fetch(
+        `${BACKEND}/api/notifications/${id}/read`,
+        {
+          method: "PUT",
+          headers: authHeader
+        }
+      );
+      if (res.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Reply handlers...
-  const handleOpenReply = (notification) => {
+  // --- Reply Handlers ---
+  const openReply = (notification) => {
     setReplyNotification(notification);
     setReplyMessage("");
     setReplyOpen(true);
   };
-  const handleCloseReply = () => {
+  const closeReply = () => {
     setReplyOpen(false);
     setReplyNotification(null);
     setReplyMessage("");
   };
-  const handleSendReply = async () => {
-    if (!replyMessage.trim()) { alert("Please enter a message"); return; }
-    setLoadingNotifications(true);
+  const sendReply = async () => {
+    if (!replyMessage.trim()) {
+      alert("Please enter a reply");
+      return;
+    }
+    setLoading(true);
     try {
       const res = await fetch(`${BACKEND}/api/notifications/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationId: replyNotification.id, reply: replyMessage })
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader
+        },
+        body: JSON.stringify({
+          notificationId: replyNotification.id,
+          reply: replyMessage
+        })
       });
       if (res.ok) {
-        setNotifications(prev => prev.filter(n => n.id !== replyNotification.id));
-        handleCloseReply();
-        alert("Reply sent successfully!");
+        setNotifications((prev) =>
+          prev.filter((n) => n.id !== replyNotification.id)
+        );
+        closeReply();
         fetchNotifications();
       } else {
         const { error } = await res.json();
@@ -110,47 +134,55 @@ export default function NotificationsTab({ user }) {
     } catch (e) {
       alert(e.message);
     } finally {
-      setLoadingNotifications(false);
+      setLoading(false);
     }
   };
 
-  // Approve adoption handlers
-  const handleOpenApproveAdoption = (notification) => {
-    // allow both the original request and any adopter responses
+  // --- Approve Adoption Handlers ---
+  const openApprove = (notification) => {
+    // Only for requests or adopter responses
     if (
       !isAdoptionRequest(notification.text) &&
       !isAdopterResponse(notification.text)
     ) {
       return;
     }
-  
-    setSelectedNotification(notification);
-    setAdoptionMessage("");
-    setApproveAdoptionOpen(true);
+    setApproveNotification(notification);
+    setApproveMessage("");
+    setApproveOpen(true);
   };
-  
-  const handleCloseApproveAdoption = () => {
-    setApproveAdoptionOpen(false);
-    setSelectedNotification(null);
-    setAdoptionMessage("");
+  const closeApprove = () => {
+    setApproveOpen(false);
+    setApproveNotification(null);
+    setApproveMessage("");
   };
-  const handleApproveAdoption = async () => {
-    setLoadingNotifications(true);
+  const approveAdoption = async () => {
+    setLoading(true);
     try {
-      const { id: notificationId, petId, adopterId } = selectedNotification;
+      const { id, petId, adopterId } = approveNotification;
       if (!petId || !adopterId) {
-        alert("Missing pet or adopter ID on this notification.");
+        alert("Missing pet or adopter ID");
         return;
       }
       const res = await fetch(`${BACKEND}/api/notifications/approve-adoption`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationId, petId, adopterId, shelterId: user.id, message: adoptionMessage })
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader
+        },
+        body: JSON.stringify({
+          notificationId: id,
+          petId,
+          adopterId,
+          shelterId: user.id,
+          message: approveMessage
+        })
       });
       if (res.ok) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-        handleCloseApproveAdoption();
-        alert("Adoption approved successfully!");
+        setNotifications((prev) =>
+          prev.filter((n) => n.id !== id)
+        );
+        closeApprove();
         fetchNotifications();
       } else {
         const { error } = await res.json();
@@ -159,87 +191,101 @@ export default function NotificationsTab({ user }) {
     } catch (e) {
       alert(e.message);
     } finally {
-      setLoadingNotifications(false);
+      setLoading(false);
     }
   };
 
-  // Adopter response to confirmation
-  {/*
-  const handleAdopterResponse = async (notification, accepted) => {
-    setLoadingNotifications(true);
-    try {
-      const res = await fetch(`${BACKEND}/api/notifications/adopter-response`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationId: notification.id, accepted })
-      });
-      if (res.ok) {
-        setNotifications(prev => prev.filter(n => n.id !== notification.id));
-        alert(accepted ? "You've confirmed this adoption!" : "You've declined this adoption offer.");
-        fetchNotifications();
-      } else {
-        const { error } = await res.json();
-        alert(error || "Failed to send response");
-      }
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setLoadingNotifications(false);
-    }
-  };*/}
-
-  const sortedNotifications = [...notifications].sort((a, b) =>
-    new Date(b.createdAt) - new Date(a.createdAt)
+  // Sort newest first
+  const sorted = [...notifications].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Typography variant="h6">
-          {user.userType === "SHELTER" ? "Adoption Requests" : "My Notifications"}
+          {user.userType === "SHELTER"
+            ? "Adoption Requests"
+            : "My Notifications"}
         </Typography>
-        <Button onClick={fetchNotifications} disabled={loadingNotifications}>
-          {loadingNotifications ? "Loading..." : "Refresh"}
+        <Button onClick={fetchNotifications} disabled={loading}>
+          {loading ? "Loading..." : "Refresh"}
         </Button>
       </Stack>
 
-      {sortedNotifications.length ? (
+      {sorted.length ? (
         <List>
-          {sortedNotifications.map(notification => (
-            <Paper key={notification.id} elevation={2} sx={{ mb:2, p:2, borderLeft: isAdoptionConfirmation(notification.text) ? '4px solid green' : isShelterResponse(notification.text) ? '4px solid blue' : isAdopterResponse(notification.text) ? '4px solid orange' : 'none' }}>
+          {sorted.map((n) => (
+            <Paper
+              key={n.id}
+              elevation={2}
+              sx={{
+                mb: 2,
+                p: 2,
+                borderLeft: isAdoptionConfirmation(n.text)
+                  ? "4px solid green"
+                  : isShelterResponse(n.text)
+                  ? "4px solid blue"
+                  : isAdopterResponse(n.text)
+                  ? "4px solid orange"
+                  : "none"
+              }}
+            >
               <ListItem>
                 <ListItemText
                   primary={
-                    <Typography variant="subtitle1" fontWeight={isAdoptionConfirmation(notification.text) ? 'bold' : 'normal'}>
-                      {notification.text}
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={
+                        isAdoptionConfirmation(n.text) ? "bold" : "normal"
+                      }
+                    >
+                      {n.text}
                     </Typography>
                   }
-                  secondary={<Typography variant="caption">{notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Unknown date'}</Typography>}
+                  secondary={
+                    n.createdAt
+                      ? new Date(n.createdAt).toLocaleString()
+                      : "Unknown date"
+                  }
                 />
               </ListItem>
-              <Divider sx={{ my:1 }} />
+              <Divider sx={{ my: 1 }} />
               <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button onClick={() => markNotificationAsRead(notification.id)}>Mark as Read</Button>
+                <Button onClick={() => markAsRead(n.id)}>
+                  Mark as Read
+                </Button>
+
                 {user.userType === "SHELTER" && (
-                  <>                   
-                    {(isAdopterResponse(notification.text) || isAdoptionRequest(notification.text)) && (
-                      <Button onClick={() => handleOpenReply(notification)}>Reply</Button>
+                  <>
+                    {(isAdoptionRequest(n.text) ||
+                      isAdopterResponse(n.text)) && (
+                      <Button onClick={() => openReply(n)}>Reply</Button>
                     )}
-                    {(isAdoptionRequest(notification.text) || isAdopterResponse(notification.text)) && (
-                      <Button variant="contained" color="success" onClick={() => handleOpenApproveAdoption(notification)}>
+                    {(isAdoptionRequest(n.text) ||
+                      isAdopterResponse(n.text)) && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => openApprove(n)}
+                      >
                         Approve Adoption
                       </Button>
                     )}
                   </>
                 )}
-                {user.userType !== "SHELTER" && isAdoptionConfirmation(notification.text) && (
-                  <>
-                      
-                  </>
-                )}
-                {user.userType !== "SHELTER" && isShelterResponse(notification.text) && (
-                  <Button onClick={() => handleOpenReply(notification)}>Respond</Button>
-                )}
+
+                {user.userType !== "SHELTER" &&
+                  isShelterResponse(n.text) && (
+                    <Button onClick={() => openReply(n)}>
+                      Respond
+                    </Button>
+                  )}
               </Stack>
             </Paper>
           ))}
@@ -249,10 +295,12 @@ export default function NotificationsTab({ user }) {
       )}
 
       {/* Reply Dialog */}
-      <Dialog open={replyOpen} onClose={handleCloseReply} fullWidth maxWidth="sm">
+      <Dialog open={replyOpen} onClose={closeReply} fullWidth maxWidth="sm">
         <DialogTitle>Reply to Notification</DialogTitle>
         <DialogContent>
-          <DialogContentText>Original message: {replyNotification?.text}</DialogContentText>
+          <DialogContentText>
+            Original message: {replyNotification?.text}
+          </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
@@ -261,22 +309,31 @@ export default function NotificationsTab({ user }) {
             multiline
             rows={4}
             value={replyMessage}
-            onChange={e => setReplyMessage(e.target.value)}
+            onChange={(e) => setReplyMessage(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseReply}>Cancel</Button>
-          <Button variant="contained" onClick={handleSendReply}>Send Reply</Button>
+          <Button onClick={closeReply}>Cancel</Button>
+          <Button variant="contained" onClick={sendReply}>
+            Send Reply
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Approve Adoption Dialog */}
-      <Dialog open={approveAdoptionOpen} onClose={handleCloseApproveAdoption} fullWidth maxWidth="sm">
+      <Dialog open={approveOpen} onClose={closeApprove} fullWidth maxWidth="sm">
         <DialogTitle>Approve Adoption</DialogTitle>
         <DialogContent>
-          <DialogContentText>You are approving the adoption request for: {selectedNotification?.text}</DialogContentText>
-          <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mt:2 }}>
-            This will automatically mark the pet as adopted and send a confirmation to the adopter.
+          <DialogContentText>
+            You are approving: {approveNotification?.text}
+          </DialogContentText>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            gutterBottom
+            sx={{ mt: 2 }}
+          >
+            This will mark the pet adopted and notify the adopter.
           </Typography>
           <TextField
             margin="dense"
@@ -284,14 +341,20 @@ export default function NotificationsTab({ user }) {
             fullWidth
             multiline
             rows={4}
-            value={adoptionMessage}
-            onChange={e => setAdoptionMessage(e.target.value)}
-            placeholder="Add instructions or details about next steps..."
+            value={approveMessage}
+            onChange={(e) => setApproveMessage(e.target.value)}
+            placeholder="Any next-step instructions…"
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseApproveAdoption}>Cancel</Button>
-          <Button variant="contained" color="success" onClick={handleApproveAdoption}>Approve Adoption</Button>
+          <Button onClick={closeApprove}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={approveAdoption}
+          >
+            Approve Adoption
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
