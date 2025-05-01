@@ -28,6 +28,8 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .requestMatchers("/api/login", "/api/signup", "/api/forgot-password", "/api/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/images/**", "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/events").authenticated()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated();
         return http.build();

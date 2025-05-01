@@ -45,13 +45,8 @@ public interface PetRepository extends JpaRepository<Pet, Long> {
      */
     List<Pet> findByAdoptionCenterId(Long adoptionCenterId);
 
-
-    // JpaRepository already provides:
-    // - save(Pet entity)
-    // - findById(Long id)
-    // - findAll()
-    // - findAll(Pageable pageable)
-    // - deleteById(Long id)
-    // - deleteAll()
-    // ... and more
+    /**
+     * Find available pets whose adoptionCenterId is in the given list.
+     */
+    Page<Pet> findByAdoptionCenterIdInAndAvailableTrue(List<Long> centerIds, Pageable pageable);
 }

@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.persistence.EntityNotFoundException;
+import petadoption.api.user.User;
+import petadoption.api.user.UserRepository;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +42,7 @@ public class PetService {
     private static final Logger log = LoggerFactory.getLogger(PetService.class);
 
     private final PetRepository petRepository;
+    private final UserRepository userRepository;
 
     // Inject the upload path from application.yml/properties
     @Value("${pet.upload.base-path:./pet-uploads}")
@@ -49,8 +52,9 @@ public class PetService {
     private final String imageSubDir = "images";
 
     @Autowired
-    public PetService(PetRepository petRepository) {
+    public PetService(PetRepository petRepository,UserRepository userRepository) {
         this.petRepository = petRepository;
+        this.userRepository = userRepository;
 
         // Log the configured upload path on startup
         log.info("Pet upload base path configured as: {}", uploadBasePath);
@@ -451,5 +455,30 @@ public class PetService {
     public List<Pet> getAllPetsList() {
         log.info("Fetching list of ALL pets (including unavailable)");
         return petRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Pet> getAvailablePetsByLocation(String state, String city, Pageable pageable) {
+        // 1) load all shelters
+        List<User> shelters = userRepository.findByUserType("SHELTER");
+
+        // 2) filter their IDs by address match
+        List<Long> centerIds = shelters.stream()
+                .filter(u -> {
+                    String addr = u.getAddress();        // e.g. "Seattle, Washington"
+                    if (addr == null) return false;
+                    boolean stateMatch = (state == null || state.isEmpty())
+                            || addr.toLowerCase().endsWith(", " + state.toLowerCase());
+                    boolean cityMatch = (city == null || city.isEmpty())
+                            || addr.toLowerCase().startsWith(city.toLowerCase() + ", ");
+                    return stateMatch && cityMatch;
+                })
+                .map(User::getId)
+                .toList();
+
+        if (centerIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return petRepository.findByAdoptionCenterIdInAndAvailableTrue(centerIds, pageable);
     }
 }

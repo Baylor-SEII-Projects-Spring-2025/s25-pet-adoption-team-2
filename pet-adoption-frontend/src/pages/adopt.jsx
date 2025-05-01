@@ -1,4 +1,3 @@
-// pages/adopt.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -26,6 +25,15 @@ import {
 } from "@mui/material";
 import PetCard from "../Components/PetCard";
 
+// List of all 50 U.S. states
+const states = [
+  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia",
+  "Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+  "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey",
+  "New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina",
+  "South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
+];
+
 export default function Adopt() {
   const router = useRouter();
   const [pets, setPets] = useState([]);
@@ -44,14 +52,16 @@ export default function Adopt() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // pagination
+  // pagination and filters
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize, setPageSize] = useState(6);
+  const [filterState, setFilterState] = useState("");
+  const [filterCity, setFilterCity] = useState("");
 
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-  // load user from sessionStorage
+  // load user
   useEffect(() => {
     const s = sessionStorage.getItem("user");
     if (s) setUser(JSON.parse(s));
@@ -60,61 +70,55 @@ export default function Adopt() {
   const isShelter = user?.userType === "SHELTER";
   const isAdopter = user && user.userType !== "SHELTER";
 
-  // fetch paged pets with auth if available
   const fetchPets = useCallback(
-    async (p = page, size = pageSize) => {
+    async (p = 0, size = pageSize, state = filterState, city = filterCity) => {
       setLoading(true);
       setError(null);
       try {
         const token = localStorage.getItem("jwtToken");
+        let url = `${BACKEND}/api/pets?page=${p}&size=${size}`;
+        if (state) url += `&state=${encodeURIComponent(state)}`;
+        if (city) url += `&city=${encodeURIComponent(city)}`;
+
         const res = await fetch(
-          `${BACKEND}/api/pets?page=${p}&size=${size}`,
-          token
-            ? { headers: { Authorization: `Bearer ${token}` } }
-            : {}
+          url,
+          token ? { headers: { Authorization: `Bearer ${token}` } } : {}
         );
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text);
-        }
+        if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
         setPets(data.content);
         setTotalPages(data.totalPages);
+        setPage(p);
       } catch (e) {
         setError(`Error fetching pets: ${e.message}`);
       } finally {
         setLoading(false);
       }
     },
-    [BACKEND, page, pageSize]
+    [BACKEND, filterState, filterCity, pageSize]
   );
 
-  // initial load & when pageSize changes
+  // initial and on filter changes
   useEffect(() => {
-    fetchPets(0, pageSize);
-    setPage(0);
-  }, [fetchPets, pageSize]);
+    fetchPets(0);
+  }, [fetchPets]);
 
-  // shelter-only: import CSV
+  // handlers
   const handleImportCSV = async () => {
     try {
       const token = localStorage.getItem("jwtToken");
       const res = await fetch(`${BACKEND}/api/pets/import-csv`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
+      if (!res.ok) throw new Error(await res.text());
       const imported = await res.json();
       alert(`Imported ${imported.length} pets`);
       fetchPets(page, pageSize);
     } catch (e) {
-      alert("Import CSV error: " + e.message);
+      alert(`Import CSV error: ${e.message}`);
     }
   };
 
-  // shelter-only: delete all pets
   const handleDeleteAll = async () => {
     if (!confirm("Are you sure you want to delete ALL pets?")) return;
     try {
@@ -123,104 +127,53 @@ export default function Adopt() {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
+      if (!res.ok) throw new Error(await res.text());
       alert("All pets deleted!");
-      fetchPets(0, pageSize);
-      setPage(0);
+      fetchPets(0);
     } catch (e) {
-      alert("Delete error: " + e.message);
+      alert(`Delete error: ${e.message}`);
     }
   };
 
-  // open “Interested!” dialog
-  const handleInterest = useCallback(
-    (pet) => {
-      if (!user) return router.push("/login");
-      setError(null);
-      setSelectedPet(pet);
+  const handleInterest = useCallback((pet) => {
+    if (!user) return router.push("/login");
+    setSelectedPet(pet);
+    const name = user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user.email;
+    setFormData({
+      userId: user.id,
+      userEmail: user.email,
+      petId: pet.id,
+      adoptionCenterId: pet.adoptionCenterId,
+      additionalNotes: "",
+      displayName: name,
+    });
+    setOpenDialog(true);
+  }, [user, router]);
 
-      if (!pet.id) {
-        setError("Invalid pet data: missing ID.");
-        return;
-      }
-      if (!pet.adoptionCenterId) {
-        setError("This pet has no shelter assigned.");
-        return;
-      }
-
-      const name =
-        user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : user.emailAddress || user.email || "Anonymous";
-
-      const userId = user.id || user.userId;
-      if (!userId) {
-        setError("Your account is missing an ID. Please re-login.");
-        return;
-      }
-
-      setFormData({
-        userId,
-        userEmail: user.emailAddress || user.email || "",
-        petId: pet.id,
-        adoptionCenterId: pet.adoptionCenterId,
-        additionalNotes: "",
-        displayName: name,
-      });
-      setOpenDialog(true);
-    },
-    [user, router]
-  );
-
-  // submit adoption request
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-
-    const { userId, petId, adoptionCenterId } = formData;
-    if (!userId || !petId || !adoptionCenterId) {
-      setError("Missing required fields. Cannot submit.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const payload = {
-        userId,
-        petId,
-        adoptionCenterId,
-        notes: formData.additionalNotes || "",
-        displayName: formData.displayName || "",
-      };
-
       const token = localStorage.getItem("jwtToken");
       const res = await fetch(`${BACKEND}/api/adoption-requests`, {
-      method: "POST",
-      headers: {
-     "Content-Type": "application/json",
-     ...(token && { Authorization: `Bearer ${token}` })
-      },
-      body: JSON.stringify(payload),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(formData),
       });
       if (!res.ok) {
-        const text = await res.text();
-        let msg = text;
-        try {
-          const obj = JSON.parse(text);
-          msg = obj.error || obj.message || text;
-        } catch {// ignore JSON-parse errors
-          }
-        throw new Error(msg);
+        const txt = await res.text();
+        throw new Error(txt);
       }
-
-      setOpenDialog(false);
       alert("Your interest has been submitted!");
+      setOpenDialog(false);
     } catch (e) {
-      setError("Submission failed: " + e.message);
+      setError(`Submission failed: ${e.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -231,129 +184,149 @@ export default function Adopt() {
       <Head>
         <title>Adopt a Pet</title>
       </Head>
-
       <main>
-        <Stack spacing={4} sx={{ pt: 4 }} alignItems="center">
-          <Card sx={{ width: "90%", maxWidth: 1200 }}>
-            <CardContent>
-              <Stack spacing={2} alignItems="center">
-                <Typography variant="h3">Adopt a Pet</Typography>
-                <Stack direction="row" spacing={2}>
-                  {isShelter && (
-                    <>
-                      <Link href="/addPet" passHref>
-                        <Button variant="contained">Add Pet</Button>
-                      </Link>
-                      <Button variant="contained" onClick={handleImportCSV}>
-                        Import CSV
-                      </Button>
-                      <Button color="error" onClick={handleDeleteAll}>
-                        Delete All
-                      </Button>
-                    </>
-                  )}
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <InputLabel>Page Size</InputLabel>
-                    <Select
-                      value={pageSize}
-                      label="Page Size"
-                      onChange={(e) => {
-                        const sz = Number(e.target.value);
-                        setPageSize(sz);
-                        setPage(0);
-                      }}
-                    >
-                      {[3, 6, 9, 12].map((n) => (
-                        <MenuItem key={n} value={n}>
-                          {n}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Stack>
-                {error && <Alert severity="error">{error}</Alert>}
+      <Stack spacing={4} sx={{ pt:4 }} alignItems="center">
+  <Card sx={{ width: '90%', maxWidth: 1200 }}>
+    <CardContent>
+      <Stack spacing={2} alignItems="center">
+        <Typography variant="h3">Adopt a Pet</Typography>
+        
+        {/* Admin controls section - only visible to shelter users */}
+        {isShelter && (
+          <Box sx={{ width: '100%', mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>Shelter Management</Typography>
+            <Stack direction="row" spacing={2}>
+              <Link href="/addPet" passHref>
+                <Button variant="contained">Add Pet</Button>
+              </Link>
+              <Button variant="contained" onClick={handleImportCSV}>Import CSV</Button>
+              <Button color="error" onClick={handleDeleteAll}>Delete All</Button>
+            </Stack>
+          </Box>
+        )}
+        
+        {/* Filter section */}
+        <Box sx={{ width: '100%' }}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>Filter Pets</Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl size="small" fullWidth>
+                <InputLabel>State</InputLabel>
+                <Select 
+                  value={filterState} 
+                  label="State" 
+                  onChange={e => { setFilterState(e.target.value); }}
+                >
+                  <MenuItem value="">All States</MenuItem>
+                  {states.map(st => <MenuItem key={st} value={st}>{st}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField 
+                label="City" 
+                size="small" 
+                fullWidth
+                value={filterCity} 
+                onChange={e => setFilterCity(e.target.value)} 
+              />
+            </Grid>
+            <Grid item xs={12} sm={12} md={6}>
+              <Stack direction="row" spacing={1} sx={{ justifyContent: {xs: 'flex-start', md: 'flex-end'} }}>
+                <Button variant="outlined" onClick={() => fetchPets(0)}>
+                  Apply Filters
+                </Button>
+                <Button 
+                  variant="text" 
+                  onClick={() => { 
+                    setFilterState(''); 
+                    setFilterCity(''); 
+                    fetchPets(0); 
+                  }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={!user?.address}
+                  onClick={() => {
+                    const addr = user.address || "";
+                    const parts = addr.split(",").map(s => s.trim());
+                    if (parts.length === 2) {
+                      const [city, locState] = parts;
+                      setFilterCity(city);
+                      setFilterState(locState);
+                      fetchPets(0, pageSize, locState, city);
+                    }
+                  }}
+                >
+                  Near Me
+                </Button>
               </Stack>
-            </CardContent>
-          </Card>
+            </Grid>
+          </Grid>
+        </Box>
+        
+        {/* Display settings */}
+        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+          <FormControl size="small" sx={{ width: 140 }}>
+            <InputLabel>Pets per page</InputLabel>
+            <Select 
+              value={pageSize} 
+              label="Pets per page" 
+              onChange={e => { 
+                setPageSize(Number(e.target.value)); 
+                fetchPets(0); 
+              }}
+            >
+              {[3, 6, 9, 12].map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
+            </Select>
+          </FormControl>
+        </Box>
+        
+        {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
+      </Stack>
+    </CardContent>
+  </Card>
 
-          {loading ? (
-            <CircularProgress />
-          ) : (
+          {loading ? <CircularProgress /> : (
             <>
               <Grid container spacing={3} justifyContent="center">
-                {pets.map((pet) => (
+                {pets.map(pet => (
                   <Grid item xs={12} sm={6} md={4} key={pet.id}>
                     <PetCard pet={pet}>
-                      {isAdopter && (
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          onClick={() => handleInterest(pet)}
-                        >
-                          Interested!
-                        </Button>
-                      )}
+                      {isAdopter && <Button fullWidth variant="contained" onClick={()=>handleInterest(pet)}>Interested!</Button>}
                     </PetCard>
                   </Grid>
                 ))}
               </Grid>
-              <Box sx={{ mt: 3 }}>
-                <Pagination
-                  count={totalPages}
-                  page={page + 1}
-                  onChange={(_, v) => {
-                    const next = v - 1;
-                    setPage(next);
-                    fetchPets(next, pageSize);
-                  }}
-                />
+              <Box sx={{mt:3}}>
+                <Pagination count={totalPages} page={page+1} onChange={(_,v)=>fetchPets(v-1)} />
               </Box>
             </>
           )}
         </Stack>
 
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <Dialog open={openDialog} onClose={()=>setOpenDialog(false)}>
           <DialogTitle>Confirm Your Interest</DialogTitle>
           <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                label="Your Name"
-                value={formData.displayName}
-                disabled
-                fullWidth
-              />
-              <TextField
-                label="Your Email"
-                value={formData.userEmail}
-                disabled
-                fullWidth
-              />
-              <TextField
-                label="Selected Pet"
-                value={selectedPet?.name || ""}
-                disabled
-                fullWidth
-              />
+            <Stack spacing={2} sx={{mt:1}}>
+              <TextField label="Your Name" value={formData.displayName} disabled fullWidth />
+              <TextField label="Your Email" value={formData.userEmail} disabled fullWidth />
+              <TextField label="Pet Name" value={selectedPet?.name||""} disabled fullWidth />
               <TextField
                 label="Additional Notes"
+                multiline rows={3}
                 value={formData.additionalNotes}
-                onChange={(e) =>
-                  setFormData((f) => ({ ...f, additionalNotes: e.target.value }))
-                }
-                multiline
-                rows={3}
+                onChange={e=>setFormData(f=>({...f, additionalNotes:e.target.value}))}
                 fullWidth
               />
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <CircularProgress size={24} /> : "Submit"}
+            <Button onClick={()=>setOpenDialog(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? <CircularProgress size={20} /> : 'Submit'}
             </Button>
           </DialogActions>
         </Dialog>

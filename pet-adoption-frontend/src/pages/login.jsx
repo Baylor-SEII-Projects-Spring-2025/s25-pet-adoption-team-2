@@ -51,7 +51,6 @@ export default function Login() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
-      // Persist JWT and user
       localStorage.setItem("jwtToken", data.token);
       sessionStorage.setItem(
         "user",
@@ -99,6 +98,16 @@ export default function Login() {
           transition: "background-image 0.3s ease-in-out",
         }}
       >
+        {/* Back to Home */}
+        <Box sx={{ position: "absolute", top: 16, left: 16 }}>
+          <Button
+            variant="contained"
+            onClick={() => router.push("/")}
+          >
+            Back to Home
+          </Button>
+        </Box>
+
         <Card
           sx={{
             width: { xs: "100%", sm: 400 },
@@ -155,14 +164,14 @@ export default function Login() {
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>
                 <Button
-                     variant="text"
-                     color="primary"
-                     size="small"
-                     fullWidth
-                     onClick={() => router.push('/forgot-password')}
-                   >
-                     Forgot password?
-                   </Button>
+                  variant="text"
+                  color="primary"
+                  size="small"
+                  fullWidth
+                  onClick={() => router.push("/forgot-password")}
+                >
+                  Forgot password?
+                </Button>
               </Stack>
             </form>
 

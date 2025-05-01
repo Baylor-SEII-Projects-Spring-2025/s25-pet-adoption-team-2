@@ -17,14 +17,21 @@ import {
   Box,
   useTheme,
 } from "@mui/material";
-//import { useColorMode } from "@/utils/theme";
+
+// List of all 50 U.S. states
+const states = [
+  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia",
+  "Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+  "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey",
+  "New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina",
+  "South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
+];
 
 export default function Signup() {
   const router = useRouter();
   const theme = useTheme();
-  //const colorMode = useColorMode();
-  const isDarkMode = theme.palette.mode === 'dark';
-  
+  const isDarkMode = theme.palette.mode === "dark";
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -33,8 +40,9 @@ export default function Signup() {
     firstName: "",
     lastName: "",
     phone: "",
-    address: "",
     shelterName: "",
+    state: "",
+    city: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +50,11 @@ export default function Signup() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "state" ? { city: "" } : {}),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -51,25 +63,32 @@ export default function Signup() {
       setError("Passwords do not match");
       return;
     }
+    if (!formData.state || !formData.city) {
+      setError("Please select a state and enter a city");
+      return;
+    }
     setIsLoading(true);
     setError("");
     setSuccess("");
     try {
-      const response = await fetch("http://localhost:8080/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-          userType: formData.userType,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          address: formData.address,
-          shelterName: formData.shelterName,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:8080/api/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            userType: formData.userType,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phone: formData.phone,
+            address: `${formData.city}, ${formData.state}`,
+            shelterName: formData.shelterName,
+          }),
+        }
+      );
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text || "Sign up failed");
@@ -84,8 +103,9 @@ export default function Signup() {
         firstName: "",
         lastName: "",
         phone: "",
-        address: "",
         shelterName: "",
+        state: "",
+        city: "",
       });
       setTimeout(() => router.push("/login"), 2000);
     } catch (err) {
@@ -94,10 +114,9 @@ export default function Signup() {
       setIsLoading(false);
     }
   };
-  
-  // Select the appropriate background image based on the theme
-  const backgroundImage = isDarkMode 
-    ? "url('/images/dSignupBackground.png')" 
+
+  const backgroundImage = isDarkMode
+    ? "url('/images/dSignupBackground.png')"
     : "url('/images/wSignupBackground.png')";
 
   return (
@@ -107,8 +126,9 @@ export default function Signup() {
       </Head>
       <Box
         sx={{
+          position: "relative",
           minHeight: "100vh",
-          backgroundImage: backgroundImage,
+          backgroundImage,
           backgroundSize: "cover",
           backgroundPosition: "center",
           display: "flex",
@@ -118,30 +138,27 @@ export default function Signup() {
           transition: "background-image 0.3s ease-in-out",
         }}
       >
-        <Card 
-          sx={{ 
-            width: { xs: "100%", sm: 600 }, 
+        {/* Back to Home button */}
+        <Box sx={{ position: "absolute", top: 16, left: 16 }}>
+          <Button variant="contained" onClick={() => router.push("/")}>Back to Home</Button>
+        </Box>
+
+        <Card
+          sx={{
+            width: { xs: "100%", sm: 600 },
             opacity: 0.95,
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
-            transition: "all 0.3s ease"
-          }} 
+            transition: "all 0.3s ease",
+          }}
           elevation={4}
         >
           <CardContent>
             <Typography variant="h4" align="center" gutterBottom>
               Create Your Account
             </Typography>
-            {success && (
-              <Alert severity="success" sx={{ mb: 3 }}>
-                {success}
-              </Alert>
-            )}
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
+            {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
             <form onSubmit={handleSubmit}>
               <Stack spacing={3}>
                 <TextField
@@ -173,16 +190,8 @@ export default function Signup() {
                   fullWidth
                   required
                   disabled={isLoading}
-                  error={
-                    formData.confirmPassword &&
-                    formData.password !== formData.confirmPassword
-                  }
-                  helperText={
-                    formData.confirmPassword &&
-                    formData.password !== formData.confirmPassword
-                      ? "Passwords don't match"
-                      : ""
-                  }
+                  error={formData.confirmPassword && formData.password !== formData.confirmPassword}
+                  helperText={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Passwords don't match" : ""}
                 />
                 <FormControl fullWidth disabled={isLoading}>
                   <InputLabel>User Type</InputLabel>
@@ -197,8 +206,8 @@ export default function Signup() {
                     <MenuItem value="ADMIN">Administrator</MenuItem>
                   </Select>
                 </FormControl>
-                {(formData.userType === "ADOPTER" ||
-                  formData.userType === "ADMIN") && (
+
+                {(formData.userType === "ADOPTER" || formData.userType === "ADMIN") && (
                   <>
                     <TextField
                       label="First Name"
@@ -224,16 +233,30 @@ export default function Signup() {
                       fullWidth
                       disabled={isLoading}
                     />
+                    <FormControl fullWidth required disabled={isLoading}>
+                      <InputLabel>State</InputLabel>
+                      <Select
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        label="State"
+                      >
+                        {states.map((st) => (
+                          <MenuItem key={st} value={st}>{st}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     <TextField
-                      label="Address"
-                      name="address"
-                      value={formData.address}
+                      label="City"
+                      name="city"
+                      value={formData.city}
                       onChange={handleChange}
                       fullWidth
-                      disabled={isLoading}
+                      required
                     />
                   </>
                 )}
+
                 {formData.userType === "SHELTER" && (
                   <>
                     <TextField
@@ -253,16 +276,30 @@ export default function Signup() {
                       fullWidth
                       disabled={isLoading}
                     />
+                    <FormControl fullWidth required disabled={isLoading}>
+                      <InputLabel>State</InputLabel>
+                      <Select
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        label="State"
+                      >
+                        {states.map((st) => (
+                          <MenuItem key={st} value={st}>{st}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     <TextField
-                      label="Address"
-                      name="address"
-                      value={formData.address}
+                      label="City"
+                      name="city"
+                      value={formData.city}
                       onChange={handleChange}
                       fullWidth
-                      disabled={isLoading}
+                      required
                     />
                   </>
                 )}
+
                 <Button
                   type="submit"
                   variant="contained"

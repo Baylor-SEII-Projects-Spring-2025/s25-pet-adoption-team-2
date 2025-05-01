@@ -27,6 +27,25 @@ public class PetEndpoint {
         this.petService = petService;
     }
 
+    @GetMapping
+    public ResponseEntity<Page<Pet>> getAvailablePets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String city) {
+        log.info("API Request: getAvailablePets page={}, size={}, state={}, city={}",
+                page, size, state, city);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<Pet> pets;
+        if ((state != null && !state.isEmpty()) || (city != null && !city.isEmpty())) {
+            pets = petService.getAvailablePetsByLocation(state, city, pageable);
+        } else {
+            pets = petService.getAllAvailablePets(pageable);
+        }
+        return ResponseEntity.ok(pets);
+    }
+
+
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> addPet(@ModelAttribute Pet pet,
                                     @RequestPart(value = "image", required = false) MultipartFile image) {
@@ -111,6 +130,7 @@ public class PetEndpoint {
         }
     }
 
+    /*
     @GetMapping
     public ResponseEntity<Page<Pet>> getAvailablePets(
             @RequestParam(defaultValue = "0") int page,
@@ -124,7 +144,7 @@ public class PetEndpoint {
             log.error("Error fetching available pets: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-    }
+    }*/
 
     @GetMapping("/adopter/{userId}")
     public ResponseEntity<List<Pet>> getAdoptedPetsByUser(@PathVariable Long userId) {
@@ -149,6 +169,9 @@ public class PetEndpoint {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
+
 
     //@GetMapping("/all")
     //public ResponseEntity<List<Pet>> getAllPetsList() {

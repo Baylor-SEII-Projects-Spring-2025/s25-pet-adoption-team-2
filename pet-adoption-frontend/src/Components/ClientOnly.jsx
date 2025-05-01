@@ -1,5 +1,5 @@
 // components/ClientOnly.jsx
-"use client";    // although you’re on the pages-router, this simply marks intent
+"use client";    
 import { useEffect, useState } from "react";
 
 export default function ClientOnly({ children, fallback = null }) {

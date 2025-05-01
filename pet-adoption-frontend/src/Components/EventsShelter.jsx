@@ -13,8 +13,6 @@ import {
 import axios from "axios";
 import EventList from "./EventList";
 
-// This master list is used for available events.
-// Replace "your-image-url-here" with your actual image URLs.
 const masterEvents = [
   {
     title: "Themed Adoption Days",
@@ -91,9 +89,6 @@ const EventsShelter = () => {
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
 
-  const token = localStorage.getItem("jwtToken");
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
-
   const handleDialogOpen = (event) => {
     setSelectedEvent(event);
     setOpenDialog(true);
@@ -114,6 +109,8 @@ const EventsShelter = () => {
       alert("All fields (date, time, location) are required.");
       return;
     }
+
+    // Build the newEvent object:
     const newEvent = {
       name: selectedEvent.title,
       imageUrl: selectedEvent.imageUrl,
@@ -124,10 +121,19 @@ const EventsShelter = () => {
       location
     };
 
+    // Read token inside function, where window.localStorage exists
+    const token = typeof window !== "undefined"
+      ? localStorage.getItem("jwtToken")
+      : null;
+    const headers = token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : {};
+
     try {
-      const { data: scheduled } = await axios.get("/api/events", {
-        headers: authHeader
-      });
+      // 1) Fetch already-scheduled events
+      const { data: scheduled } = await axios.get("/api/events", headers);
+
+      // 2) Check for conflict client-side
       const conflict = scheduled.find(
         (e) =>
           e.date === newEvent.date &&
@@ -147,16 +153,16 @@ const EventsShelter = () => {
       if (err.response?.status === 401) {
         console.log("Unauthorized to check scheduled events.");
       }
+      // we’ll still try to submit even if this fails
     }
 
-    // 2) Create the new event
+    // 3) Create the new event
     try {
-      const response = await axios.post("/api/events", newEvent, {
-        headers: authHeader
-      });
+      const response = await axios.post("/api/events", newEvent, headers);
       console.log("Event scheduled", response.data);
       setSuccessMsg("Event scheduled successfully!");
       setErrorMsg("");
+      // remove from master list so it no longer appears
       setEvents((prev) =>
         prev.filter((e) => e.title !== selectedEvent.title)
       );
@@ -174,25 +180,13 @@ const EventsShelter = () => {
       <Typography
         variant="h4"
         gutterBottom
-        sx={{
-          fontFamily: "'Montserrat', sans-serif",
-          fontWeight: "bold",
-          mb: 3
-        }}
+        sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", mb: 3 }}
       >
         Available Events
       </Typography>
 
-      {successMsg && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {successMsg}
-        </Alert>
-      )}
-      {errorMsg && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {errorMsg}
-        </Alert>
-      )}
+      {successMsg && <Alert severity="success" sx={{ mb: 2 }}>{successMsg}</Alert>}
+      {errorMsg   && <Alert severity="error"   sx={{ mb: 2 }}>{errorMsg}</Alert>}
 
       <EventList
         events={events}
@@ -201,9 +195,7 @@ const EventsShelter = () => {
       />
 
       <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>
-          Schedule Event: {selectedEvent?.title}
-        </DialogTitle>
+        <DialogTitle>Schedule Event: {selectedEvent?.title}</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
@@ -232,11 +224,7 @@ const EventsShelter = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={handleDialogClose}
-            color="error"
-            sx={{ borderRadius: "20px", textTransform: "none" }}
-          >
+          <Button onClick={handleDialogClose} color="error" sx={{ borderRadius: "20px", textTransform: "none" }}>
             Cancel
           </Button>
           <Button
