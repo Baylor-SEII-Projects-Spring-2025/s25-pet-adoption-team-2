@@ -1,25 +1,17 @@
-# Server port configuration
 server:
   port: 8080
 
-# Spring Boot configuration
 spring:
-  # Database connection details
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/petadoption
-    username: root  # Consider using environment variables for credentials
-    password: password  # Use environment variables or secrets management in production
+    username: root
+    password: password
     driverClassName: com.mysql.cj.jdbc.Driver
 
-  # JPA and Hibernate settings
   jpa:
     hibernate:
-      ddl-auto: validate  # Currently set to validate, but duplicated config has update
+      ddl-auto: validate
     show-sql: true
-    # Optional: Format SQL logs for better readability
-    # properties:
-    #   hibernate:
-    #     format_sql: true
 
   flyway:
     enabled: true
@@ -27,13 +19,37 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
 
-  # Multipart file upload configuration
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 15MB
 
-# Custom application settings
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    username: homefurgood25@gmail.com
+    password: oupb xeym nzda gtld
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+            trust: smtp.gmail.com
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+          connectiontimeout: 30000
+          timeout: 30000
+          writetimeout: 30000
+        debug: true
+        transport:
+          protocol: smtps
+        ssl:
+          debug: true
+          trustStore: ${JAVA_HOME}/lib/security/cacerts
+          trustStorePassword: changeit
+
 pet:
   upload:
     base-path: D:/petAdaptWebsite/s25-pet-adoption-team-2/pet-adoption-api/uploads

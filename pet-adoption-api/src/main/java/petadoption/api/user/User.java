@@ -2,10 +2,6 @@ package petadoption.api.user;
 
 import jakarta.persistence.*;
 import lombok.Data;
-// Optional: Import Pet if using the @OneToMany collection
-// import petadoption.api.pet.Pet;
-// import java.util.HashSet;
-// import java.util.Set;
 
 /**
  * Represents a user in the system (Adopter, Shelter, Admin).
@@ -85,10 +81,4 @@ public class User {
 
     @Column(name = "PREFERRED_HEALTH_STATUS")
     private String preferredHealthStatus;
-
-    // --- Optional: Collection of adopted pets (uncomment if needed, requires DTOs/JsonIgnore) ---
-    // @OneToMany(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "ADOPTER_ID", referencedColumnName = "USER_ID")
-    // private Set<Pet> adoptedPets = new HashSet<>();
-
 }

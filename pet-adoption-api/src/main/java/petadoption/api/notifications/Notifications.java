@@ -46,6 +46,4 @@ public class Notifications {
 
     @Column(name = "REPLY_TEXT") // Consider if this field is still needed with the new sender logic
     private String replyText;
-
-    // Lombok's @Data should handle getters and setters, ensure User class is accessible
 }
