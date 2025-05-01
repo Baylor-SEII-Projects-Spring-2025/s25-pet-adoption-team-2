@@ -159,7 +159,7 @@ export default function HomePage() {
           <Card elevation={4}>
             <CardContent>
               <Typography variant="h3" align="center">
-                Pet Adoption Spring 2025
+                Pet Adoption
               </Typography>
               <Typography variant="body1" color="text.secondary" align="center">
                 {isShelter
