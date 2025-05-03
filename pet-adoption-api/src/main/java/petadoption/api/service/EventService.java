@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import petadoption.api.events.Events;
 import petadoption.api.repository.EventRepository;
+import petadoption.api.user.User;
+import petadoption.api.user.UserRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +16,13 @@ public class EventService {
     @Autowired
     private EventRepository eventRepository;
 
-    public Events createEvent(Events event) {
+    @Autowired
+    private UserRepository userRepository;
+
+    public Events createEvent(Events event, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        event.setCreatedBy(user);
         return eventRepository.save(event);
     }
 
@@ -27,7 +35,8 @@ public class EventService {
     }
 
     public Events updateEvent(Long id, Events eventDetails) {
-        Events event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+        Events event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
         event.setName(eventDetails.getName());
         event.setDescription(eventDetails.getDescription());
         event.setImageUrl(eventDetails.getImageUrl());
@@ -40,11 +49,30 @@ public class EventService {
     }
 
     public void deleteEvent(Long id) {
-        Events event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+        Events event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
         eventRepository.delete(event);
     }
-    //delete all events
+
     public void deleteAllEvents() {
         eventRepository.deleteAll();
+    }
+
+    public Events addAttendee(Long eventId, Long userId) {
+        Events event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        event.getAttendees().add(user);
+        return eventRepository.save(event);
+    }
+
+    public Events removeAttendee(Long eventId, Long userId) {
+        Events event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        event.getAttendees().remove(user);
+        return eventRepository.save(event);
     }
 }
