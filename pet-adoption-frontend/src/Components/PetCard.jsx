@@ -62,9 +62,6 @@ export default function PetCard({ pet, children }) {
           Health: {pet.healthStatus}
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Description: {pet.description}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
           Available: {pet.available ? 'Yes' : 'No'}
         </Typography>
         {/* Extra content (e.g., action buttons) */}

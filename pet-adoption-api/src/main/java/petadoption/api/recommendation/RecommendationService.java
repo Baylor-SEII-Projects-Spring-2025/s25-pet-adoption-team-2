@@ -1,7 +1,5 @@
 package petadoption.api.recommendation;
 
-// src/main/java/petadoption/service/RecommendationService.java
-
 import petadoption.api.pet.Pet;
 import petadoption.api.pet.PetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +26,18 @@ public class RecommendationService {
 
     @Autowired
     private UserRepository userRepository;
+
+
+    public List<Pet> getRecommendationsForUser(Long userId, List<Long> excludeIds) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return List.of();
+
+        return petRepository.findAll().stream()
+                .filter(pet -> excludeIds == null || !excludeIds.contains(pet.getId()))
+                .filter(Pet::getAvailable)
+                .sorted(Comparator.comparingDouble(pet -> -calculateScore(pet, user)))
+                .collect(Collectors.toList());
+    }
 
     public List<Pet> getRecommendationsForUser(Long userId) {
         // get the user's preferences
