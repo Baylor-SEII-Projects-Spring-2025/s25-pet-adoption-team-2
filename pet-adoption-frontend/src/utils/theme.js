@@ -4,7 +4,7 @@ import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/s
 // Define the palette for both modes
 const lightModeColors = {
   primary: {
-    main: "#1976d2", // A blue that matches the paw prints in light mode
+    main: "#76B5B9", // A blue that matches the paw prints in light mode
     light: "#42a5f5",
     dark: "#1565c0",
     contrastText: "#fff",
