@@ -81,4 +81,10 @@ public class User {
 
     @Column(name = "PREFERRED_HEALTH_STATUS")
     private String preferredHealthStatus;
+
+    @Column(name="SPECIES_DISLIKE_COUNT", nullable=false)
+    private Integer speciesDislikeCount = 0;
+
+    @Column(name="BREED_DISLIKE_COUNT", nullable=false)
+    private Integer breedDislikeCount   = 0;
 }
