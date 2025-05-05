@@ -1,4 +1,3 @@
-// src/main/java/petadoption/endpoint/RecommendationController.java
 package petadoption.api.endpoint;
 
 import petadoption.api.pet.Pet;
@@ -11,8 +10,6 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 
-
-
 @RestController
 @RequestMapping("/api/recommendations")
 @CrossOrigin(origins = "http://localhost:3001")
@@ -22,8 +19,13 @@ public class RecommendationEndpoint {
     private RecommendationService recommendationService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<List<Pet>> getRecommendations(@PathVariable Long userId) {
-        List<Pet> recommendations = recommendationService.getRecommendationsForUser(userId);
+    public ResponseEntity<List<Pet>> getRecommendations(
+            @PathVariable Long userId,
+            @RequestParam(value = "exclude", required = false) List<Long> excludeIds
+    ) {
+        List<Pet> recommendations =
+                recommendationService.getRecommendationsForUser(userId, excludeIds);
         return ResponseEntity.ok(recommendations);
     }
 }
+

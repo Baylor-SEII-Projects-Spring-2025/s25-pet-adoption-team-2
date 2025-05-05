@@ -1,7 +1,5 @@
-// components/Recommendations.jsx
-
-import React, { useState, useEffect, useCallback } from "react";
-import { Box, IconButton, Rating, Typography } from "@mui/material";
+import React, { useState, useEffect, useCallback, useRef } from "react";  // ← added useRef
+import { Box, Button, IconButton, Rating, Typography } from "@mui/material";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import PetCard from "./PetCard";
@@ -9,6 +7,9 @@ import PetCard from "./PetCard";
 export default function Recommendations({ userId, refreshKey, onRatePet }) {
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const seenIdsRef = useRef(new Set());
+  const [showDesc, setShowDesc] = useState(false);
+
 
   const fetchRecommendations = useCallback(async () => {
     if (!userId) return;
@@ -19,11 +20,14 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
       ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
       : { "Content-Type": "application/json" };
 
+    let url = `${backendUrl}/api/recommendations/${userId}`;
+    if (seenIdsRef.current.size) {
+      const excludeParam = Array.from(seenIdsRef.current).join(",");
+      url += `?exclude=${excludeParam}`;
+    }
+
     try {
-      const res = await fetch(
-        `${backendUrl}/api/recommendations/${userId}`,
-        { headers }
-      );
+      const res = await fetch(url, { headers });
       if (!res.ok) {
         console.error("Failed to fetch recs:", res.status);
         if (res.status === 401) console.log("Unauthorized - please log in.");
@@ -52,7 +56,9 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
 
   const handleRatingChange = async (_, rating) => {
     if (!currentPet || rating == null) return;
+
     await onRatePet(currentPet.id, rating);
+    seenIdsRef.current.add(currentPet.id);
     fetchRecommendations();
   };
 
@@ -84,6 +90,25 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
 
       <Box sx={{ width: 280 }}>
         <PetCard pet={currentPet}>
+          {/* description toggle */}
+          <Box sx={{ textAlign: "center", my: 1 }}>
+            <Button
+              size="small"
+              onClick={() => setShowDesc((s) => !s)}
+            >
+              {showDesc ? "Hide Description" : "Show Description"}
+            </Button>
+            {showDesc && (
+              <Typography
+                variant="body2"
+                sx={{ mt: 1, px: 1 }}
+              >
+                {currentPet.description}
+              </Typography>
+            )}
+          </Box>
+
+          {/* rating */}
           <Box sx={{ textAlign: "center", mt: 1 }}>
             <Rating
               name="rating"
@@ -91,7 +116,7 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
               onChange={handleRatingChange}
             />
           </Box>
-        </PetCard>
+    </PetCard>
       </Box>
 
       <IconButton

@@ -35,6 +35,8 @@ public class UserService {
     public User updatePreferencesAfterRating(User user, Pet pet, double rating) {
         // making a learning rate so I can tune it later
         double learningRate = 0.1;
+        final int LOW_RATING_THRESHOLD       = 2;
+        final int NEGATIVE_STREAK_THRESHOLD  = 3;
 
         // nudging preference towards pet's age
         if (user.getTargetAge() != null) {
@@ -58,6 +60,32 @@ public class UserService {
             user.setPreferredBreed(pet.getBreed());
             user.setPreferredCoatLength(pet.getCoatLength());
             user.setPreferredHealthStatus(pet.getHealthStatus());
+            user.setSpeciesDislikeCount(0);
+            user.setBreedDislikeCount(0);
+        }
+        // disliking current preferences
+        else {
+            if (pet.getSpecies().equalsIgnoreCase(user.getPreferredSpecies())) {
+                user.setSpeciesDislikeCount(user.getSpeciesDislikeCount() + 1);
+                // forgetting preference because they don't like it anymore
+                if (user.getSpeciesDislikeCount() >= NEGATIVE_STREAK_THRESHOLD) {
+                    user.setPreferredSpecies(null);
+                    user.setSpeciesDislikeCount(0);
+                }
+            } else {
+                user.setSpeciesDislikeCount(0);
+            }
+
+            // breed
+            if (pet.getBreed().equalsIgnoreCase(user.getPreferredBreed())) {
+                user.setBreedDislikeCount(user.getBreedDislikeCount() + 1);
+                if (user.getBreedDislikeCount() >= NEGATIVE_STREAK_THRESHOLD) {
+                    user.setPreferredBreed(null);
+                    user.setBreedDislikeCount(0);
+                }
+            } else {
+                user.setBreedDislikeCount(0);
+            }
         }
 
         return userRepository.save(user);
