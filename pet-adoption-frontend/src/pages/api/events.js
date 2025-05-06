@@ -1,7 +1,7 @@
 // pages/api/events.js
 import axios from "axios";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
 export default async function handler(req, res) {
   const { method, body, headers } = req;

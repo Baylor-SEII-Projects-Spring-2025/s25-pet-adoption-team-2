@@ -41,7 +41,7 @@ export default function Login() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/login`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

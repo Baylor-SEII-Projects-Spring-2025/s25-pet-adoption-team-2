@@ -16,7 +16,7 @@ import PetCard from "./PetCard";
 import { useRouter } from "next/router";
 
 export default function Recommendations({ userId, refreshKey, onRatePet }) {
-  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const seenIdsRef = useRef(new Set());
@@ -45,7 +45,7 @@ export default function Recommendations({ userId, refreshKey, onRatePet }) {
   const fetchRecommendations = useCallback(async () => {
     if (!userId) return;
     const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
     const token = localStorage.getItem("jwtToken");
     const headers = token
       ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }

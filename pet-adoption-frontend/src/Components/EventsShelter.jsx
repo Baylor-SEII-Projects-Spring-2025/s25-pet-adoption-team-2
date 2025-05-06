@@ -155,7 +155,7 @@ const EventsShelter = () => {
 
       try {
           // Get scheduled events for the shelter user only.
-          const getUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`;
+          const getUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/shelter/events?userId=${userId}`;
           const { data: scheduled } = await axios.get(getUrl, headers);
           const conflict = scheduled.find(
               (e) =>
@@ -177,7 +177,7 @@ const EventsShelter = () => {
       }
 
       try {
-          const postUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/events?userId=${userId}`;
+          const postUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/events?userId=${userId}`;
           const response = await axios.post(postUrl, newEvent, headers);
           console.log("Event scheduled successfully", response.data);
           setSuccessMsg("Event scheduled successfully!");

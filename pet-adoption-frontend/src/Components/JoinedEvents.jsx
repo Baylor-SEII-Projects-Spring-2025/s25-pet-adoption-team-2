@@ -29,7 +29,7 @@ const JoinedEvents = () => {
     if (userId && token) {
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/adopter/events?userId=${userId}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/adopter/events?userId=${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         .then((response) => {
@@ -46,7 +46,7 @@ const JoinedEvents = () => {
   const handleCancelAttendance = async (eventId) => {
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/events/${eventId}/attendees?userId=${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/events/${eventId}/attendees?userId=${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEvents(events.filter((e) => e.id !== eventId));

@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pets")
-@CrossOrigin(origins = "${cors.allowed.origins:http://35.225.196.242:3000}")
+@CrossOrigin(origins = "${cors.allowed.origins:http://localhost:3000}")
 public class PetEndpoint {
 
     private static final Logger log = LoggerFactory.getLogger(PetEndpoint.class);

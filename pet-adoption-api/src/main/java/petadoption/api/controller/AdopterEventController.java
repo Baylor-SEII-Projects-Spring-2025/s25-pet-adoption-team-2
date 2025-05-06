@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/adopter/events")
-@CrossOrigin(origins = "http://35.225.196.242:3000")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AdopterEventController {
 
     @Autowired

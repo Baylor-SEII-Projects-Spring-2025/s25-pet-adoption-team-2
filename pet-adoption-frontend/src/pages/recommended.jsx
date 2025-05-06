@@ -9,7 +9,7 @@ export default function Recommendations({ userId }) {
   useEffect(() => {
     async function fetchRecommendations() {
       const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
       const token = localStorage.getItem("jwtToken");
 
       try {

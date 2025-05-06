@@ -43,7 +43,7 @@ export default function HomePage() {
     }
     try {
       const token = localStorage.getItem("jwtToken");
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
       const res = await fetch(
         `${BACKEND}/api/user/rate`,
         {

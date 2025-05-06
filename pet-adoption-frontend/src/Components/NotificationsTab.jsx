@@ -31,7 +31,7 @@ export default function NotificationsTab({ user }) {
   const [approveNotification, setApproveNotification] = useState(null);
   const [approveMessage, setApproveMessage] = useState("");
 
-  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
   const token = localStorage.getItem("jwtToken");
   
   // Use useMemo to prevent the authHeader from changing on every render
