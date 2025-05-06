@@ -4,9 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import petadoption.api.events.Events;
 import petadoption.api.repository.EventRepository;
+import petadoption.api.user.User;
+import petadoption.api.user.UserRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EventService {
@@ -14,7 +17,13 @@ public class EventService {
     @Autowired
     private EventRepository eventRepository;
 
-    public Events createEvent(Events event) {
+    @Autowired
+    private UserRepository userRepository;
+
+    public Events createEvent(Events event, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        event.setCreatedBy(user);
         return eventRepository.save(event);
     }
 
@@ -27,7 +36,8 @@ public class EventService {
     }
 
     public Events updateEvent(Long id, Events eventDetails) {
-        Events event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+        Events event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
         event.setName(eventDetails.getName());
         event.setDescription(eventDetails.getDescription());
         event.setImageUrl(eventDetails.getImageUrl());
@@ -40,11 +50,71 @@ public class EventService {
     }
 
     public void deleteEvent(Long id) {
-        Events event = eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+        Events event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
         eventRepository.delete(event);
     }
-    //delete all events
+
     public void deleteAllEvents() {
         eventRepository.deleteAll();
+    }
+
+    public Events addAttendee(Long eventId, Long userId) {
+        Events event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!event.getAttendees().contains(user)) {
+            event.getAttendees().add(user);
+        }
+        return eventRepository.save(event);
+    }
+
+    public Events removeAttendee(Long eventId, Long userId) {
+        Events event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        event.getAttendees().remove(user);
+        return eventRepository.save(event);
+    }
+
+    public Events updateEventForShelter(Long id, Events eventDetails, Long userId) {
+        Events event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        if (!event.getCreatedBy().getId().equals(userId)) {
+            throw new RuntimeException("Not authorized to update this event");
+        }
+        event.setName(eventDetails.getName());
+        event.setDescription(eventDetails.getDescription());
+        event.setImageUrl(eventDetails.getImageUrl());
+        event.setRating(eventDetails.getRating());
+        event.setLocation(eventDetails.getLocation());
+        event.setDate(eventDetails.getDate());
+        event.setTime(eventDetails.getTime());
+        event.setEventType(eventDetails.getEventType());
+        return eventRepository.save(event);
+    }
+
+    public void deleteEventForShelter(Long id, Long userId) {
+        Events event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        if (!event.getCreatedBy().getId().equals(userId)) {
+            throw new RuntimeException("Not authorized to delete this event");
+        }
+        eventRepository.delete(event);
+    }
+
+    public List<Events> getEventsForShelter(Long userId) {
+        return eventRepository.findAll().stream()
+                .filter(e -> e.getCreatedBy() != null && e.getCreatedBy().getId().equals(userId))
+                .collect(Collectors.toList());
+    }
+
+    public List<Events> getEventsForAdopter(Long userId) {
+        return eventRepository.findAll().stream()
+                .filter(e -> e.getAttendees() != null &&
+                        e.getAttendees().stream().anyMatch(u -> u.getId().equals(userId)))
+                .collect(Collectors.toList());
     }
 }

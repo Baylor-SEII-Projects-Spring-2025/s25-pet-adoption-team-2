@@ -2,7 +2,7 @@ import React from "react";
 import EventsShelter from "../Components/EventsShelter";
 
 const ShelterEventsPage = () => {
-  return <EventsShelter />;
+    return <EventsShelter />;
 };
 
 export default ShelterEventsPage;
