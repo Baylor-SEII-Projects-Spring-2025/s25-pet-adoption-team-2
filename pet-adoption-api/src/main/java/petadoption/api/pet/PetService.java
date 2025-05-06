@@ -481,4 +481,12 @@ public class PetService {
         }
         return petRepository.findByAdoptionCenterIdInAndAvailableTrue(centerIds, pageable);
     }
+
+    @Transactional
+    public void deletePetById(Long petId) {
+        if (!petRepository.existsById(petId)) {
+            throw new EntityNotFoundException("Pet not found: " + petId);
+        }
+        petRepository.deleteById(petId);
+    }
 }

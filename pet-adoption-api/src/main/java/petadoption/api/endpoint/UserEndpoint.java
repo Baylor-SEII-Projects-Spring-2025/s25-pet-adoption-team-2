@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import petadoption.api.admin.AdminPasswordRepository;
+import petadoption.api.admin.AdminPasswordService;
 import petadoption.api.pet.PetRepository;
 import petadoption.api.user.User;
 import petadoption.api.user.UserRepository;
@@ -34,6 +36,12 @@ public class UserEndpoint {
 
     @Autowired
     private PetRepository petRepository;
+
+    @Autowired
+    private AdminPasswordRepository adminPasswordRepository;
+
+    @Autowired
+    private AdminPasswordService adminPasswordService;
 
     @GetMapping("/users/{id}")
     public User findUserById(@PathVariable Long id) {
@@ -98,12 +106,13 @@ public class UserEndpoint {
             String password = signupRequest.get("password");
             String confirmPassword = signupRequest.get("confirmPassword");
             String userType = signupRequest.getOrDefault("userType", "ADOPTER");
+            String adminPassword = signupRequest.get("adminPassword"); // Get admin password if provided
 
             String firstName = signupRequest.get("firstName");
             String lastName = signupRequest.get("lastName");
             String phone = signupRequest.get("phone");
             String address = signupRequest.get("address");
-            String shelterName = signupRequest.get("shelterName"); // only relevant if userType=SHELTER
+            String shelterName = signupRequest.get("shelterName");
 
             if (!isValidEmail(email)) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid email format"));
@@ -120,6 +129,25 @@ public class UserEndpoint {
             if (userRepository.existsByEmailAddress(email)) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("error", "Email already registered"));
+            }
+
+            // Check admin password for ADMIN user type
+            if ("ADMIN".equals(userType)) {
+                // Admin password is required
+                if (adminPassword == null || adminPassword.isEmpty()) {
+                    log.warn("Admin signup attempt without password from email: {}", email);
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("error", "Admin password is required for administrator accounts"));
+                }
+
+                // Verify admin password
+                if (!adminPasswordService.isValidAdminPassword(adminPassword)) {
+                    log.warn("Admin signup attempt with invalid password from email: {}", email);
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("error", "Invalid administrator credentials"));
+                }
+
+                log.info("Admin signup with valid password from email: {}", email);
             }
 
             User newUser = new User();
@@ -379,5 +407,7 @@ public class UserEndpoint {
                     .body(Map.of("error", "Failed to update user: " + e.getMessage()));
         }
     }
+
+
 
 }

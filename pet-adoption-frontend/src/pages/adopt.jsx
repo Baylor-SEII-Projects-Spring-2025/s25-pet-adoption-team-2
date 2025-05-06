@@ -68,7 +68,7 @@ export default function Adopt() {
   }, []);
 
   const isShelter = user?.userType === "SHELTER";
-  // Removed the unused isAdopter variable
+  const isAdmin = user?.userType === "ADMIN";
 
   const fetchPets = useCallback(
     async (p = 0, size = pageSize, state = filterState, city = filterCity) => {
@@ -197,10 +197,22 @@ export default function Adopt() {
       <Stack spacing={2} alignItems="center">
         <Typography variant="h3">Adopt a Pet</Typography>
         
-        {/* Admin controls section - only visible to shelter users */}
+        {/* Shelter Management section - only visible to shelter users */}
         {isShelter && (
           <Box sx={{ width: '100%', mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
             <Typography variant="subtitle1" sx={{ mb: 1 }}>Shelter Management</Typography>
+            <Stack direction="row" spacing={2}>
+              <Link href="/addPet" passHref>
+                <Button variant="contained">Add Pet</Button>
+              </Link>
+            </Stack>
+          </Box>
+        )}
+        
+        {/* Admin Controls section - only visible to admin users */}
+        {isAdmin && (
+          <Box sx={{ width: '100%', mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>Admin Controls</Typography>
             <Stack direction="row" spacing={2}>
               <Link href="/addPet" passHref>
                 <Button variant="contained">Add Pet</Button>
@@ -296,7 +308,7 @@ export default function Adopt() {
         {/* Login notification for anonymous users */}
         {!user && (
           <Alert severity="info" sx={{ width: '100%', mt: 2 }}>
-            You can browse pets without logging in, but you'll need to 
+            You can browse pets without logging in, but you will need to 
             <Link href="/login?redirect=/adopt" passHref>
               <Button color="primary" size="small" sx={{ mx: 1 }}>Login</Button>
             </Link> 

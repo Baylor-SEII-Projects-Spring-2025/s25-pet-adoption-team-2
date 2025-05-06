@@ -1,6 +1,6 @@
 // components/NotificationsTab.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Button,
   List,
@@ -33,7 +33,11 @@ export default function NotificationsTab({ user }) {
 
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
   const token = localStorage.getItem("jwtToken");
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  
+  // Use useMemo to prevent the authHeader from changing on every render
+  const authHeader = useMemo(() => {
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [token]);
 
   // Helpers for notification types
   const isAdoptionRequest = (text) =>
@@ -53,17 +57,13 @@ export default function NotificationsTab({ user }) {
     
   const isShelterResponse = (text) => text?.startsWith("Shelter response:");
 
-  // Fetch notifications on mount & when user changes
-  useEffect(() => {
-    if (user?.id) fetchNotifications();
-  }, [user]);
-
-  const fetchNotifications = async () => {
+  // Define fetchNotifications with useCallback BEFORE using it in useEffect
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
       const ts = new Date().getTime();
       const res = await fetch(
-        `${BACKEND}/api/notifications/user/${user.id}?t=${ts}`,
+        `${BACKEND}/api/notifications/user/${user?.id}?t=${ts}`,
         { headers: authHeader }
       );
       if (!res.ok) throw new Error("Failed to fetch notifications");
@@ -73,7 +73,12 @@ export default function NotificationsTab({ user }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, BACKEND, authHeader]); // Using optional chaining for user?.id
+
+  // Only keep one useEffect to avoid duplicate calls
+  useEffect(() => {
+    if (user?.id) fetchNotifications();
+  }, [user, fetchNotifications]);
 
   const markAsRead = async (id) => {
     try {

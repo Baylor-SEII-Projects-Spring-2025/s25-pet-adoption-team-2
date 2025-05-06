@@ -1,10 +1,20 @@
 // pet-adoption-frontend/src/Components/EventsAdopter.jsx
 import React, { useEffect, useState } from "react";
-import { Container, Typography, Alert } from "@mui/material";
+import { 
+  Container, 
+  Typography, 
+  Alert, 
+  Box,
+  useTheme
+} from "@mui/material";
 import axios from "axios";
 import EventList from "./EventList";
+import { useColorMode } from "../utils/theme"; // Import the color mode hook
 
 const EventsAdopter = () => {
+  const theme = useTheme(); // Use the theme
+  const colorMode = useColorMode(); // Access the color mode context
+  
   const [events, setEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState([]);
   const [successMsg, setSuccessMsg] = useState("");
@@ -84,29 +94,74 @@ const EventsAdopter = () => {
   };
 
   return (
-    <Container maxWidth="lg">
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ fontFamily: "\\'Montserrat\\', sans-serif", fontWeight: "bold", mb: 3 }}
-      >
-        Available Events
-      </Typography>
+    <Box
+      sx={{
+        background: 'transparent',
+        minHeight: "100vh",
+        pt: 4,
+        pb: 6
+      }}
+    >
+      <Container maxWidth="lg">
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ 
+            mb: 3,
+            color: theme.palette.text.primary
+          }}
+        >
+          Available Events
+        </Typography>
 
-      {successMsg && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {successMsg}
-        </Alert>
-      )}
+        {successMsg && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+              mb: 2, 
+              backgroundColor: theme.palette.mode === 'light' 
+                ? 'rgba(237, 247, 237, 0.9)' 
+                : 'rgba(30, 70, 32, 0.9)',
+              color: theme.palette.mode === 'light' ? '#1b5e20' : '#a5d6a7'
+            }}
+          >
+            {successMsg}
+          </Alert>
+        )}
 
-      {errorMsg && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {errorMsg}
-        </Alert>
-      )}
+        {errorMsg && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 2,
+              backgroundColor: theme.palette.mode === 'light' 
+                ? 'rgba(253, 237, 237, 0.9)' 
+                : 'rgba(97, 26, 21, 0.9)',
+              color: theme.palette.mode === 'light' ? '#c62828' : '#ef9a9a'
+            }}
+          >
+            {errorMsg}
+          </Alert>
+        )}
 
-      <EventList events={events} onSchedule={addEvent} actionLabel="Add Event" />
-    </Container>
+        <Box 
+          sx={{ 
+            backgroundColor: theme.palette.background.paper, 
+            borderRadius: theme.shape.borderRadius,
+            boxShadow: 2,
+            p: 3,
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <EventList 
+            events={events} 
+            onSchedule={addEvent} 
+            actionLabel="Add Event"
+            colorMode={colorMode} 
+          />
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

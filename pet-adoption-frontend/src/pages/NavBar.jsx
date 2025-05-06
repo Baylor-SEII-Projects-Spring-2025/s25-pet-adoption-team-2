@@ -10,8 +10,21 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  styled,
 } from "@mui/material";
 import Image from "next/image";
+
+const LogoText = styled(Typography)(({ theme }) => ({
+  fontFamily: "'MilkyWay', Roboto, sans-serif !important",
+  fontWeight: "100 !important", 
+  flexGrow: 1,
+  fontSize: '2.8rem !important', 
+  letterSpacing: '1.5px !important', 
+  color: "white !important",
+  textShadow: '0.5px 0.5px 0px rgba(0,0,0,0.15) !important',
+  padding: theme.spacing(1),
+}));
+
 export default function NavBar() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -68,9 +81,11 @@ export default function NavBar() {
             />
           </Box>
         </Link>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+        
+        {/* Using the custom styled component instead of regular Typography */}
+        <LogoText variant="h6">
           Home Fur Good
-        </Typography>
+        </LogoText>
         
         {isLoggedIn ? (
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -78,10 +93,10 @@ export default function NavBar() {
               {user.emailAddress}
             </Typography>
             <Avatar
-              sx={{ bgcolor: "secondary.main", cursor: "pointer" }}
+              sx={{ bgcolor: "secondary.main", color: "white", cursor: "pointer" }}
               onClick={handleProfileMenuOpen}
             >
-              {(user?.emailAddress || "").charAt(0).toUpperCase()}
+              {(user?.email || user?.emailAddress || "").charAt(0).toUpperCase()}
             </Avatar>
             <Menu
               anchorEl={anchorEl}

@@ -54,7 +54,7 @@ const useApi = () => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, logout]);
+  }, [backendUrl]);
 
   // Function to make POST requests
   const post = useCallback(async (url, data, config = {}) => {
@@ -80,7 +80,7 @@ const useApi = () => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, logout]);
+  }, [backendUrl]);
 
   // Function to make PUT requests
   const put = useCallback(async (url, data, config = {}) => {
@@ -106,7 +106,7 @@ const useApi = () => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, logout]);
+  }, [backendUrl]);
 
   // Function to make DELETE requests
   const del = useCallback(async (url, config = {}) => {
@@ -132,7 +132,7 @@ const useApi = () => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, logout]);
+  }, [backendUrl]);
 
   return {
     get,

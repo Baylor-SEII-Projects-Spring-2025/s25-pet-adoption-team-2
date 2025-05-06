@@ -9,7 +9,9 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    Button
+    Button,
+    Box,
+    useTheme
 } from "@mui/material";
 import axios from "axios";
 import EventList from "./EventList";
@@ -22,7 +24,6 @@ const masterEvents = [
         eventType: "THEMED_ADOPTION_DAYS",
         description: "Events based on popular themes, like 'Star Wars Pets' or 'Superhero Sidekicks', where pets and staff dress accordingly.",
         imageUrl: "https://i.etsystatic.com/25964056/r/il/df7583/4498673153/il_fullxfull.4498673153_c46g.jpg"
-
     },
     {
         title: "Adoption Day Carnival",
@@ -30,7 +31,6 @@ const masterEvents = [
         eventType: "ADOPTION_DAY_CARNIVAL",
         description: "A fun-filled carnival with pet-themed games, face painting, and food trucks, creating a festive environment to meet and adopt pets.",
         imageUrl: "https://www.sccmo.org/ImageRepository/Document?documentID=8299"
-
     },
     {
         title: "Pets & Paint Night",
@@ -38,7 +38,6 @@ const masterEvents = [
         eventType: "PETS_PAINT_NIGHT",
         description: "An art class where attendees can paint portraits of adoptable pets or create their own pet-themed artwork.",
         imageUrl: "https://paintyourpetsportrait.com/wp-content/uploads/2022/01/Facebook-Banner-single-pets-Small.png"
-
     },
     {
         title: "Fur-tastic Fashion Show",
@@ -60,7 +59,6 @@ const masterEvents = [
         eventType: "TAILGATE_ADOPTION_PARTY",
         description: "A sports-themed event where pets and potential adopters bond over a tailgate-inspired gathering.",
         imageUrl: "https://mms.businesswire.com/media/20160901006586/en/542449/5/pet_dog_20160726_PetSmart-Scrimmage_0391-min.jpg"
-
     },
     {
         title: "Storytime with Pets",
@@ -68,7 +66,6 @@ const masterEvents = [
         eventType: "STORYTIME_WITH_PETS",
         description: "A family-friendly event where kids read books to adoptable animals, fostering a calm and loving environment.",
         imageUrl: "https://images.squarespace-cdn.com/content/v1/59d79627f7e0ab7585717499/1588104563731-R7LE2NDG2B9APQ93UGF5/PHOTO-2020-04-12-17-09-05.jpg"
-
     },
     {
         title: "Puppy Yoga Class",
@@ -90,12 +87,12 @@ const masterEvents = [
         eventType: "TRICKS_TREATS_TRAINING_WORKSHOP",
         description: "Demonstrations of cute tricks adoptable pets can learn, plus treats and training tips for new pet parents.",
         imageUrl: "https://www.thesprucepets.com/thmb/6eGfO7YKsdRUO-lwV8bPgZhaNjo=/1500x0/filters:no_upscale():strip_icc()/10_fun_and_easy_dog_tricks_11173309_beg_2796-c8293aefe01b456b8aa1290bb1af7423.jpg"
-
     }
-    // ... other events
 ];
 
 const EventsShelter = () => {
+    const theme = useTheme(); // Use the theme
+    
     const [events, setEvents] = useState(masterEvents);
     const [successMsg, setSuccessMsg] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
@@ -191,71 +188,224 @@ const EventsShelter = () => {
           console.error("Error scheduling event", err);
           setErrorMsg("Error scheduling event. Please check the console for more details.");
       }
-  };
+    };
 
     return (
-        <Container>
-            <Typography
-                variant="h4"
-                gutterBottom
-                sx={{ fontFamily: "\\'Montserrat\\', sans-serif", fontWeight: "bold", mb: 3 }}
-            >
-                Available Events
-            </Typography>
+        <Box
+          sx={{
+            background: theme.palette.background.default,
+            minHeight: "100vh",
+            pt: 4,
+            pb: 6
+          }}
+        >
+            <Container>
+                <Typography
+                    variant="h4"
+                    gutterBottom
+                    sx={{ 
+                        mb: 3,
+                        color: theme.palette.text.primary
+                    }}
+                >
+                    Available Events
+                </Typography>
 
-            {successMsg && <Alert severity="success" sx={{ mb: 2 }}>{successMsg}</Alert>}
-            {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
-
-            <EventList
-                events={events}
-                onSchedule={handleDialogOpen}
-                actionLabel="Schedule Event"
-            />
-
-            <Dialog open={openDialog} onClose={handleDialogClose}>
-                <DialogTitle>Schedule Event: {selectedEvent?.title}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        margin="dense"
-                        label="Event Date"
-                        type="date"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Event Time"
-                        type="time"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Event Location"
-                        fullWidth
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDialogClose} color="error" sx={{ borderRadius: "20px", textTransform: "none" }}>
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSubmit}
-                        variant="contained"
-                        color="success"
-                        sx={{ borderRadius: "20px", textTransform: "none", ml: 1 }}
+                {successMsg && (
+                    <Alert 
+                        severity="success" 
+                        sx={{ 
+                            mb: 2,
+                            backgroundColor: theme.palette.mode === 'light' 
+                                ? 'rgba(237, 247, 237, 0.9)' 
+                                : 'rgba(30, 70, 32, 0.9)',
+                            color: theme.palette.mode === 'light' ? '#1b5e20' : '#a5d6a7'
+                        }}
                     >
-                        Schedule Event
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
+                        {successMsg}
+                    </Alert>
+                )}
+                
+                {errorMsg && (
+                    <Alert 
+                        severity="error" 
+                        sx={{ 
+                            mb: 2,
+                            backgroundColor: theme.palette.mode === 'light' 
+                                ? 'rgba(253, 237, 237, 0.9)' 
+                                : 'rgba(97, 26, 21, 0.9)',
+                            color: theme.palette.mode === 'light' ? '#c62828' : '#ef9a9a'
+                        }}
+                    >
+                        {errorMsg}
+                    </Alert>
+                )}
+
+                <Box 
+                    sx={{ 
+                        backgroundColor: theme.palette.background.paper, 
+                        borderRadius: theme.shape.borderRadius,
+                        boxShadow: 2,
+                        p: 3,
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    <EventList
+                        events={events}
+                        onSchedule={handleDialogOpen}
+                        actionLabel="Schedule Event"
+                    />
+                </Box>
+
+                <Dialog 
+                    open={openDialog} 
+                    onClose={handleDialogClose}
+                    PaperProps={{
+                        sx: {
+                            backgroundColor: theme.palette.background.paper,
+                            color: theme.palette.text.primary,
+                            boxShadow: theme.shadows[5],
+                            borderRadius: theme.shape.borderRadius,
+                            transition: 'all 0.3s ease'
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{ 
+                        color: theme.palette.primary.main,
+                        fontWeight: 'bold',
+                        borderBottom: `1px solid ${theme.palette.divider}`
+                    }}>
+                        Schedule Event: {selectedEvent?.title}
+                    </DialogTitle>
+                    <DialogContent sx={{ mt: 2 }}>
+                        <TextField
+                            margin="dense"
+                            label="Event Date"
+                            type="date"
+                            fullWidth
+                            InputLabelProps={{ 
+                                shrink: true,
+                                sx: { color: theme.palette.text.secondary }
+                            }}
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            sx={{
+                                mb: 2,
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: theme.palette.divider,
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: theme.palette.primary.main,
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: theme.palette.primary.main,
+                                    },
+                                    '& input': {
+                                        color: theme.palette.text.primary
+                                    }
+                                }
+                            }}
+                        />
+                        <TextField
+                            margin="dense"
+                            label="Event Time"
+                            type="time"
+                            fullWidth
+                            InputLabelProps={{ 
+                                shrink: true,
+                                sx: { color: theme.palette.text.secondary }
+                            }}
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                            sx={{
+                                mb: 2,
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: theme.palette.divider,
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: theme.palette.primary.main,
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: theme.palette.primary.main,
+                                    },
+                                    '& input': {
+                                        color: theme.palette.text.primary
+                                    }
+                                }
+                            }}
+                        />
+                        <TextField
+                            margin="dense"
+                            label="Event Location"
+                            fullWidth
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            InputLabelProps={{ 
+                                sx: { color: theme.palette.text.secondary }
+                            }}
+                            sx={{
+                                mb: 1,
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: theme.palette.divider,
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: theme.palette.primary.main,
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: theme.palette.primary.main,
+                                    },
+                                    '& input': {
+                                        color: theme.palette.text.primary
+                                    }
+                                }
+                            }}
+                        />
+                    </DialogContent>
+                    <DialogActions sx={{ 
+                        p: 2,
+                        borderTop: `1px solid ${theme.palette.divider}`
+                    }}>
+                        <Button 
+                            onClick={handleDialogClose} 
+                            color="error" 
+                            variant="outlined"
+                            sx={{ 
+                                borderRadius: "20px", 
+                                textTransform: "none",
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    backgroundColor: theme.palette.error.light,
+                                    color: theme.palette.mode === 'light' ? '#fff' : '#000'
+                                }
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            variant="contained"
+                            color="primary"
+                            sx={{ 
+                                borderRadius: "20px", 
+                                textTransform: "none", 
+                                ml: 1,
+                                transition: 'all 0.3s ease',
+                                backgroundColor: theme.palette.primary.main,
+                                '&:hover': {
+                                    backgroundColor: theme.palette.primary.dark,
+                                    transform: 'scale(1.05)'
+                                }
+                            }}
+                        >
+                            Schedule Event
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Container>
+        </Box>
     );
 };
 

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import petadoption.api.pet.Pet;
@@ -130,22 +131,6 @@ public class PetEndpoint {
         }
     }
 
-    /*
-    @GetMapping
-    public ResponseEntity<Page<Pet>> getAvailablePets(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size) {
-        log.info("API Request: getAvailablePets page={}, size={}", page, size);
-        try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
-            Page<Pet> petPage = petService.getAllAvailablePets(pageable);
-            return ResponseEntity.ok(petPage);
-        } catch (Exception e) {
-            log.error("Error fetching available pets: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }*/
-
     @GetMapping("/adopter/{userId}")
     public ResponseEntity<List<Pet>> getAdoptedPetsByUser(@PathVariable Long userId) {
         log.info("API Request: getAdoptedPetsByUser userId={}", userId);
@@ -170,18 +155,12 @@ public class PetEndpoint {
         }
     }
 
+    @DeleteMapping("/{petId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deletePet(@PathVariable Long petId) {
+        petService.deletePetById(petId);
+        return ResponseEntity.noContent().build();
+    }
 
 
-
-    //@GetMapping("/all")
-    //public ResponseEntity<List<Pet>> getAllPetsList() {
-     //   log.info("API Request: getAllPetsList");
-      //  try {
-     //       List<Pet> all = petService.getAllPets();
-      //      return ResponseEntity.ok(all);
-      //  } catch (Exception e) {
-      //      log.error("Error fetching all pets list: {}", e.getMessage(), e);
-      //      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-      //  }
-   // }
 }

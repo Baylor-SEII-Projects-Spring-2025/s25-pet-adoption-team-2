@@ -11,8 +11,8 @@ import {
   Stack,
 } from "@mui/material";
 import Image from "next/image";
-import NavBar from "./NavBar";
-import Recommendations from "../Components/Recommendations";
+import NavBar from "./NavBar"; // Assuming NavBar exists
+import Recommendations from "../Components/Recommendations"; // Assuming Recommendations exists
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,12 +24,18 @@ export default function HomePage() {
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
     if (stored) {
-      setUser(JSON.parse(stored));
-      setIsLoggedIn(true);
+      try {
+        const parsedUser = JSON.parse(stored);
+        setUser(parsedUser);
+        setIsLoggedIn(true);
+      } catch (e) {
+        console.error("Failed to parse user from session storage:", e);
+        sessionStorage.removeItem("user"); // Clear invalid data
+      }
     }
   }, []);
 
-  // Pet‐rating callback
+  // Pet-rating callback (ensure this is still needed or adjust)
   const handleRatePet = async (petId, rating) => {
     if (!user?.id) {
       console.error("No user ID");
@@ -37,20 +43,21 @@ export default function HomePage() {
     }
     try {
       const token = localStorage.getItem("jwtToken");
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/user/rate`,
+        `${BACKEND}/api/user/rate`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : undefined,
+            Authorization: token ? `Bearer ${token}` : undefined, // Corrected undefined
           },
           body: JSON.stringify({ userId: user.id, petId, rating }),
         }
       );
       if (!res.ok) throw new Error(res.statusText);
       const json = await res.json();
-      const updated = json.user || json;
+      const updated = json.user || json; // Adjust based on backend response
       setUser(updated);
       sessionStorage.setItem("user", JSON.stringify(updated));
       setRefreshKey((k) => k + 1);
@@ -59,7 +66,9 @@ export default function HomePage() {
     }
   };
 
+  // Determine user type
   const isShelter = user?.userType === "SHELTER";
+  const isAdmin = user?.userType === "ADMIN"; // Check for Admin
 
   return (
     <>
@@ -87,7 +96,7 @@ export default function HomePage() {
             sx={{ position: "absolute", width: "100%", height: "100%", zIndex: 1 }}
           >
             <Image
-              src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg"
+              src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg" // Ensure this path is correct
               alt="Hero"
               fill
               style={{ objectFit: "cover" }}
@@ -106,10 +115,28 @@ export default function HomePage() {
               borderRadius: 2,
             }}
           >
-            {isShelter ? (
+            {/* === Conditional Hero Content === */}
+            {isAdmin ? (
               <>
                 <Typography variant="h2" gutterBottom>
-                  Welcome, {user.shelterName || "Shelter"}!
+                  Admin Portal Access
+                </Typography>
+                <Typography variant="h5" gutterBottom>
+                  Manage users and pets from your dashboard.
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  color="secondary"
+                  onClick={() => router.push("/profile")}
+                >
+                  Go to Admin Dashboard
+                </Button>
+              </>
+            ) : isShelter ? (
+              <>
+                <Typography variant="h2" gutterBottom>
+                  Welcome, {user?.shelterName || "Shelter"}!
                 </Typography>
                 <Typography variant="h5" gutterBottom>
                   Post an Animal for Adoption Today!
@@ -151,6 +178,7 @@ export default function HomePage() {
                 </Button>
               </>
             )}
+            {/* === End Conditional Hero Content === */}
           </Box>
         </Box>
 
@@ -159,10 +187,14 @@ export default function HomePage() {
           <Card elevation={4}>
             <CardContent>
               <Typography variant="h3" align="center">
-                Pet Adoption
+                {/* === Conditional Title === */}
+                {isAdmin ? "Admin Portal" : "Pet Adoption"}
               </Typography>
               <Typography variant="body1" color="text.secondary" align="center">
-                {isShelter
+                {/* === Conditional Description === */}
+                {isAdmin
+                  ? "Manage application users and pet listings."
+                  : isShelter
                   ? "Post animals for adoption and help them find a loving home."
                   : "Browse pets available for adoption and find your new best friend."}
               </Typography>
@@ -170,8 +202,8 @@ export default function HomePage() {
           </Card>
         </Container>
 
-        {/* Recommendations */}
-        {!isShelter && isLoggedIn && (
+        {/* Recommendations (Only for non-admin, logged-in adopters) */}
+        {!isShelter && !isAdmin && isLoggedIn && user?.id && (
           <Container maxWidth="lg" sx={{ mb: 4 }}>
             <Typography variant="h4" align="center" gutterBottom>
               Recommended Pets
@@ -184,52 +216,54 @@ export default function HomePage() {
           </Container>
         )}
 
-        {/* Event Buttons */}
-        <Container sx={{ textAlign: "center", mb: 4 }}>
-          {isShelter ? (
-            <Stack spacing={2} alignItems="center">
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{ maxWidth: 300 }}
-                onClick={() => router.push("/ShelterEventsPage")}
-              >
-                Add Events (Shelter)
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{ maxWidth: 300 }}
-                onClick={() => router.push("/ScheduledEventsPage")}
-              >
-                Scheduled Events (Shelter)
-              </Button>
-            </Stack>
-          ) : isLoggedIn ? (
-            <Stack spacing={2} alignItems="center">
-              <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                sx={{ maxWidth: 300 }}
-                onClick={() => router.push("/AdopterEventsPage")}
-              >
-                Add Events (Adopter)
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                sx={{ maxWidth: 300 }}
-                onClick={() => router.push("/JoinedEventsPage")}
-              >
-                Scheduled Events (Adopter)
-              </Button>
-            </Stack>
-          ) : null}
-        </Container>
+        {/* Event Buttons (Not shown for Admin, adjust if needed) */}
+        {!isAdmin && (
+          <Container sx={{ textAlign: "center", mb: 4 }}>
+            {isShelter ? (
+              <Stack spacing={2} alignItems="center">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/ShelterEventsPage")}
+                >
+                  Add Events (Shelter)
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/ScheduledEventsPage")}
+                >
+                  Scheduled Events (Shelter)
+                </Button>
+              </Stack>
+            ) : isLoggedIn ? (
+              <Stack spacing={2} alignItems="center">
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/AdopterEventsPage")}
+                >
+                  Add Events (Adopter)
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/JoinedEventsPage")}
+                >
+                  Scheduled Events (Adopter)
+                </Button>
+              </Stack>
+            ) : null}
+          </Container>
+        )}
       </main>
     </>
   );

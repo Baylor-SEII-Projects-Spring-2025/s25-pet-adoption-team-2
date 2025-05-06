@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 
 // Define the palette for both modes
 const lightModeColors = {
@@ -16,7 +17,7 @@ const lightModeColors = {
     contrastText: "#000",
   },
   background: {
-    default: "#fff8e1", // Light peach/orange background
+    default: "transparent", // Changed to transparent to show the background image
     paper: "#fff3e0",
   },
   text: {
@@ -39,7 +40,7 @@ const darkModeColors = {
     contrastText: "#000",
   },
   background: {
-    default: "#0d1b2a", // Very dark blue background from the image
+    default: "transparent", // Changed to transparent to show the background image
     paper: "#1a2a38",
   },
   text: {
@@ -53,17 +54,66 @@ export const getDesignTokens = (mode) => ({
     mode,
     ...(mode === 'light' ? lightModeColors : darkModeColors),
   },
+  typography: {
+    fontFamily: "'MilkyWay', Roboto, Noto Sans, sans-serif",
+    fontSize: 14,
+    // Headline variants
+    h6: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+      fontWeight: 75, 
+      letterSpacing: '1px', 
+      textShadow: '0.5px 0.5px 0px rgba(0,0,0,0.2)', 
+    },
+    // Add explicit font family for other typography variants
+    h1: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    h2: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    h3: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    h4: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    h5: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    // Body text variants
+    body1: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    body2: {
+      fontSize: 14,
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    // Additional typography variants
+    subtitle1: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    subtitle2: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    button: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    caption: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+    overline: {
+      fontFamily: "'MilkyWay', Roboto, sans-serif",
+    },
+  },
   components: {
     MuiCssBaseline: {
       styleOverrides: `
-        body {
-          background-image: ${mode === 'light' 
-            ? 'url("/images/light-paw-background.png")' 
-            : 'url("/images/dark-paw-background.png")'};
-          background-size: cover;
-          background-repeat: repeat;
-          background-color: ${mode === 'light' ? '#fff8e1' : '#0d1b2a'} !important;
-          transition: all 0.3s ease;
+        @font-face {
+          font-family: 'MilkyWay';
+          src: url('/fonts/MilkyWay.ttf') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+          font-display: swap;
         }
       `,
     },
@@ -98,13 +148,6 @@ export const getDesignTokens = (mode) => ({
       },
     },
   },
-  typography: {
-    fontFamily: "Roboto, Noto Sans, sans-serif",
-    fontSize: 14,
-    body2: {
-      fontSize: 14,
-    },
-  },
   shape: {
     borderRadius: 5,
   },
@@ -122,6 +165,14 @@ export const useColorMode = () => {
 export const PetAdoptionThemeProvider = ({ children }) => {
   const [mode, setMode] = useState('light');
   
+  // Function to apply body classes for background images
+  const applyBodyClass = (newMode) => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('light-mode', 'dark-mode');
+      document.body.classList.add(`${newMode}-mode`);
+    }
+  };
+  
   // Check for saved preference in localStorage
   useEffect(() => {
     // Only access localStorage on the client side
@@ -129,17 +180,13 @@ export const PetAdoptionThemeProvider = ({ children }) => {
       const savedMode = localStorage.getItem('colorMode');
       if (savedMode) {
         setMode(savedMode);
-        // Apply body class based on mode
-        document.body.classList.remove('light-mode', 'dark-mode');
-        document.body.classList.add(`${savedMode}-mode`);
+        applyBodyClass(savedMode);
       } else {
         // Check user's system preference
         const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialMode = prefersDarkMode ? 'dark' : 'light';
         setMode(initialMode);
-        // Apply body class based on mode
-        document.body.classList.remove('light-mode', 'dark-mode');
-        document.body.classList.add(`${initialMode}-mode`);
+        applyBodyClass(initialMode);
       }
     }
   }, []);
@@ -152,10 +199,7 @@ export const PetAdoptionThemeProvider = ({ children }) => {
           // Only access localStorage on the client side
           if (typeof window !== 'undefined') {
             localStorage.setItem('colorMode', newMode);
-            
-            // Toggle body class for background image
-            document.body.classList.remove('light-mode', 'dark-mode');
-            document.body.classList.add(`${newMode}-mode`);
+            applyBodyClass(newMode);
           }
           return newMode;
         });
@@ -174,6 +218,7 @@ export const PetAdoptionThemeProvider = ({ children }) => {
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
+        <CssBaseline />
         {children}
       </ThemeProvider>
     </ColorModeContext.Provider>
