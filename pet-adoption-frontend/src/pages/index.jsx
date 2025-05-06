@@ -187,21 +187,47 @@ export default function HomePage() {
         {/* Event Buttons */}
         <Container sx={{ textAlign: "center", mb: 4 }}>
           {isShelter ? (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => router.push("/ShelterEventsPage")}
-            >
-              Add Events (Shelter)
-            </Button>
+            <Stack spacing={2} alignItems="center">
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{ maxWidth: 300 }}
+                onClick={() => router.push("/ShelterEventsPage")}
+              >
+                Add Events (Shelter)
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{ maxWidth: 300 }}
+                onClick={() => router.push("/ScheduledEventsPage")}
+              >
+                Scheduled Events (Shelter)
+              </Button>
+            </Stack>
           ) : isLoggedIn ? (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => router.push("/AdopterEventsPage")}
-            >
-              View Events (Adopter)
-            </Button>
+            <Stack spacing={2} alignItems="center">
+              <Button
+                variant="contained"
+                color="secondary"
+                fullWidth
+                sx={{ maxWidth: 300 }}
+                onClick={() => router.push("/AdopterEventsPage")}
+              >
+                Add Events (Adopter)
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                fullWidth
+                sx={{ maxWidth: 300 }}
+                onClick={() => router.push("/JoinedEventsPage")}
+              >
+                Scheduled Events (Adopter)
+              </Button>
+            </Stack>
           ) : null}
         </Container>
       </main>
