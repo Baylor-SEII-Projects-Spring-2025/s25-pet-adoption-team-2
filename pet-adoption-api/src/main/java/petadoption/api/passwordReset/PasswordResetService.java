@@ -49,7 +49,7 @@ public class PasswordResetService {
         passwordResetTokenRepository.deleteByUserEmail(email);
         passwordResetTokenRepository.save(passwordResetToken);
 
-        String resetLink = "http://localhost:3000/reset-password?token=" + token;
+        String resetLink = "http://35.225.196.242:3000/reset-password?token=" + token;
         mailService.sendPasswordResetEmail(user.getEmailAddress(), resetLink);
     }
 
