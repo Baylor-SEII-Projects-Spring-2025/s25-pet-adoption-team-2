@@ -43,6 +43,7 @@ function TabPanel({ children, value, index, ...other }) {
 
 // --- Admin Dashboard Component ---
 function AdminDashboard({ user, BACKEND }) {
+  const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
   const [pets, setPets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -191,10 +192,21 @@ function AdminDashboard({ user, BACKEND }) {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Paper elevation={3}>
         {/* Admin Header */}
-        <Box sx={{ p: 3, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-           <Typography variant="h4">Admin Dashboard</Typography>
-           <Typography variant="subtitle1">Welcome, {getUserDisplayName(user)}!</Typography>
-         </Box>
+        <Box sx={{ p: 3, bgcolor: 'primary.main', color: 'primary.contrastText', display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box>
+            <Typography variant="h4">Admin Dashboard</Typography>
+            <Typography variant="subtitle1">Welcome, {getUserDisplayName(user)}!</Typography>
+          </Box>
+          {/* Add the navigation button */}
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            onClick={() => router.push('/adopt')}
+            sx={{ ml: 2 }}
+          >
+            Browse Pets
+          </Button>
+        </Box>
          {/* Admin Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="admin dashboard tabs">
