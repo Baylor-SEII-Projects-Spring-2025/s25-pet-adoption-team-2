@@ -1,5 +1,6 @@
 package petadoption.api.notifications;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +20,11 @@ public interface NotificationsRepository extends JpaRepository<Notifications, Lo
     // Add this custom query to ensure we get ALL notifications for a user
     @Query("SELECT n FROM Notifications n WHERE n.user.id = :userId ORDER BY n.createdAt DESC")
     List<Notifications> findAllByUserIdOrdered(@Param("userId") Long userId);
+
+    @Transactional
+    void deleteBySender_Id(Long senderId);
+
+    // deletes all notifications whose recipient.id == passed‑in value
+    @Transactional
+    void deleteByUser_Id(Long recipientId);
 }

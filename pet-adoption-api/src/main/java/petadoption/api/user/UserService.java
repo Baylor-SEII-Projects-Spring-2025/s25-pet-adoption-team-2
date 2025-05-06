@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import petadoption.api.notifications.NotificationsRepository;
 import petadoption.api.pet.Pet;
 
 
@@ -20,6 +21,11 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private NotificationsRepository notificationRepo;
+    @Autowired
+    private UserRepository userRepo;
 
     public Optional<User> findUser(Long userId) {
         return userRepository.findById(userId);
@@ -109,5 +115,12 @@ public class UserService {
             }
         }
         return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
+    }
+
+    @Transactional
+    public void deleteUserAndNotifications(Long userId) {
+        notificationRepo.deleteBySender_Id(userId);
+        notificationRepo.deleteByUser_Id(userId);
+        userRepo.deleteById(userId);
     }
 }

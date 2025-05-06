@@ -13,6 +13,7 @@ import petadoption.api.pet.Pet;
 import petadoption.api.pet.PetService;
 import petadoption.api.user.User;
 import petadoption.api.user.UserRepository;
+import petadoption.api.user.UserService;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +30,9 @@ public class AdminEndpoint {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     private User getAdminUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication.getName() == null) {
@@ -109,7 +113,7 @@ public class AdminEndpoint {
                 log.warn("Attempted to delete non-existent user with ID: {}", userId);
                 return ResponseEntity.notFound().build();
             }
-            userRepository.deleteById(userId);
+            userService.deleteUserAndNotifications(userId);
             log.info("Successfully deleted user with ID: {} by admin {}", userId, adminUser.getEmailAddress());
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
@@ -133,4 +137,5 @@ public class AdminEndpoint {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
+
 }
