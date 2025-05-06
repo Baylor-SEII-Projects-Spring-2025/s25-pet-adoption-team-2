@@ -9,7 +9,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:3001")
+@CrossOrigin(origins = "http://35.225.196.242:3001")
 public class PasswordResetController {
 
     @Autowired

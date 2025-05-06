@@ -28,7 +28,7 @@ const EventsAdopter = () => {
   const fetchScheduledEvents = async () => {
     const token = localStorage.getItem("jwtToken");
     try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/events`;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/events`;
       const response = await axios.get(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -50,7 +50,7 @@ const EventsAdopter = () => {
       return;
     }
     try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/adopter/events?userId=${user.id}`;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/adopter/events?userId=${user.id}`;
       const response = await axios.get(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -79,7 +79,7 @@ const EventsAdopter = () => {
       return;
     }
     try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/events/${event.id}/attendees?userId=${user.id}`;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/events/${event.id}/attendees?userId=${user.id}`;
       await axios.post(url, {}, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

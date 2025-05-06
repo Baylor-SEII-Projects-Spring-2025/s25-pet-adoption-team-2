@@ -35,7 +35,7 @@ const ScheduledEvents = () => {
   useEffect(() => {
     if (userId && token) {
       axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/shelter/events?userId=${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then(response => {
@@ -81,7 +81,7 @@ const ScheduledEvents = () => {
     };
     try {
       const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/shelter/events/${selectedEvent.id}?userId=${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events/${selectedEvent.id}?userId=${userId}`,
         updatedEvent,
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
       );
@@ -98,7 +98,7 @@ const ScheduledEvents = () => {
   const handleDelete = async (eventId) => {
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/shelter/events/${eventId}?userId=${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events/${eventId}?userId=${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEvents(events.filter(e => e.id !== eventId));

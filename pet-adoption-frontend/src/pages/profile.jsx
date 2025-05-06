@@ -537,7 +537,7 @@ function UserProfile({ user, BACKEND }) {
 // --- Main Profile Page Component (Conditional Rendering Logic) ---
 export default function ProfilePage() {
   const router = useRouter();
-  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');

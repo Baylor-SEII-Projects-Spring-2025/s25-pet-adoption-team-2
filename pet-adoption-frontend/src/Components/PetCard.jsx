@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 export default function PetCard({ pet, children }) {
   // Access MUI theme for light/dark mode
   const theme = useTheme();
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://35.225.196.242:8080';
 
   // Theme-specific placeholder image URLs
   const placeholderUrl =

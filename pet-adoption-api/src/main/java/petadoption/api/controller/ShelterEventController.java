@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/shelter/events")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://35.225.196.242:3000")
 public class ShelterEventController {
 
     @Autowired

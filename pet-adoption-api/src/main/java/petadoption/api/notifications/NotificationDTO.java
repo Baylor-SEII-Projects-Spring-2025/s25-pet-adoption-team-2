@@ -17,12 +17,9 @@ public class NotificationDTO {
     private String senderInfo; // Example: "Shelter Name (shelter@example.com)" or "Adopter Name (adopter@email.com)"
     private String recipientInfo;
     private Long petId;
-    private Long adopterId;// Example: "Adopter Name (adopter@email.com)"
+    private Long adopterId;
 
-    // You can add more fields here if needed by the frontend,
-    // like specific flags for approval requests, etc.
 
-    // Optional constructor for easier manual mapping if needed
     public NotificationDTO(Long id, String text, boolean isRead, LocalDateTime createdAt, String senderInfo, String recipientInfo) {
         this.id = id;
         this.text = text;

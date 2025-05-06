@@ -35,15 +35,14 @@ public class Notifications {
     @Column(name = "ADOPTER_ID")
     private Long adopterId;
 
-    @ManyToOne // This is the RECIPIENT of the notification
+    @ManyToOne
     @JoinColumn(name = "USER_ID", referencedColumnName = "USER_ID")
     private User user;
 
-    // ADD THIS FIELD
-    @ManyToOne(fetch = FetchType.LAZY) // Added fetch type for potential performance
-    @JoinColumn(name = "SENDER_ID", referencedColumnName = "USER_ID", nullable = true) // Column for sender's user ID
-    private User sender; // Represents the user who sent the notification
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SENDER_ID", referencedColumnName = "USER_ID", nullable = true)
+    private User sender;
 
-    @Column(name = "REPLY_TEXT") // Consider if this field is still needed with the new sender logic
+    @Column(name = "REPLY_TEXT")
     private String replyText;
 }
