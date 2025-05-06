@@ -185,6 +185,11 @@ export default function Adopt() {
     }
   };
 
+  // Helper function to check if the pet belongs to the logged-in shelter
+  const isPetOwnedByShelter = (pet) => {
+    return isShelter && user?.id === pet.adoptionCenterId;
+  };
+
   return (
     <>
       <Head>
@@ -325,14 +330,26 @@ export default function Adopt() {
                 {pets.map(pet => (
                   <Grid item xs={12} sm={6} md={4} key={pet.id}>
                     <PetCard pet={pet}>
-                      {/* Show button for all users, but with different text based on login status */}
-                      <Button 
-                        fullWidth 
-                        variant="contained" 
-                        onClick={() => handleInterest(pet)}
-                      >
-                        {user ? "Interested!" : "Login to Express Interest"}
-                      </Button>
+                      {/* Only show interest button if user is not a shelter or if the pet doesn't belong to this shelter */}
+                      {!isPetOwnedByShelter(pet) && (
+                        <Button 
+                          fullWidth 
+                          variant="contained" 
+                          onClick={() => handleInterest(pet)}
+                        >
+                          {user ? "Interested!" : "Login to Express Interest"}
+                        </Button>
+                      )}
+                      {/* Show a disabled button with message if shelter owns this pet */}
+                      {isPetOwnedByShelter(pet) && (
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          disabled
+                        >
+                          Your Shelter Pet
+                        </Button>
+                      )}
                     </PetCard>
                   </Grid>
                 ))}
