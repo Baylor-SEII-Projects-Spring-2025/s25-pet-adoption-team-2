@@ -56,6 +56,8 @@ dependencies {
 
 	// Spring Mail Starter
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	testImplementation 'org.mockito:mockito-core'
+	// For Gradle
 }
 
 tasks.named('test') {
