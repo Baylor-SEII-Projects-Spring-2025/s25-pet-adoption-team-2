@@ -1,80 +1,166 @@
 package petadoption.api.endpoint;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.*;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import petadoption.api.pet.Pet;
 import petadoption.api.pet.PetService;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pets")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "${cors.allowed.origins:http://35.225.196.242:3000}")
 public class PetEndpoint {
 
+    private static final Logger log = LoggerFactory.getLogger(PetEndpoint.class);
+    private final PetService petService;
+
     @Autowired
-    private PetService petService;
+    public PetEndpoint(PetService petService) {
+        this.petService = petService;
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<Pet>> getAvailablePets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String city) {
+        log.info("API Request: getAvailablePets page={}, size={}, state={}, city={}",
+                page, size, state, city);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<Pet> pets;
+        if ((state != null && !state.isEmpty()) || (city != null && !city.isEmpty())) {
+            pets = petService.getAvailablePetsByLocation(state, city, pageable);
+        } else {
+            pets = petService.getAllAvailablePets(pageable);
+        }
+        return ResponseEntity.ok(pets);
+    }
+
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Pet> addPet(@ModelAttribute Pet pet,
-                                      @RequestPart(value = "image", required = false) MultipartFile image) {
+    public ResponseEntity<?> addPet(@ModelAttribute Pet pet,
+                                    @RequestPart(value = "image", required = false) MultipartFile image) {
+        log.info("API Request: addPet name='{}', shelterId={}", pet.getName(), pet.getAdoptionCenterId());
         try {
             if (image != null && !image.isEmpty()) {
-                String storedPath = storeImage(image);
+                String storedPath = petService.storeImage(image);
                 pet.setImageUrl(storedPath);
+                log.info("Image stored at {}", storedPath);
+            } else {
+                log.info("No image uploaded for pet '{}'", pet.getName());
+                pet.setImageUrl(null);
             }
-            Pet savedPet = petService.addPet(pet);
-            return ResponseEntity.ok(savedPet);
+            if (pet.getName() == null || pet.getName().trim().isEmpty() || pet.getAdoptionCenterId() == null) {
+                log.warn("Validation failed: missing name or shelterId");
+                return ResponseEntity.badRequest().body(Map.of("error", "Pet name and shelter ID are required."));
+            }
+            Pet saved = petService.addPet(pet);
+            log.info("Pet created with id={}", saved.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).build();
+            log.error("Error storing image for pet '{}': {}", pet.getName(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to process uploaded image."));
+        } catch (Exception e) {
+            log.error("Error adding pet '{}': {}", pet.getName(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to add pet: " + e.getMessage()));
         }
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<List<Pet>> getAllPets() {
-        return ResponseEntity.ok(petService.getAllPets());
-    }
-
-    // Helper method to store the uploaded image file
-    private String storeImage(MultipartFile file) throws IOException {
-        String uploadsDir = "uploads/";
-        File uploadDir = new File(uploadsDir);
-        if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-            throw new IOException("Failed to create uploads directory");
-        }
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path filePath = Paths.get(uploadsDir, fileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        // Return a URL path (adjust as needed for your hosting)
-        return "/" + uploadsDir + fileName;
     }
 
     @GetMapping("/import-csv")
     public ResponseEntity<?> importCSV() {
+        log.info("API Request: import-csv");
         try {
-            List<Pet> importedPets = petService.importPetsFromCSV();
-            return ResponseEntity.ok(importedPets);
+            List<Pet> imported = petService.importPetsFromCSV();
+            log.info("Imported {} pets from CSV", imported.size());
+            return ResponseEntity.ok(imported);
         } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error importing CSV file: " + e.getMessage());
+            log.error("IOException during CSV import: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error importing CSV file: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error during CSV import: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Unexpected error during CSV import."));
         }
     }
 
     @PostMapping("/import-csv")
-    public ResponseEntity<?> importCSV(@RequestBody String csvData) {
+    public ResponseEntity<?> importCSVData(@RequestBody String csvData) {
+        log.info("API Request: import-csv (data payload)");
+        if (csvData == null || csvData.trim().isEmpty()) {
+            log.warn("Empty CSV data payload");
+            return ResponseEntity.badRequest().body(Map.of("error", "CSV data cannot be empty."));
+        }
         try {
-            List<Pet> importedPets = petService.importPetsFromCSVData(csvData);
-            return ResponseEntity.ok(importedPets);
+            List<Pet> imported = petService.importPetsFromCSVData(csvData);
+            log.info("Imported {} pets from data", imported.size());
+            return ResponseEntity.ok(imported);
         } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error importing CSV data: " + e.getMessage());
+            log.error("Error parsing CSV data: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error parsing CSV data: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error during CSV data import: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Unexpected error during CSV data import."));
         }
     }
+
+    @DeleteMapping("/all")
+    public ResponseEntity<Void> deleteAllPets() {
+        log.warn("API Request: deleteAllPets");
+        try {
+            petService.deleteAllPets();
+            log.info("All pets deleted");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error deleting all pets: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/adopter/{userId}")
+    public ResponseEntity<List<Pet>> getAdoptedPetsByUser(@PathVariable Long userId) {
+        log.info("API Request: getAdoptedPetsByUser userId={}", userId);
+        try {
+            List<Pet> adopted = petService.getPetsByAdopter(userId);
+            return ResponseEntity.ok(adopted);
+        } catch (Exception e) {
+            log.error("Error fetching adopted pets for user {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/shelter/{shelterId}")
+    public ResponseEntity<List<Pet>> getPetsByShelter(@PathVariable Long shelterId) {
+        log.info("API Request: getPetsByShelter shelterId={}", shelterId);
+        try {
+            List<Pet> shelterPets = petService.getPetsByShelter(shelterId);
+            return ResponseEntity.ok(shelterPets);
+        } catch (Exception e) {
+            log.error("Error fetching pets for shelter {}: {}", shelterId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @DeleteMapping("/{petId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deletePet(@PathVariable Long petId) {
+        petService.deletePetById(petId);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

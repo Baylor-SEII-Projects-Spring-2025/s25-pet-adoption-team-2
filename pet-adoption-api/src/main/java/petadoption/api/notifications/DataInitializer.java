@@ -21,6 +21,7 @@ public class DataInitializer {
             User adoptionCenter = new User();
             adoptionCenter.setEmailAddress("shelter@example.com");
             adoptionCenter.setUserType("SHELTER");
+            adoptionCenter.setPassword("defaultPassword123");
 
             userRepository.save(adoptionCenter);
         }

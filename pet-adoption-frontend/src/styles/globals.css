@@ -1,3 +1,4 @@
+/* Base HTML styling */
 html {
   box-sizing: border-box;
   font-size: 16px;
@@ -32,4 +33,90 @@ ul {
 img {
   max-width: 100%;
   height: auto;
+}
+
+/* Font declarations */
+@font-face {
+  font-family: 'MilkyWay';
+  src: url('/fonts/MilkyWay.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Theme-related styles */
+body.light-mode {
+  background-image: url('/images/light-paw-background.png');
+  background-size: cover;
+  background-repeat: repeat;
+  background-color: #fff8e1 !important;
+  color: #424242;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode {
+  background-image: url('/images/dark-paw-background.png');
+  background-size: cover;
+  background-repeat: repeat;
+  background-color: #0d1b2a !important;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+/* Typography styling */
+.MuiTypography-root {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+}
+
+/* Header typography styles */
+.MuiTypography-h1,
+.MuiTypography-h2,
+.MuiTypography-h3,
+.MuiTypography-h4,
+.MuiTypography-h5 {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+}
+
+/* Special styling for h6 to match theme.js */
+.MuiTypography-h6 {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+  font-weight: 75 !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.2) !important;
+}
+
+/* Body typography styles */
+.MuiTypography-body1,
+.MuiTypography-body2 {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Body2 specific font size */
+.MuiTypography-body2 {
+  font-size: 14px !important;
+}
+
+/* Additional variants */
+.MuiTypography-subtitle1,
+.MuiTypography-subtitle2 {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+.MuiButton-root {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: 0.5px !important;
+}
+
+.MuiTypography-caption,
+.MuiTypography-overline {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Numbers specific class */
+.pet-number {
+  font-family: 'MilkyWay', Roboto, sans-serif !important;
 }

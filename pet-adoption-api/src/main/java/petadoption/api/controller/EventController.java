@@ -11,14 +11,15 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/events")
+@CrossOrigin(origins = "http://35.225.196.242:3000")
 public class EventController {
 
     @Autowired
     private EventService eventService;
 
     @PostMapping
-    public ResponseEntity<Events> createEvent(@RequestBody Events event) {
-        Events createdEvent = eventService.createEvent(event);
+    public ResponseEntity<Events> createEvent(@RequestBody Events event, @RequestParam Long userId) {
+        Events createdEvent = eventService.createEvent(event, userId);
         return ResponseEntity.status(201).body(createdEvent);
     }
 
@@ -45,10 +46,22 @@ public class EventController {
         eventService.deleteEvent(id);
         return ResponseEntity.noContent().build();
     }
-    //delete all events
+
     @DeleteMapping
     public ResponseEntity<Void> deleteAllEvents() {
         eventService.deleteAllEvents();
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{eventId}/attendees")
+    public ResponseEntity<Events> addAttendee(@PathVariable Long eventId, @RequestParam Long userId) {
+        Events updatedEvent = eventService.addAttendee(eventId, userId);
+        return ResponseEntity.ok(updatedEvent);
+    }
+
+    @DeleteMapping("/{eventId}/attendees")
+    public ResponseEntity<Events> removeAttendee(@PathVariable Long eventId, @RequestParam Long userId) {
+        Events updatedEvent = eventService.removeAttendee(eventId, userId);
+        return ResponseEntity.ok(updatedEvent);
     }
 }

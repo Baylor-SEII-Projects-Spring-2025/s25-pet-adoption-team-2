@@ -2,6 +2,8 @@ package petadoption.api.notifications;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import petadoption.api.user.User; // Make sure User import is present
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -25,11 +27,21 @@ public class Notifications {
     private boolean isRead;
 
     @Column(name = "CREATED_AT")
-    private java.time.LocalDateTime createdAt;
+    private LocalDateTime createdAt;
+
+    @Column(name = "PET_ID")
+    private Long petId;
+
+    @Column(name = "ADOPTER_ID")
+    private Long adopterId;
 
     @ManyToOne
     @JoinColumn(name = "USER_ID", referencedColumnName = "USER_ID")
-    private petadoption.api.user.User user;
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SENDER_ID", referencedColumnName = "USER_ID", nullable = true)
+    private User sender;
 
     @Column(name = "REPLY_TEXT")
     private String replyText;

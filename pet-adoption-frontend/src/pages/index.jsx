@@ -1,281 +1,270 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import {
-  AppBar,
-  Avatar,
+  Box,
   Button,
   Card,
   CardContent,
   Container,
   Typography,
-  Box,
-  Toolbar,
-  Menu,
-  MenuItem,
+  Stack,
 } from "@mui/material";
-import { useRouter } from "next/router";
 import Image from "next/image";
-import Recommendations from "../Components/Recommendations";
-
-
+import NavBar from "./NavBar"; // Assuming NavBar exists
+import Recommendations from "../Components/Recommendations"; // Assuming Recommendations exists
 
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // On mount, check session storage for a logged-in user.
+  // Load user on mount
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      setIsLoggedIn(true);
+    const stored = sessionStorage.getItem("user");
+    if (stored) {
+      try {
+        const parsedUser = JSON.parse(stored);
+        setUser(parsedUser);
+        setIsLoggedIn(true);
+      } catch (e) {
+        console.error("Failed to parse user from session storage:", e);
+        sessionStorage.removeItem("user"); // Clear invalid data
+      }
     }
   }, []);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setUser(null);
-    router.push("/login");
-  };
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleProfileClick = () => {
-    router.push("/profile");
-    handleMenuClose();
-  };
-
-  const [refreshKey, setRefreshKey] = useState(0);
-
+  // Pet-rating callback (ensure this is still needed or adjust)
   const handleRatePet = async (petId, rating) => {
-    if (!user || !user.id) {
-      console.error("User ID is missing, cannot rate pet.");
+    if (!user?.id) {
+      console.error("No user ID");
       return;
     }
     try {
-      const response = await fetch('http://35.225.196.242:8080/api/user/rate', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, petId, rating }),
-      });
-
-      if (response.ok) {
-        const jsonResponse = await response.json();
-        const updatedUser = jsonResponse.user ? jsonResponse.user : jsonResponse;
-        setUser(updatedUser);
-        sessionStorage.setItem('user', JSON.stringify(updatedUser));
-        console.log("Rating processed; user preferences updated.");
-        setRefreshKey(prev => prev + 1);
-      } else {
-        console.error("Failed to update rating and preferences");
-      }
-    } catch (error) {
-      console.error("Error updating rating:", error);
+      const token = localStorage.getItem("jwtToken");
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
+      const res = await fetch(
+        `${BACKEND}/api/user/rate`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined, // Corrected undefined
+          },
+          body: JSON.stringify({ userId: user.id, petId, rating }),
+        }
+      );
+      if (!res.ok) throw new Error(res.statusText);
+      const json = await res.json();
+      const updated = json.user || json; // Adjust based on backend response
+      setUser(updated);
+      sessionStorage.setItem("user", JSON.stringify(updated));
+      setRefreshKey((k) => k + 1);
+    } catch (e) {
+      console.error("Rating error:", e);
     }
   };
 
-
+  // Determine user type
+  const isShelter = user?.userType === "SHELTER";
+  const isAdmin = user?.userType === "ADMIN"; // Check for Admin
 
   return (
     <>
       <Head>
-        <title>Pet Adoption - Home</title>
+        <title>Pet Adoption – Home</title>
       </Head>
 
-      {/* Navigation Bar */}
-      <AppBar position="static">
-        <Toolbar>
-          {/* Logo on the left */}
-          <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+      {/* Use shared NavBar */}
+      <NavBar />
+
+      <main>
+        {/* Hero Section */}
+        <Box
+          sx={{
+            height: 400,
+            position: "relative",
+            mb: 4,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "primary.light",
+          }}
+        >
+          <Box
+            sx={{ position: "absolute", width: "100%", height: "100%", zIndex: 1 }}
+          >
             <Image
-              src="/images/Home_Fur_Good_Logo.jpeg"
-              alt="Home Fur Good Logo"
-              width={50}
-              height={50}
+              src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg" // Ensure this path is correct
+              alt="Hero"
+              fill
+              style={{ objectFit: "cover" }}
               priority
             />
           </Box>
 
-          {/* Title */}
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Home Fur Good
-          </Typography>
-
-          {/* Right side: user menu or login/signup */}
-          {isLoggedIn ? (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
-                {user?.email}
-              </Typography>
-              <Avatar
-                sx={{ bgcolor: "secondary.main", cursor: "pointer" }}
-                onClick={handleProfileMenuOpen}
-              >
-                {(user?.email || "").charAt(0).toUpperCase()}
-              </Avatar>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-              >
-                <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
-              </Menu>
-            </Box>
-          ) : (
-            <Box>
-              <Button color="inherit" onClick={() => router.push("/login")}>
-                Login
-              </Button>
-              <Button color="inherit" onClick={() => router.push("/signup")}>
-                Sign Up
-              </Button>
-            </Box>
-          )}
-        </Toolbar>
-      </AppBar>
-
-      {/* Hero Section */}
-      <Box
-        sx={{
-          height: "400px",
-          position: "relative",
-          overflow: "hidden",
-          mb: 4,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "primary.light",
-        }}
-      >
-        {/* Background Image */}
-        <Box
-          sx={{ position: "absolute", zIndex: 1, width: "100%", height: "100%" }}
-        >
-          <Image
-            src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg"
-            alt="Pet adoption hero image"
-            fill
-            priority
-            style={{ objectFit: "cover" }}
-          />
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 2,
+              textAlign: "center",
+              color: "white",
+              bgcolor: "rgba(0,0,0,0.5)",
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            {/* === Conditional Hero Content === */}
+            {isAdmin ? (
+              <>
+                <Typography variant="h2" gutterBottom>
+                  Admin Portal Access
+                </Typography>
+                <Typography variant="h5" gutterBottom>
+                  Manage users and pets from your dashboard.
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  color="secondary"
+                  onClick={() => router.push("/profile")}
+                >
+                  Go to Admin Dashboard
+                </Button>
+              </>
+            ) : isShelter ? (
+              <>
+                <Typography variant="h2" gutterBottom>
+                  Welcome, {user?.shelterName || "Shelter"}!
+                </Typography>
+                <Typography variant="h5" gutterBottom>
+                  Post an Animal for Adoption Today!
+                </Typography>
+                <Stack direction="row" spacing={2} justifyContent="center">
+                  <Button
+                    variant="contained"
+                    size="large"
+                    color="secondary"
+                    onClick={() => router.push("/addPet")}
+                  >
+                    Post Animal
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    color="secondary"
+                    onClick={() => router.push("/adopt")}
+                  >
+                    See All Future Pets
+                  </Button>
+                </Stack>
+              </>
+            ) : (
+              <>
+                <Typography variant="h2" gutterBottom>
+                  Find Your Forever Friend
+                </Typography>
+                <Typography variant="h5" gutterBottom>
+                  Adopt a pet and change both your lives for the better
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  color="secondary"
+                  onClick={() => router.push("/adopt")}
+                >
+                  Browse Available Pets
+                </Button>
+              </>
+            )}
+            {/* === End Conditional Hero Content === */}
+          </Box>
         </Box>
 
-        {/* Foreground Text & Button */}
-        <Box
-          sx={{
-            position: "relative",
-            zIndex: 2,
-            textAlign: "center",
-            color: "white",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            p: 4,
-            borderRadius: 2,
-          }}
-        >
-          {user?.userType === "SHELTER" ? (
-            <>
-              <Typography
-                variant="h2"
-                component="h1"
-                sx={{ fontWeight: "bold", mb: 2 }}
-              >
-                Welcome, {user?.shelterName || "Shelter"}!
+        {/* Info Card */}
+        <Container maxWidth="lg" sx={{ mb: 4 }}>
+          <Card elevation={4}>
+            <CardContent>
+              <Typography variant="h3" align="center">
+                {/* === Conditional Title === */}
+                {isAdmin ? "Admin Portal" : "Pet Adoption"}
               </Typography>
-              <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
-                Post an Animal for Adoption Today!
+              <Typography variant="body1" color="text.secondary" align="center">
+                {/* === Conditional Description === */}
+                {isAdmin
+                  ? "Manage application users and pet listings."
+                  : isShelter
+                  ? "Post animals for adoption and help them find a loving home."
+                  : "Browse pets available for adoption and find your new best friend."}
               </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                color="secondary"
-                onClick={() => router.push("/post-animal")}
-              >
-                Post Animal
-              </Button>
-            </>
-          ) : (
-            <>
-              <Typography
-                variant="h2"
-                component="h1"
-                sx={{ fontWeight: "bold", mb: 2 }}
-              >
-                Find Your Forever Friend Scrum
-              </Typography>
-              <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
-                Adopt a pet and change both your lives for the better
-              </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                color="secondary"
-                onClick={() => router.push("/adopt")}
-              >
-                Browse Available Pets
-              </Button>
-            </>
-          )}
-        </Box>
-      </Box>
-
-      {/* A simple informational Card */}
-      <Container maxWidth="lg">
-        <Card sx={{ width: "100%" }} elevation={4}>
-          <CardContent>
-            <Typography variant="h3" align="center">
-              Pet Adoption Spring 2025
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {isLoggedIn && user?.userType === "SHELTER"
-                ? "Post animals for adoption and help them find a loving home."
-                : "Browse through pets available for adoption and find your new best friend."}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Container>
-
-      {/* Recommendations for adopter users */}
-      {isLoggedIn && user?.userType !== "SHELTER" && (
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Recommended Pets
-          </Typography>
-          <Recommendations userId={user.id} refreshKey={refreshKey} onRatePet={handleRatePet} />
+            </CardContent>
+          </Card>
         </Container>
-      )}
 
-      {/* Conditional Buttons for Events */}
-      <Container>
-        {isLoggedIn && user?.userType === "SHELTER" && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push("/ShelterEventsPage")}
-          >
-            Add Events (Shelter)
-          </Button>
+        {/* Recommendations (Only for non-admin, logged-in adopters) */}
+        {!isShelter && !isAdmin && isLoggedIn && user?.id && (
+          <Container maxWidth="lg" sx={{ mb: 4 }}>
+            <Typography variant="h4" align="center" gutterBottom>
+              Recommended Pets
+            </Typography>
+            <Recommendations
+              userId={user.id}
+              refreshKey={refreshKey}
+              onRatePet={handleRatePet}
+            />
+          </Container>
         )}
-        {isLoggedIn && user?.userType !== "SHELTER" && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => router.push("/AdopterEventsPage")}
-          >
-            View Events (Adopter)
-          </Button>
+
+        {/* Event Buttons (Not shown for Admin, adjust if needed) */}
+        {!isAdmin && (
+          <Container sx={{ textAlign: "center", mb: 4 }}>
+            {isShelter ? (
+              <Stack spacing={2} alignItems="center">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/ShelterEventsPage")}
+                >
+                  Add Events (Shelter)
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/ScheduledEventsPage")}
+                >
+                  Scheduled Events (Shelter)
+                </Button>
+              </Stack>
+            ) : isLoggedIn ? (
+              <Stack spacing={2} alignItems="center">
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/AdopterEventsPage")}
+                >
+                  Add Events (Adopter)
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  sx={{ maxWidth: 300 }}
+                  onClick={() => router.push("/JoinedEventsPage")}
+                >
+                  Scheduled Events (Adopter)
+                </Button>
+              </Stack>
+            ) : null}
+          </Container>
         )}
-      </Container>
+      </main>
     </>
   );
 }
