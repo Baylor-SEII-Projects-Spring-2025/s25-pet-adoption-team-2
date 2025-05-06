@@ -61,10 +61,10 @@ export default function NavBar() {
             }}
           >
             <Image
-              src="/images/Home_Fur_Good_Logo.jpeg"
+              src="/images/Home_Fur_Good_Logo.png"
               alt="Home Fur Good Logo"
-              width={40}
-              height={40}
+              width={60}
+              height={60}
             />
           </Box>
         </Link>

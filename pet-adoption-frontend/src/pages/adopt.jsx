@@ -61,14 +61,14 @@ export default function Adopt() {
 
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-  // load user
+  // load user (if logged in)
   useEffect(() => {
     const s = sessionStorage.getItem("user");
     if (s) setUser(JSON.parse(s));
   }, []);
 
   const isShelter = user?.userType === "SHELTER";
-  const isAdopter = user && user.userType !== "SHELTER";
+  // Removed the unused isAdopter variable
 
   const fetchPets = useCallback(
     async (p = 0, size = pageSize, state = filterState, city = filterCity) => {
@@ -80,6 +80,7 @@ export default function Adopt() {
         if (state) url += `&state=${encodeURIComponent(state)}`;
         if (city) url += `&city=${encodeURIComponent(city)}`;
 
+        // Fetch pets without requiring authentication
         const res = await fetch(
           url,
           token ? { headers: { Authorization: `Bearer ${token}` } } : {}
@@ -136,7 +137,12 @@ export default function Adopt() {
   };
 
   const handleInterest = useCallback((pet) => {
-    if (!user) return router.push("/login");
+    if (!user) {
+      // Redirect to login if user is not logged in
+      router.push("/login?redirect=/adopt");
+      return;
+    }
+    
     setSelectedPet(pet);
     const name = user.firstName && user.lastName
       ? `${user.firstName} ${user.lastName}`
@@ -205,7 +211,7 @@ export default function Adopt() {
           </Box>
         )}
         
-        {/* Filter section */}
+        {/* Filter section - available to all users */}
         <Box sx={{ width: '100%' }}>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>Filter Pets</Typography>
           <Grid container spacing={2} alignItems="center">
@@ -246,6 +252,7 @@ export default function Adopt() {
                 >
                   Clear
                 </Button>
+                {/* Near Me button is disabled if user isn't logged in or has no address */}
                 <Button
                   variant="outlined"
                   disabled={!user?.address}
@@ -267,7 +274,7 @@ export default function Adopt() {
           </Grid>
         </Box>
         
-        {/* Display settings */}
+        {/* Display settings - available to all users */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
           <FormControl size="small" sx={{ width: 140 }}>
             <InputLabel>Pets per page</InputLabel>
@@ -285,6 +292,17 @@ export default function Adopt() {
         </Box>
         
         {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
+        
+        {/* Login notification for anonymous users */}
+        {!user && (
+          <Alert severity="info" sx={{ width: '100%', mt: 2 }}>
+            You can browse pets without logging in, but you'll need to 
+            <Link href="/login?redirect=/adopt" passHref>
+              <Button color="primary" size="small" sx={{ mx: 1 }}>Login</Button>
+            </Link> 
+            to express interest in a pet.
+          </Alert>
+        )}
       </Stack>
     </CardContent>
   </Card>
@@ -295,11 +313,26 @@ export default function Adopt() {
                 {pets.map(pet => (
                   <Grid item xs={12} sm={6} md={4} key={pet.id}>
                     <PetCard pet={pet}>
-                      {isAdopter && <Button fullWidth variant="contained" onClick={()=>handleInterest(pet)}>Interested!</Button>}
+                      {/* Show button for all users, but with different text based on login status */}
+                      <Button 
+                        fullWidth 
+                        variant="contained" 
+                        onClick={() => handleInterest(pet)}
+                      >
+                        {user ? "Interested!" : "Login to Express Interest"}
+                      </Button>
                     </PetCard>
                   </Grid>
                 ))}
               </Grid>
+              
+              {/* No pets message */}
+              {pets.length === 0 && !loading && (
+                <Alert severity="info" sx={{ mt: 3 }}>
+                  No pets found matching your criteria. Try adjusting your filters.
+                </Alert>
+              )}
+              
               <Box sx={{mt:3}}>
                 <Pagination count={totalPages} page={page+1} onChange={(_,v)=>fetchPets(v-1)} />
               </Box>
