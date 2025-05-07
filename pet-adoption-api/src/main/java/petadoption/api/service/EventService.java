@@ -1,5 +1,7 @@
 package petadoption.api.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import petadoption.api.events.Events;
@@ -13,6 +15,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class EventService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
     @Autowired
     private EventRepository eventRepository;
@@ -106,9 +110,35 @@ public class EventService {
     }
 
     public List<Events> getEventsForShelter(Long userId) {
-        return eventRepository.findAll().stream()
-                .filter(e -> e.getCreatedBy() != null && e.getCreatedBy().getId().equals(userId))
+        logger.info("Fetching events for shelter user ID: {}", userId);
+
+        // Check if user exists
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isPresent()) {
+            logger.info("User found with ID: {}", userId);
+            // If your User class has other fields you can access, you can log them here
+            // e.g., logger.info("User found: {} ({})", user.get().getEmail(), user.get().getId());
+        } else {
+            logger.warn("User ID {} not found in database", userId);
+        }
+
+        List<Events> allEvents = eventRepository.findAll();
+        logger.info("Total events in database: {}", allEvents.size());
+
+        List<Events> userEvents = allEvents.stream()
+                .filter(e -> {
+                    boolean hasCreator = e.getCreatedBy() != null;
+                    boolean createdByUser = hasCreator && e.getCreatedBy().getId().equals(userId);
+                    if (hasCreator) {
+                        logger.debug("Event ID {}: Created by user {}? {}",
+                                e.getId(), e.getCreatedBy().getId(), createdByUser);
+                    }
+                    return hasCreator && createdByUser;
+                })
                 .collect(Collectors.toList());
+
+        logger.info("Found {} events created by user {}", userEvents.size(), userId);
+        return userEvents;
     }
 
     public List<Events> getEventsForAdopter(Long userId) {
