@@ -8,7 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import petadoption.api.events.Events;
 import petadoption.api.service.EventService;
+import petadoption.api.user.UserRepository;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Date;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -20,6 +27,9 @@ public class ShelterEventController {
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @PutMapping("/{id}")
     public ResponseEntity<Events> updateEventForShelter(@PathVariable Long id, @RequestBody Events eventDetails, @RequestParam Long userId) {
@@ -35,14 +45,30 @@ public class ShelterEventController {
 
     @GetMapping
     public ResponseEntity<List<Events>> getEventsForShelter(@RequestParam Long userId) {
-        logger.info("GET /api/shelter/events called with userId: {}", userId);
+        System.out.println("GET /api/shelter/events requested for userId: " + userId);
+
         try {
-            List<Events> events = eventService.getEventsForShelter(userId);
-            logger.info("Successfully retrieved {} events for shelter user: {}", events.size(), userId);
+            // Use the new safer method
+            List<Events> events = eventService.getSafeEventsForShelter(userId);
+            System.out.println("Successfully found " + events.size() + " events for shelter: " + userId);
             return ResponseEntity.ok(events);
         } catch (Exception e) {
-            logger.error("Error retrieving events for shelter user: {}", userId, e);
-            return ResponseEntity.status(500).body(null);
+            // Log the error to file
+            try {
+                FileWriter fw = new FileWriter("app-error.log", true);
+                fw.write(new Date().toString() + ": ERROR in ShelterEventController: " + e.getMessage() + "\n");
+                // Add stack trace for more detail
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                fw.write(sw.toString() + "\n");
+                fw.close();
+            } catch (IOException logError) {
+                System.out.println("Cannot write to log file");
+            }
+
+            System.out.println("Error in shelter events controller: " + e.getMessage());
+            // Return empty list on error to avoid 500 status
+            return ResponseEntity.ok(new ArrayList<>());
         }
     }
 }
