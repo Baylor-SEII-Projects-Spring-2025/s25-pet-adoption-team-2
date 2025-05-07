@@ -34,18 +34,23 @@ const ScheduledEvents = () => {
 
   useEffect(() => {
     if (userId && token) {
-      axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      .then(response => {
-        setEvents(response.data);
-        setErrorMsg("");
-      })
-      .catch(err => {
-        console.error("Error fetching scheduled events:", err);
-        setErrorMsg("Failed to fetch scheduled events.");
-      });
+      const fetchEvents = async () => {
+        try {
+          console.log("Sending request for userId:", userId);
+          const response = await axios.get(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          console.log("Received response:", response.data);
+          setEvents(response.data);
+          setErrorMsg("");
+        } catch (err) {
+          console.error("Error details:", err.response?.status, err.response?.data);
+          setErrorMsg(`Failed to fetch scheduled events: ${err.response?.status} ${err.response?.data || err.message}`);
+        }
+      };
+      
+      fetchEvents();
     }
   }, [userId, token]);
 

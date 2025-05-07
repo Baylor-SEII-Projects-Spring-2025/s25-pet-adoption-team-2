@@ -116,8 +116,6 @@ public class EventService {
         Optional<User> user = userRepository.findById(userId);
         if (user.isPresent()) {
             logger.info("User found with ID: {}", userId);
-            // If your User class has other fields you can access, you can log them here
-            // e.g., logger.info("User found: {} ({})", user.get().getEmail(), user.get().getId());
         } else {
             logger.warn("User ID {} not found in database", userId);
         }
@@ -129,10 +127,8 @@ public class EventService {
                 .filter(e -> {
                     boolean hasCreator = e.getCreatedBy() != null;
                     boolean createdByUser = hasCreator && e.getCreatedBy().getId().equals(userId);
-                    if (hasCreator) {
-                        logger.debug("Event ID {}: Created by user {}? {}",
-                                e.getId(), e.getCreatedBy().getId(), createdByUser);
-                    }
+                    logger.debug("Event ID {}: Created by user {}? {}",
+                            e.getId(), hasCreator ? e.getCreatedBy().getId() : "null", createdByUser);
                     return hasCreator && createdByUser;
                 })
                 .collect(Collectors.toList());
