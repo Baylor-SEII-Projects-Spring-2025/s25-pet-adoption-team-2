@@ -33,25 +33,43 @@ const ScheduledEvents = () => {
   const token = typeof window !== "undefined" ? localStorage.getItem("jwtToken") : null;
 
   useEffect(() => {
-    if (userId && token) {
-      const fetchEvents = async () => {
-        try {
-          console.log("Sending request for userId:", userId);
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          console.log("Received response:", response.data);
-          setEvents(response.data);
-          setErrorMsg("");
-        } catch (err) {
-          console.error("Error details:", err.response?.status, err.response?.data);
-          setErrorMsg(`Failed to fetch scheduled events: ${err.response?.status} ${err.response?.data || err.message}`);
+    const fetchData = async () => {
+      try {
+        console.log("Fetching events for user ID:", userId);
+        
+        if (!userId) {
+          console.log("No user ID available, cannot fetch events");
+          setErrorMsg("Please log in to view scheduled events.");
+          return;
         }
-      };
-      
-      fetchEvents();
-    }
+        
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`,
+          { 
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            // Add timeout to prevent long loading times
+            timeout: 10000
+          }
+        );
+        
+        console.log("Received events:", response.data ? response.data.length : 0);
+        setEvents(response.data || []);
+        setErrorMsg("");
+      } catch (err) {
+        console.error("Error details:", {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message
+        });
+        
+        // Set a user-friendly error message
+        setErrorMsg("Could not load events. Please try again later.");
+        // Initialize empty events to prevent UI issues
+        setEvents([]);
+      }
+    };
+  
+    fetchData();
   }, [userId, token]);
 
   const handleDialogOpen = (event) => {
