@@ -2,19 +2,16 @@ package petadoption.api.pet;
 
 import jakarta.persistence.*;
 import lombok.Data;
-// Removed unused User import for this specific entity definition
-// import petadoption.api.user.User;
 
 /**
  * Represents an adoptable pet. Includes status and adopter tracking.
  */
 @Data
 @Entity
-@Table(name = "pets") // Ensure this matches your actual table name
+@Table(name = "pets")
 public class Pet {
 
     @Id
-    // Explicitly confirm IDENTITY strategy for auto-increment columns (like MySQL)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PET_ID", nullable = false, updatable = false) // Primary key shouldn't be updatable
     private Long id;
@@ -50,7 +47,6 @@ public class Pet {
     @Column(name = "DESCRIPTION", columnDefinition = "MEDIUMTEXT")
     private String description;
 
-    // Maps to the database column storing the ID of the shelter.
     @Column(name = "adoption_center_id", nullable = false)
     private Long adoptionCenterId;
 
@@ -60,7 +56,6 @@ public class Pet {
     @Column(name = "AVAILABLE", nullable = false)
     private Boolean available = true;
 
-    // Maps to the database column storing the ID of the adopter.
     @Column(name = "ADOPTER_ID", nullable = true)
     private Long adopterId;
 
@@ -74,7 +69,7 @@ public class Pet {
             else if (weight <= 11) return "medium";
             else if (weight <= 16) return "large";
             else return "extra large";
-        } else { // Default: assume Dog
+        } else {
             if (weight <= 25) return "small";
             else if (weight <= 60) return "medium";
             else if (weight <= 100) return "large";

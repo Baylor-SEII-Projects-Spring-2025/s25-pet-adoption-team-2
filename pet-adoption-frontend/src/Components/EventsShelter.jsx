@@ -16,7 +16,6 @@ import {
 import axios from "axios";
 import EventList from "./EventList";
 
-//updated masterEvents with a new name property for each event
 const masterEvents = [
     {
         title: "Themed Adoption Days",
@@ -91,8 +90,7 @@ const masterEvents = [
 ];
 
 const EventsShelter = () => {
-    const theme = useTheme(); // Use the theme
-    
+    const theme = useTheme(); 
     const [events, setEvents] = useState(masterEvents);
     const [successMsg, setSuccessMsg] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
@@ -154,7 +152,6 @@ const EventsShelter = () => {
       };
 
       try {
-          // Get scheduled events for the shelter user only.
           const getUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`;
           const { data: scheduled } = await axios.get(getUrl, headers);
           const conflict = scheduled.find(

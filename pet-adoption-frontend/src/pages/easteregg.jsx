@@ -21,7 +21,7 @@ export default function EasterEgg() {
 
   return (
     <Box
-      className={`${roboto.className} easterFont`}        // ①
+      className={`${roboto.className} easterFont`}        
       onClick={e => {
         if (e.target.closest('a')) return;
         document.documentElement.requestFullscreen()?.catch(() => {});
@@ -55,7 +55,6 @@ export default function EasterEgg() {
         Send Apology Letter
       </a>
 
-      {/* ② force Roboto on every child of .easterFont */}
       <style jsx global>{`
         .easterFont,
         .easterFont * {

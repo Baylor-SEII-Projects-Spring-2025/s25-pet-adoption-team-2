@@ -22,7 +22,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import CloseIcon from '@mui/icons-material/Close';
-import PetsIcon from '@mui/icons-material/Pets'; // used for both cat and dog
+import PetsIcon from '@mui/icons-material/Pets'; 
 import { useColorMode } from '@/utils/theme';
 
 const FloatingThemeToggle = () => {
@@ -30,26 +30,24 @@ const FloatingThemeToggle = () => {
   const colorMode = useColorMode();
   const isDarkMode = theme.palette.mode === 'dark';
   
-  // Default to cat mode
   const [petMode, setPetMode] = useState('cat');
 
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
 
-  // Pet‑specific styling & sound
   const getPetColors = () => {
     if (petMode === 'cat') {
       return {
-        primary: '#ff9800',    // orange
-        secondary: '#ffc947',  // light orange
+        primary: '#ff9800',    
+        secondary: '#ffc947',  
         icon: <PetsIcon sx={{ color: '#ff9800' }} />,
         sound: 'Meow'
       };
     } else {
       return {
-        primary: '#2196f3',    // blue
-        secondary: '#90caf9',  // light blue
+        primary: '#2196f3',    
+        secondary: '#90caf9',  
         icon: <PetsIcon sx={{ color: '#2196f3' }} />,
         sound: 'Woof'
       };
@@ -71,7 +69,6 @@ const FloatingThemeToggle = () => {
     if (!text) return;
     const lower = text.toLowerCase();
 
-    // Easter egg: fullscreen + redirect
     if (lower.includes('credera') && lower.includes('hate')) {
       document.documentElement.requestFullscreen()?.catch(() => {});
       setTimeout(() => window.location.href = '/easteregg', 100);

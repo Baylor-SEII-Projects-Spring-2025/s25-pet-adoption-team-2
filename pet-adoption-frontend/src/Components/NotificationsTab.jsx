@@ -34,12 +34,10 @@ export default function NotificationsTab({ user }) {
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
   const token = localStorage.getItem("jwtToken");
   
-  // Use useMemo to prevent the authHeader from changing on every render
   const authHeader = useMemo(() => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
 
-  // Helpers for notification types
   const isAdoptionRequest = (text) =>
     Boolean(text?.startsWith("New adoption request"));
     
@@ -57,7 +55,6 @@ export default function NotificationsTab({ user }) {
     
   const isShelterResponse = (text) => text?.startsWith("Shelter response:");
 
-  // Define fetchNotifications with useCallback BEFORE using it in useEffect
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
@@ -73,9 +70,8 @@ export default function NotificationsTab({ user }) {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, BACKEND, authHeader]); // Using optional chaining for user?.id
+  }, [user?.id, BACKEND, authHeader]); 
 
-  // Only keep one useEffect to avoid duplicate calls
   useEffect(() => {
     if (user?.id) fetchNotifications();
   }, [user, fetchNotifications]);
@@ -96,8 +92,6 @@ export default function NotificationsTab({ user }) {
       console.error(e);
     }
   };
-
-  // --- Reply Handlers ---
   const openReply = (notification) => {
     setReplyNotification(notification);
     setReplyMessage("");
@@ -145,7 +139,6 @@ export default function NotificationsTab({ user }) {
 
   // --- Approve Adoption Handlers ---
   const openApprove = (notification) => {
-    // Only for requests or adopter responses
     if (
       !isAdoptionRequest(notification.text) &&
       !isAdopterResponse(notification.text)
@@ -200,7 +193,6 @@ export default function NotificationsTab({ user }) {
     }
   };
 
-  // Sort newest first
   const sorted = [...notifications].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );

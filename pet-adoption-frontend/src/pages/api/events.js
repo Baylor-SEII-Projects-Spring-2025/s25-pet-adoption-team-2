@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   const authHeader = headers.authorization;
 
   try {
-    // build axios options
     const opts = {
       url: `${BACKEND}/api/events`,
       method,
@@ -16,13 +15,11 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         ...(authHeader ? { Authorization: authHeader } : {}),
       },
-      // only attach a body for methods that support it
       ...(method !== "GET" && { data: body }),
     };
 
     const response = await axios(opts);
 
-    // mirror the status & payload
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error("Next.js /api/events error:", error);

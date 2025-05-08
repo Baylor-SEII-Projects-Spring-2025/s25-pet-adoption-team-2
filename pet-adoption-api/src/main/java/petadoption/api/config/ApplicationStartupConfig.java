@@ -17,7 +17,6 @@ public class ApplicationStartupConfig implements ApplicationListener<Application
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        // Ensure default admin password exists
         adminPasswordService.ensureDefaultPasswordExists();
     }
 }

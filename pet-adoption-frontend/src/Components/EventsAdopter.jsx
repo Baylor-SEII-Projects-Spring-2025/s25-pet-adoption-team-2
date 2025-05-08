@@ -9,11 +9,11 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import EventList from "./EventList";
-import { useColorMode } from "../utils/theme"; // Import the color mode hook
+import { useColorMode } from "../utils/theme"; 
 
 const EventsAdopter = () => {
-  const theme = useTheme(); // Use the theme
-  const colorMode = useColorMode(); // Access the color mode context
+  const theme = useTheme(); 
+  const colorMode = useColorMode(); 
   
   const [events, setEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState([]);
@@ -61,11 +61,9 @@ const EventsAdopter = () => {
   };
 
   const addEvent = async (event) => {
-    // clear any previous messages
     setSuccessMsg("");
     setErrorMsg("");
 
-    // Check if user already joined the event
     if (joinedEvents.some(e => e.id === event.id)) {
       setErrorMsg(`You have already signed up for event "${event.name}".`);
       return;
@@ -84,9 +82,7 @@ const EventsAdopter = () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setSuccessMsg(`You have successfully joined event "${event.name}"!`);
-      // Optionally update the joined events list
       setJoinedEvents(prev => [...prev, event]);
-      // Remove event from available events after joining
       setEvents(prev => prev.filter(e => e.id !== event.id));
     } catch (error) {
       console.error("Error adding attendee", error);

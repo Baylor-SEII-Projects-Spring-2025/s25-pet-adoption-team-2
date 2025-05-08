@@ -52,7 +52,6 @@ export default function Adopt() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // pagination and filters
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize, setPageSize] = useState(6);
@@ -61,7 +60,6 @@ export default function Adopt() {
 
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
 
-  // load user (if logged in)
   useEffect(() => {
     const s = sessionStorage.getItem("user");
     if (s) setUser(JSON.parse(s));
@@ -80,7 +78,6 @@ export default function Adopt() {
         if (state) url += `&state=${encodeURIComponent(state)}`;
         if (city) url += `&city=${encodeURIComponent(city)}`;
 
-        // Fetch pets without requiring authentication
         const res = await fetch(
           url,
           token ? { headers: { Authorization: `Bearer ${token}` } } : {}
@@ -99,12 +96,10 @@ export default function Adopt() {
     [BACKEND, filterState, filterCity, pageSize]
   );
 
-  // initial and on filter changes
   useEffect(() => {
     fetchPets(0);
   }, [fetchPets]);
 
-  // handlers
   const handleImportCSV = async () => {
     try {
       const token = localStorage.getItem("jwtToken");
@@ -138,7 +133,6 @@ export default function Adopt() {
 
   const handleInterest = useCallback((pet) => {
     if (!user) {
-      // Redirect to login if user is not logged in
       router.push("/login?redirect=/adopt");
       return;
     }
@@ -185,7 +179,6 @@ export default function Adopt() {
     }
   };
 
-  // Helper function to check if the pet belongs to the logged-in shelter
   const isPetOwnedByShelter = (pet) => {
     return isShelter && user?.id === pet.adoptionCenterId;
   };
@@ -202,7 +195,6 @@ export default function Adopt() {
       <Stack spacing={2} alignItems="center">
         <Typography variant="h3">Adopt a Pet</Typography>
         
-        {/* Shelter Management section - only visible to shelter users */}
         {isShelter && (
           <Box sx={{ width: '100%', mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
             <Typography variant="subtitle1" sx={{ mb: 1 }}>Shelter Management</Typography>
@@ -214,7 +206,6 @@ export default function Adopt() {
           </Box>
         )}
         
-        {/* Admin Controls section - only visible to admin users */}
         {isAdmin && (
           <Box sx={{ width: '100%', mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
             <Typography variant="subtitle1" sx={{ mb: 1 }}>Admin Controls</Typography>
@@ -228,7 +219,6 @@ export default function Adopt() {
           </Box>
         )}
         
-        {/* Filter section - available to all users */}
         <Box sx={{ width: '100%' }}>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>Filter Pets</Typography>
           <Grid container spacing={2} alignItems="center">
@@ -269,7 +259,6 @@ export default function Adopt() {
                 >
                   Clear
                 </Button>
-                {/* Near Me button is disabled if user isn't logged in or has no address */}
                 <Button
                   variant="outlined"
                   disabled={!user?.address}
@@ -291,7 +280,6 @@ export default function Adopt() {
           </Grid>
         </Box>
         
-        {/* Display settings - available to all users */}
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
           <FormControl size="small" sx={{ width: 140 }}>
             <InputLabel>Pets per page</InputLabel>
@@ -310,7 +298,6 @@ export default function Adopt() {
         
         {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
         
-        {/* Login notification for anonymous users */}
         {!user && (
           <Alert severity="info" sx={{ width: '100%', mt: 2 }}>
             You can browse pets without logging in, but you will need to 
@@ -330,7 +317,6 @@ export default function Adopt() {
                 {pets.map(pet => (
                   <Grid item xs={12} sm={6} md={4} key={pet.id}>
                     <PetCard pet={pet}>
-                      {/* Only show interest button if user is not a shelter or if the pet doesn't belong to this shelter */}
                       {!isPetOwnedByShelter(pet) && (
                         <Button 
                           fullWidth 
@@ -340,7 +326,6 @@ export default function Adopt() {
                           {user ? "Interested!" : "Login to Express Interest"}
                         </Button>
                       )}
-                      {/* Show a disabled button with message if shelter owns this pet */}
                       {isPetOwnedByShelter(pet) && (
                         <Button
                           fullWidth
@@ -355,7 +340,6 @@ export default function Adopt() {
                 ))}
               </Grid>
               
-              {/* No pets message */}
               {pets.length === 0 && !loading && (
                 <Alert severity="info" sx={{ mt: 3 }}>
                   No pets found matching your criteria. Try adjusting your filters.

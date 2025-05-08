@@ -33,10 +33,9 @@ public class AdminPasswordService {
      * Creates a default admin password if none exists
      */
     public void ensureDefaultPasswordExists() {
-        // Only create default password if no admin passwords exist
         if (adminPasswordRepository.count() == 0) {
             AdminPassword defaultPassword = new AdminPassword();
-            defaultPassword.setPassword("admin123"); // Default password - should be changed in production
+            defaultPassword.setPassword("admin123");
             defaultPassword.setDescription("Default admin password - please change");
             defaultPassword.setActive(true);
             adminPasswordRepository.save(defaultPassword);

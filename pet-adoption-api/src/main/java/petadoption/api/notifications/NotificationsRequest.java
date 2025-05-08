@@ -9,8 +9,6 @@ public class NotificationsRequest {
     private String displayName;
     private Long petId;
 
-    // Getters and setters with null checks
-
     public String getText() {
         return text;
     }

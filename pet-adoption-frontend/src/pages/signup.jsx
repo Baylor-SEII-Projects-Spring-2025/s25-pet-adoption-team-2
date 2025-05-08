@@ -21,7 +21,6 @@ import {
 } from "@mui/material";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
-// List of all 50 U.S. states
 const states = [
   "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia",
   "Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
@@ -35,11 +34,8 @@ export default function Signup() {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  // Track number of clicks on the hidden area
   const [secretClickCount, setSecretClickCount] = useState(0);
-  // Show admin option only after clicking the hidden button
   const [showAdminOption, setShowAdminOption] = useState(false);
-  // Admin password field
   const [adminPassword, setAdminPassword] = useState("");
   
   const [formData, setFormData] = useState({
@@ -58,18 +54,15 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Handle clicking the secret area - requires 3 clicks to activate
   const handleSecretClick = () => {
     const newCount = secretClickCount + 1;
     setSecretClickCount(newCount);
     
-    // Only show admin option after 3 clicks
     if (newCount >= 3) {
       setShowAdminOption(true);
     }
   };
 
-  // Reset clicks if clicked elsewhere
   useEffect(() => {
     const resetSecretClicks = () => setSecretClickCount(0);
     if (secretClickCount > 0 && secretClickCount < 3) {
@@ -98,7 +91,6 @@ export default function Signup() {
       return;
     }
     
-    // If admin type is selected but no admin password, show error
     if (formData.userType === "ADMIN" && (!adminPassword || adminPassword.trim() === "")) {
       setError("Admin password is required");
       return;
@@ -109,7 +101,6 @@ export default function Signup() {
     setSuccess("");
     
     try {
-      // Create request body - include admin password if needed
       const requestBody = {
         email: formData.email,
         password: formData.password,
@@ -122,7 +113,6 @@ export default function Signup() {
         shelterName: formData.shelterName,
       };
       
-      // Only include adminPassword field if trying to create admin account
       if (formData.userType === "ADMIN") {
         requestBody.adminPassword = adminPassword;
       }
@@ -136,7 +126,6 @@ export default function Signup() {
         }
       );
       
-      // Handle errors
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text || "Sign up failed");
@@ -145,7 +134,6 @@ export default function Signup() {
       const data = await response.json();
       setSuccess(`Account created! Welcome, ${data.email}`);
       
-      // Reset form
       setFormData({
         email: "",
         password: "",
@@ -190,12 +178,10 @@ export default function Signup() {
           transition: "background-image 0.3s ease-in-out",
         }}
       >
-        {/* Back to Home button */}
         <Box sx={{ position: "absolute", top: 16, left: 16 }}>
           <Button variant="contained" onClick={() => router.push("/")}>Back to Home</Button>
         </Box>
         
-        {/* Secret clickable area - top right corner */}
         <Box
           onClick={handleSecretClick}
           sx={{
@@ -206,12 +192,10 @@ export default function Signup() {
             height: 50,
             cursor: showAdminOption ? "default" : "pointer",
             zIndex: 10,
-            // Invisible to the user
             background: "transparent",
           }}
         />
         
-        {/* Admin mode indicator - only shown when admin mode is unlocked */}
         {showAdminOption && (
           <Tooltip title="Admin signup enabled" placement="left">
             <IconButton
@@ -292,7 +276,6 @@ export default function Signup() {
                   </Select>
                 </FormControl>
                 
-                {/* Admin password field - only shown when ADMIN is selected */}
                 {formData.userType === "ADMIN" && showAdminOption && (
                   <TextField
                     label="Admin Password"

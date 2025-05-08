@@ -39,13 +39,11 @@ export default function AddPet() {
   const [error, setError] = useState("");
   const [openSuccess, setOpenSuccess] = useState(false);
 
-  // Dropdown options
   const speciesOptions = ["Dog", "Cat"];
   const genderOptions = ["Male", "Female", "Other"];
   const healthStatusOptions = ["Excellent", "Good", "Fair", "Poor"];
   const coatLengthOptions = ["Hairless", "Short", "Medium", "Long"];
 
-  // Guard: only allow logged-in shelter users
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
     if (!stored) {
@@ -96,11 +94,9 @@ export default function AddPet() {
       process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
     const formData = new FormData();
 
-    // Append pet fields
     Object.entries(pet).forEach(([key, val]) => {
       formData.append(key, val);
     });
-    // Use shelter’s own ID
     formData.append("adoptionCenterId", user.id);
 
     if (selectedFile) {
@@ -139,7 +135,6 @@ export default function AddPet() {
   };
 
   if (!user) {
-    // while the redirect is in flight
     return null;
   }
 

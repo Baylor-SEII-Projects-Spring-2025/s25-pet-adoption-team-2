@@ -25,22 +25,18 @@ const ProtectedRoute = ({ children, requiredUserType }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Skip the check during initial loading
     if (loading) return;
 
-    // If not authenticated, redirect to login
     if (!isAuthenticated()) {
       router.replace('/login');
       return;
     }
 
-    // If a specific user type is required, check for that as well
     if (requiredUserType && user?.userType !== requiredUserType) {
       router.replace('/unauthorized');
     }
   }, [isAuthenticated, loading, requiredUserType, router, user]);
 
-  // Show loading while checking authentication
   if (loading) {
     return (
       <Box
@@ -56,12 +52,10 @@ const ProtectedRoute = ({ children, requiredUserType }) => {
     );
   }
 
-  // Show the protected content if authenticated and has right permissions
   if (isAuthenticated() && (!requiredUserType || user?.userType === requiredUserType)) {
     return children;
   }
 
-  // Return null during redirect to avoid flashing content
   return null;
 };
 

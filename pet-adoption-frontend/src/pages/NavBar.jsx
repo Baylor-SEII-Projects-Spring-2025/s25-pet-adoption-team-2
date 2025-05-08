@@ -82,7 +82,6 @@ export default function NavBar() {
           </Box>
         </Link>
         
-        {/* Using the custom styled component instead of regular Typography */}
         <LogoText variant="h6">
           Home Fur Good
         </LogoText>

@@ -15,7 +15,7 @@ import {
 import axios from "axios";
 
 const JoinedEvents = () => {
-  const theme = useTheme(); // Use the theme
+  const theme = useTheme(); 
   
   const [events, setEvents] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");

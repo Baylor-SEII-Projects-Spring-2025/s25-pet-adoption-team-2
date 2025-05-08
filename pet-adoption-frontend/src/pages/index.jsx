@@ -11,8 +11,8 @@ import {
   Stack,
 } from "@mui/material";
 import Image from "next/image";
-import NavBar from "./NavBar"; // Assuming NavBar exists
-import Recommendations from "../Components/Recommendations"; // Assuming Recommendations exists
+import NavBar from "./NavBar"; 
+import Recommendations from "../Components/Recommendations"; 
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,7 +20,6 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Load user on mount
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
     if (stored) {
@@ -30,12 +29,11 @@ export default function HomePage() {
         setIsLoggedIn(true);
       } catch (e) {
         console.error("Failed to parse user from session storage:", e);
-        sessionStorage.removeItem("user"); // Clear invalid data
+        sessionStorage.removeItem("user"); 
       }
     }
   }, []);
 
-  // Pet-rating callback (ensure this is still needed or adjust)
   const handleRatePet = async (petId, rating) => {
     if (!user?.id) {
       console.error("No user ID");
@@ -50,14 +48,14 @@ export default function HomePage() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : undefined, // Corrected undefined
+            Authorization: token ? `Bearer ${token}` : undefined, 
           },
           body: JSON.stringify({ userId: user.id, petId, rating }),
         }
       );
       if (!res.ok) throw new Error(res.statusText);
       const json = await res.json();
-      const updated = json.user || json; // Adjust based on backend response
+      const updated = json.user || json; 
       setUser(updated);
       sessionStorage.setItem("user", JSON.stringify(updated));
       setRefreshKey((k) => k + 1);
@@ -66,9 +64,8 @@ export default function HomePage() {
     }
   };
 
-  // Determine user type
   const isShelter = user?.userType === "SHELTER";
-  const isAdmin = user?.userType === "ADMIN"; // Check for Admin
+  const isAdmin = user?.userType === "ADMIN"; 
 
   return (
     <>
@@ -76,11 +73,9 @@ export default function HomePage() {
         <title>Pet Adoption – Home</title>
       </Head>
 
-      {/* Use shared NavBar */}
       <NavBar />
 
       <main>
-        {/* Hero Section */}
         <Box
           sx={{
             height: 400,
@@ -96,7 +91,7 @@ export default function HomePage() {
             sx={{ position: "absolute", width: "100%", height: "100%", zIndex: 1 }}
           >
             <Image
-              src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg" // Ensure this path is correct
+              src="/images/krista-mangulsone-9gz3wfHr65U-unsplash.jpg" 
               alt="Hero"
               fill
               style={{ objectFit: "cover" }}
@@ -115,7 +110,6 @@ export default function HomePage() {
               borderRadius: 2,
             }}
           >
-            {/* === Conditional Hero Content === */}
             {isAdmin ? (
               <>
                 <Typography variant="h2" gutterBottom>
@@ -178,20 +172,16 @@ export default function HomePage() {
                 </Button>
               </>
             )}
-            {/* === End Conditional Hero Content === */}
           </Box>
         </Box>
 
-        {/* Info Card */}
         <Container maxWidth="lg" sx={{ mb: 4 }}>
           <Card elevation={4}>
             <CardContent>
               <Typography variant="h3" align="center">
-                {/* === Conditional Title === */}
                 {isAdmin ? "Admin Portal" : "Pet Adoption"}
               </Typography>
               <Typography variant="body1" color="text.secondary" align="center">
-                {/* === Conditional Description === */}
                 {isAdmin
                   ? "Manage application users and pet listings."
                   : isShelter
@@ -202,7 +192,6 @@ export default function HomePage() {
           </Card>
         </Container>
 
-        {/* Recommendations (Only for non-admin, logged-in adopters) */}
         {!isShelter && !isAdmin && isLoggedIn && user?.id && (
           <Container maxWidth="lg" sx={{ mb: 4 }}>
             <Typography variant="h4" align="center" gutterBottom>
@@ -216,7 +205,6 @@ export default function HomePage() {
           </Container>
         )}
 
-        {/* Event Buttons (Not shown for Admin, adjust if needed) */}
         {!isAdmin && (
           <Container sx={{ textAlign: "center", mb: 4 }}>
             {isShelter ? (

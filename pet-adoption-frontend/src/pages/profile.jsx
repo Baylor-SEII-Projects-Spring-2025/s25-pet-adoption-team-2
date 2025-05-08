@@ -20,13 +20,12 @@ import {
   Typography,
   Stack,
   Alert,
-  IconButton, // Import IconButton
+  IconButton, 
 } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete'; // Import Delete Icon
-import PetCard from "../Components/PetCard"; // Assuming PetCard exists
-import NotificationsTab from "../Components/NotificationsTab"; // Assuming NotificationsTab exists
+import DeleteIcon from '@mui/icons-material/Delete'; 
+import PetCard from "../Components/PetCard"; 
+import NotificationsTab from "../Components/NotificationsTab"; 
 
-// Helper TabPanel component
 function TabPanel({ children, value, index, ...other }) {
   return (
     <div
@@ -41,7 +40,6 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-// --- Admin Dashboard Component ---
 function AdminDashboard({ user, BACKEND }) {
   const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
@@ -50,16 +48,15 @@ function AdminDashboard({ user, BACKEND }) {
   const [loadingPets, setLoadingPets] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState(null); // Tracks loading state for delete actions by ID
+  const [actionLoading, setActionLoading] = useState(null); 
 
   const handleTabChange = (_, newValue) => {
     setTabValue(newValue);
-    setError(''); // Clear errors on tab change
+    setError(''); 
   };
 
   const getToken = () => localStorage.getItem("jwtToken");
 
-  // Fetch All Pets (Admin)
   const fetchAllPets = useCallback(async () => {
     setLoadingPets(true);
     setError('');
@@ -75,7 +72,6 @@ function AdminDashboard({ user, BACKEND }) {
       });
       if (!res.ok) throw new Error(`Pet fetch failed (${res.status}): ${await res.text()}`);
       const data = await res.json();
-      // If paginated, use data.content, otherwise use data
       setPets(data.content || data || []);
     } catch (err) {
       console.error("Pet fetch error:", err);
@@ -86,7 +82,6 @@ function AdminDashboard({ user, BACKEND }) {
     }
   }, [BACKEND]);
 
-  // Fetch All Users (Admin)
   const fetchAllUsers = useCallback(async () => {
     setLoadingUsers(true);
     setError('');
@@ -112,7 +107,6 @@ function AdminDashboard({ user, BACKEND }) {
     }
   }, [BACKEND, user?.id]);
 
-  // Delete Pet (Admin)
   const handleDeletePet = async (petId) => {
     if (!window.confirm(`Are you sure you want to permanently delete pet ID ${petId}? This action cannot be undone.`)) return;
     setError('');
@@ -131,7 +125,7 @@ function AdminDashboard({ user, BACKEND }) {
        });
       if (!res.ok) throw new Error(`Delete failed (${res.status}): ${await res.text()}`);
       alert('Pet deleted successfully!');
-      fetchAllPets(); // Refresh the list
+      fetchAllPets();
     } catch (err) {
       console.error("Delete pet error:", err);
       setError(`Failed to delete pet ID ${petId}: ${err.message}`);
@@ -140,7 +134,6 @@ function AdminDashboard({ user, BACKEND }) {
     }
   };
 
-  // Delete User (Admin)
   const handleDeleteUser = async (userIdToDelete, userEmail) => {
      if (userIdToDelete === user.id) {
        alert("You cannot delete your own account from this interface.");
@@ -156,15 +149,13 @@ function AdminDashboard({ user, BACKEND }) {
         return;
       }
      try {
-        // *** BACKEND TODO: Create admin-only endpoint DELETE /api/admin/users/{userId} ***
-        // This endpoint should call UserRepository.deleteById(userId) with safety checks
         const res = await fetch(`${BACKEND}/api/admin/users/${userIdToDelete}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error(`Delete failed (${res.status}): ${await res.text()}`);
         alert(`User ${userEmail} deleted successfully!`);
-        fetchAllUsers(); // Refresh the list
+        fetchAllUsers(); 
       } catch (err) {
         console.error("Delete user error:", err);
         setError(`Failed to delete user ID ${userIdToDelete}: ${err.message}`);
@@ -173,16 +164,13 @@ function AdminDashboard({ user, BACKEND }) {
       }
   };
 
-  // Fetch data when tabs become visible or component mounts
   useEffect(() => {
     if (tabValue === 0) fetchAllPets();
     else if (tabValue === 1) fetchAllUsers();
   }, [tabValue, fetchAllPets, fetchAllUsers]);
 
-  // Get user name or email for display
   const getUserDisplayName = (u) => {
       const name = `${u.firstName || ''} ${u.lastName || ''}`.trim();
-      // Use emailAddress field from User.java
       return name || u.emailAddress || 'Unnamed User';
   }
   const getPetDisplayName = (p) => p.name || 'Unnamed Pet';
@@ -191,13 +179,11 @@ function AdminDashboard({ user, BACKEND }) {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Paper elevation={3}>
-        {/* Admin Header */}
         <Box sx={{ p: 3, bgcolor: 'primary.main', color: 'primary.contrastText', display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box>
             <Typography variant="h4">Admin Dashboard</Typography>
             <Typography variant="subtitle1">Welcome, {getUserDisplayName(user)}!</Typography>
           </Box>
-          {/* Add the navigation button */}
           <Button 
             variant="contained" 
             color="secondary" 
@@ -207,7 +193,6 @@ function AdminDashboard({ user, BACKEND }) {
             Browse Pets
           </Button>
         </Box>
-         {/* Admin Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="admin dashboard tabs">
             <Tab label="Manage Pets" id="admin-tab-0" aria-controls="admin-tabpanel-0" />
@@ -217,7 +202,6 @@ function AdminDashboard({ user, BACKEND }) {
 
         {error && <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>}
 
-        {/* Pet Management Tab */}
         <TabPanel value={tabValue} index={0} id="admin-tabpanel-0" aria-labelledby="admin-tab-0">
            <Typography variant="h6" gutterBottom>Pet Listings</Typography>
            {loadingPets ? <CircularProgress /> : (
@@ -240,7 +224,6 @@ function AdminDashboard({ user, BACKEND }) {
                  >
                    <ListItemText
                      primary={getPetDisplayName(pet)}
-                      // Using adoptionCenterId from Pet.java
                       secondary={`ID: ${pet.id} | Type: ${pet.species || '?'} | Breed: ${pet.breed || '?'} | ShelterID: ${pet.adoptionCenterId || '?'}`}
                    />
                  </ListItem>
@@ -249,7 +232,6 @@ function AdminDashboard({ user, BACKEND }) {
            )}
          </TabPanel>
 
-        {/* User Management Tab */}
         <TabPanel value={tabValue} index={1} id="admin-tabpanel-1" aria-labelledby="admin-tab-1">
            <Typography variant="h6" gutterBottom>User Accounts (excluding current admin)</Typography>
           {loadingUsers ? <CircularProgress /> : (
@@ -262,7 +244,6 @@ function AdminDashboard({ user, BACKEND }) {
                       <IconButton
                         edge="end"
                         aria-label={`Delete user ${getUserDisplayName(usr)}`}
-                        // Using emailAddress field from User.java
                         onClick={() => handleDeleteUser(usr.id, usr.emailAddress || 'unknown email')}
                         disabled={actionLoading === `user-${usr.id}`}
                       >
@@ -273,7 +254,6 @@ function AdminDashboard({ user, BACKEND }) {
                  >
                    <ListItemText
                      primary={getUserDisplayName(usr)}
-                      // Using emailAddress and userType fields from User.java
                      secondary={`ID: ${usr.id} | Email: ${usr.emailAddress || '?'} | Type: ${usr.userType || '?'}`}
                   />
                 </ListItem>
@@ -287,11 +267,9 @@ function AdminDashboard({ user, BACKEND }) {
 }
 
 
-// --- Standard User Profile Component ---
 function UserProfile({ user, BACKEND }) {
   const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
-  // Use emailAddress based on User.java
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -306,10 +284,8 @@ function UserProfile({ user, BACKEND }) {
 
   const isShelter = user?.userType === "SHELTER";
 
-  // Populate form fields effect
   useEffect(() => {
       if (user) {
-        // Use emailAddress based on User.java
         setEmail(user.emailAddress || "");
         setFirstName(user.firstName || "");
         setLastName(user.lastName || "");
@@ -319,16 +295,14 @@ function UserProfile({ user, BACKEND }) {
           setShelterName(user.shelterName || "");
         }
       }
-  }, [user, isShelter]); // Added isShelter dependency
+  }, [user, isShelter]); 
 
-  // Fetch "My Pets" (adopted or listed by shelter)
   const fetchMyPets = useCallback(async () => {
     if (!user?.id) return;
     setLoadingMyPets(true);
     setMyPetsError("");
     setMyPets([]);
 
-    // Endpoints match existing PetEndpoint GET methods
     const endpoint = isShelter
         ? `${BACKEND}/api/pets/shelter/${user.id}`
         : `${BACKEND}/api/pets/adopter/${user.id}`;
@@ -348,16 +322,14 @@ function UserProfile({ user, BACKEND }) {
     } finally {
       setLoadingMyPets(false);
     }
-  }, [BACKEND, user, isShelter]); // Added isShelter dependency
+  }, [BACKEND, user, isShelter]); 
 
-  // Fetch pets when "My Pets" tab is active
   useEffect(() => {
     if (tabValue === 1) {
       fetchMyPets();
     }
   }, [tabValue, fetchMyPets]);
 
-  // --- Handlers ---
   const handleLogout = () => {
     sessionStorage.removeItem("user");
     localStorage.removeItem("jwtToken");
@@ -377,22 +349,19 @@ function UserProfile({ user, BACKEND }) {
 
     const payload = {
       id: user.id,
-      // Send emailAddress based on User.java
       emailAddress: email,
       firstName,
       lastName,
       phone,
       address,
-      shelterName: isShelter ? shelterName : null, // Send shelterName only if shelter
-      userType: user.userType, // Include userType, backend might need it
-      // DO NOT send password here for security reasons
+      shelterName: isShelter ? shelterName : null, 
+      userType: user.userType, 
+
     };
 
     try {
       const token = localStorage.getItem("jwtToken");
-      // *** BACKEND TODO: Ensure PUT /api/user or /users/{id} exists ***
-      // This endpoint should handle updates via UserService.saveUser(user)
-      const res = await fetch(`${BACKEND}/api/user`, { // Or /users/${user.id}
+      const res = await fetch(`${BACKEND}/api/user`, { 
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -400,10 +369,9 @@ function UserProfile({ user, BACKEND }) {
         },
         body: JSON.stringify(payload),
       });
-      const data = await res.json(); // Assume backend returns updated user
+      const data = await res.json(); 
       if (!res.ok) throw new Error(data.error || data.message || `Update failed status ${res.status}`);
 
-      // Update session storage with the LATEST user data from backend response
       sessionStorage.setItem("user", JSON.stringify(data));
       setUpdateMessage("Profile updated successfully!");
        setTimeout(() => setUpdateMessage(""), 5000);
@@ -414,16 +382,14 @@ function UserProfile({ user, BACKEND }) {
     }
   };
 
-   // Get user name or email for display
    const getUserDisplayName = (u) => {
        const name = `${u.firstName || ''} ${u.lastName || ''}`.trim();
-       return name || u.shelterName || u.emailAddress || 'User Profile'; // Show Shelter name if applicable
+       return name || u.shelterName || u.emailAddress || 'User Profile'; 
    }
 
   return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Paper elevation={3}>
-              {/* Header Section */}
                <Box sx={{ p: 3,
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
@@ -435,12 +401,10 @@ function UserProfile({ user, BACKEND }) {
                   height: 80,
                   mb: { xs: 2, sm: 0 },
                   mr: { xs: 0, sm: 3 },bgcolor: "secondary.main", color: "white"}}>
-                     {/* Prioritize first name/shelter name initials */}
                      {(user.firstName?.charAt(0) || user.shelterName?.charAt(0) || user.emailAddress?.charAt(0) || 'U').toUpperCase()}
                  </Avatar>
                  <Box>
                      <Typography variant="h4">{getUserDisplayName(user)}</Typography>
-                     {/* Use emailAddress */}
                      <Typography variant="subtitle1">{user.emailAddress}</Typography>
                      <Typography variant="caption" display="block">
                          Type: {user.userType || 'Unknown'} | ID: {user.id || 'N/A'}
@@ -451,7 +415,6 @@ function UserProfile({ user, BACKEND }) {
                   </Button>
               </Box>
 
-              {/* Tabs */}
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                   <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto" aria-label="profile tabs">
                       <Tab label="Profile Info" id="profile-tab-0" aria-controls="profile-tabpanel-0" />
@@ -497,7 +460,6 @@ function UserProfile({ user, BACKEND }) {
                            {myPets.map((pet) => (
                                <Grid item xs={12} sm={6} md={4} key={pet.id}>
                                    <PetCard pet={pet}>
-                                     {/* Optional actions for user's own pets */}
                                    </PetCard>
                                </Grid>
                            ))}
@@ -507,7 +469,6 @@ function UserProfile({ user, BACKEND }) {
                            <Typography gutterBottom>
                                {isShelter ? "You haven't listed any pets yet." : "No adopted pets found."}
                            </Typography>
-                           {/* ... existing message and button ... */}
                              <Button variant="contained" sx={{ mt: 2 }} onClick={() => router.push(isShelter ? "/addPet" : "/adopt")}>
                                {isShelter ? "Add a Pet" : "Browse Pets"}
                            </Button>
@@ -520,7 +481,6 @@ function UserProfile({ user, BACKEND }) {
                    <Divider sx={{ mb: 2 }} />
                    {updateMessage && <Alert severity="success" sx={{ mb: 2 }}>{updateMessage}</Alert>}
                    {updateError && <Alert severity="error" sx={{ mb: 2 }}>{updateError}</Alert>}
-                   {/* Use emailAddress */}
                    <TextField fullWidth required label="Email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" InputLabelProps={{ shrink: true }} type="email"/>
                    {isShelter ? (
                        <TextField fullWidth required label="Shelter Name" value={shelterName} onChange={(e) => setShelterName(e.target.value)} margin="normal" InputLabelProps={{ shrink: true }}/>
@@ -546,7 +506,6 @@ function UserProfile({ user, BACKEND }) {
 }
 
 
-// --- Main Profile Page Component (Conditional Rendering Logic) ---
 export default function ProfilePage() {
   const router = useRouter();
   const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080";
@@ -554,7 +513,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
 
-  // Fetch full user details on mount
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
     const token = localStorage.getItem("jwtToken");
@@ -568,7 +526,7 @@ export default function ProfilePage() {
     let parsedUserId;
     try {
         const parsed = JSON.parse(storedUser);
-        parsedUserId = parsed.id || parsed.userId; // Get ID from session
+        parsedUserId = parsed.id || parsed.userId; 
         if (!parsedUserId) throw new Error("User ID missing.");
     } catch (e) {
         console.error("Session parse error:", e);
@@ -580,8 +538,6 @@ export default function ProfilePage() {
         return;
     }
 
-    // *** BACKEND TODO: Ensure GET /users/{userId} endpoint exists ***
-    // This should call UserService.findUser(userId)
     fetch(`${BACKEND}/users/${parsedUserId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -595,7 +551,6 @@ export default function ProfilePage() {
         return res.json();
       })
       .then((data) => {
-         // Update session storage with fresh data from backend
         sessionStorage.setItem("user", JSON.stringify(data));
         setUser(data);
         setFetchError('');
@@ -612,22 +567,20 @@ export default function ProfilePage() {
 
   }, [BACKEND, router]);
 
-  // Render based on loading state, errors, or user type
-  if (loading) { /* ... loading indicator ... */
+  if (loading) { 
      return (
       <Container sx={{ textAlign: "center", mt: 8 }}>
         <CircularProgress /> <Typography sx={{ mt: 2 }}>Loading profile...</Typography>
       </Container>
     );
    }
-  if (fetchError) { /* ... error display ... */
+  if (fetchError) { 
      return ( <Container sx={{ textAlign: "center", mt: 8 }}> <Alert severity="error">{fetchError}</Alert> </Container> );
    }
-  if (!user) { /* ... handling missing user/redirect state ... */
+  if (!user) { 
       return ( <Container sx={{ textAlign: "center", mt: 8 }}> <Typography>Redirecting...</Typography> <CircularProgress /> </Container> );
   }
 
-  // Determine user type AFTER user data is loaded
   const isAdmin = user?.userType === 'ADMIN';
 
   return (

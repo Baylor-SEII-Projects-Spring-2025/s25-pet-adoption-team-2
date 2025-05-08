@@ -2,22 +2,21 @@ import React, { useState, useEffect } from "react";
 import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
-// Define the palette for both modes
 const lightModeColors = {
   primary: {
-    main: "#76B5B9", // A blue that matches the paw prints in light mode
+    main: "#76B5B9", 
     light: "#42a5f5",
     dark: "#1565c0",
     contrastText: "#fff",
   },
   secondary: {
-    main: "#ff8a65", // Orange/peach from the light mode background
+    main: "#ff8a65", 
     light: "#ffab91",
     dark: "#e57373",
     contrastText: "#000",
   },
   background: {
-    default: "transparent", // Changed to transparent to show the background image
+    default: "transparent", 
     paper: "#fff3e0",
   },
   text: {
@@ -28,19 +27,19 @@ const lightModeColors = {
 
 const darkModeColors = {
   primary: {
-    main: "#2196f3", // Bright blue for paw prints in dark mode
+    main: "#2196f3", 
     light: "#64b5f6",
     dark: "#1976d2",
     contrastText: "#fff",
   },
   secondary: {
-    main: "#90caf9", // Lighter blue for accents
+    main: "#90caf9", 
     light: "#bbdefb",
     dark: "#64b5f6",
     contrastText: "#000",
   },
   background: {
-    default: "transparent", // Changed to transparent to show the background image
+    default: "transparent", 
     paper: "#1a2a38",
   },
   text: {
@@ -57,14 +56,12 @@ export const getDesignTokens = (mode) => ({
   typography: {
     fontFamily: "'MilkyWay', Roboto, Noto Sans, sans-serif",
     fontSize: 14,
-    // Headline variants
     h6: {
       fontFamily: "'MilkyWay', Roboto, sans-serif",
       fontWeight: 75, 
       letterSpacing: '1px', 
       textShadow: '0.5px 0.5px 0px rgba(0,0,0,0.2)', 
     },
-    // Add explicit font family for other typography variants
     h1: {
       fontFamily: "'MilkyWay', Roboto, sans-serif",
     },
@@ -80,7 +77,6 @@ export const getDesignTokens = (mode) => ({
     h5: {
       fontFamily: "'MilkyWay', Roboto, sans-serif",
     },
-    // Body text variants
     body1: {
       fontFamily: "'MilkyWay', Roboto, sans-serif",
     },
@@ -88,7 +84,6 @@ export const getDesignTokens = (mode) => ({
       fontSize: 14,
       fontFamily: "'MilkyWay', Roboto, sans-serif",
     },
-    // Additional typography variants
     subtitle1: {
       fontFamily: "'MilkyWay', Roboto, sans-serif",
     },
@@ -165,7 +160,6 @@ export const useColorMode = () => {
 export const PetAdoptionThemeProvider = ({ children }) => {
   const [mode, setMode] = useState('light');
   
-  // Function to apply body classes for background images
   const applyBodyClass = (newMode) => {
     if (typeof document !== 'undefined') {
       document.body.classList.remove('light-mode', 'dark-mode');
@@ -173,16 +167,13 @@ export const PetAdoptionThemeProvider = ({ children }) => {
     }
   };
   
-  // Check for saved preference in localStorage
   useEffect(() => {
-    // Only access localStorage on the client side
     if (typeof window !== 'undefined') {
       const savedMode = localStorage.getItem('colorMode');
       if (savedMode) {
         setMode(savedMode);
         applyBodyClass(savedMode);
       } else {
-        // Check user's system preference
         const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialMode = prefersDarkMode ? 'dark' : 'light';
         setMode(initialMode);
@@ -196,7 +187,6 @@ export const PetAdoptionThemeProvider = ({ children }) => {
       toggleColorMode: () => {
         setMode((prevMode) => {
           const newMode = prevMode === 'light' ? 'dark' : 'light';
-          // Only access localStorage on the client side
           if (typeof window !== 'undefined') {
             localStorage.setItem('colorMode', newMode);
             applyBodyClass(newMode);
@@ -209,7 +199,6 @@ export const PetAdoptionThemeProvider = ({ children }) => {
     [mode],
   );
 
-  // Create the theme and make it responsive
   const theme = React.useMemo(
     () => responsiveFontSizes(createTheme(getDesignTokens(mode))),
     [mode],

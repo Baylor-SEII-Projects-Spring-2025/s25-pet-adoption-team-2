@@ -3,17 +3,14 @@ import { Card, CardContent, Typography, CardMedia, Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 export default function PetCard({ pet, children }) {
-  // Access MUI theme for light/dark mode
   const theme = useTheme();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://35.225.196.242:8080';
 
-  // Theme-specific placeholder image URLs
   const placeholderUrl =
     theme.palette.mode === 'dark'
       ? `${backendUrl}/images/no-photo-dark.png`
       : `${backendUrl}/images/no-photo-light.png`;
 
-  // Compute the correct image URL (custom, absolute, or relative)
   const getImageUrl = () => {
     if (!pet.imageUrl || pet.imageUrl.trim() === '') {
       return placeholderUrl;
@@ -64,7 +61,6 @@ export default function PetCard({ pet, children }) {
         <Typography variant="body2" color="text.secondary" paragraph>
           Available: {pet.available ? 'Yes' : 'No'}
         </Typography>
-        {/* Extra content (e.g., action buttons) */}
         <Box sx={{ mt: 2 }}>{children}</Box>
       </CardContent>
     </Card>

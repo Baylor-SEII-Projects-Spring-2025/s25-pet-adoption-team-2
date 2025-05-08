@@ -25,12 +25,10 @@ public class Events {
     @Enumerated(EnumType.STRING)
     private EventType eventType;
 
-    // Reference to the user who created the event
     @ManyToOne
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private User createdBy;
 
-    // List of adopters attending the event
     @ManyToMany
     @JoinTable(
         name = "event_attendees",
@@ -39,7 +37,6 @@ public class Events {
     )
     private List<User> attendees;
 
-    // Constructors, getters, and setters
 
     public Events() {
     }

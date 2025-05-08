@@ -41,7 +41,6 @@ public class PasswordResetController {
         }
     }
 
-    // Request body classes
     public static class PasswordResetRequest {
         private String email;
 

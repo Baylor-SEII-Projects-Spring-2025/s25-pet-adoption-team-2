@@ -35,7 +35,6 @@ const ScheduledEvents = () => {
   const userId = user ? user.id : null;
   const token = typeof window !== "undefined" ? localStorage.getItem("jwtToken") : null;
 
-  // Use useCallback to memoize the fetchEvents function
   const fetchEvents = useCallback(async () => {
     if (!userId) {
       console.log("No user ID available, cannot fetch events");
@@ -47,7 +46,6 @@ const ScheduledEvents = () => {
     try {
       console.log("Fetching events for user ID:", userId);
       
-      // Add a cache-busting parameter to prevent caching
       const timestamp = new Date().getTime();
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}&t=${timestamp}`,
@@ -60,7 +58,6 @@ const ScheduledEvents = () => {
       console.log("Raw response:", response);
       console.log("Received events:", response.data ? response.data.length : 0);
       
-      // Extra debugging to see what might be wrong with the data
       if (response.data && response.data.length > 0) {
         console.log("First event:", response.data[0]);
       }
@@ -83,7 +80,7 @@ const ScheduledEvents = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]); // Now fetchEvents is properly included
+  }, [fetchEvents]); 
 
   const handleDialogOpen = (event) => {
     setSelectedEvent(event);
@@ -129,7 +126,6 @@ const ScheduledEvents = () => {
       setErrorMsg("");
       handleDialogClose();
       
-      // Refresh the events list to ensure we have the latest data
       fetchEvents();
     } catch (err) {
       console.error("Error updating event:", err);

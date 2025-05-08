@@ -22,7 +22,6 @@ const DebugPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Get current user info from session storage
       const userData = sessionStorage.getItem("user");
       if (userData) {
         const user = JSON.parse(userData);
@@ -31,7 +30,6 @@ const DebugPage = () => {
       
       const token = localStorage.getItem("jwtToken");
       
-      // Try to get events for user ID 10
       console.log("Checking events for user ID 10");
       console.log("Token present:", token ? "Yes" : "No");
       
@@ -39,7 +37,7 @@ const DebugPage = () => {
         `${BACKEND_URL}/api/shelter/events?userId=10`,
         { 
           headers: token ? { Authorization: `Bearer ${token}` } : {},
-          timeout: 10000 // 10 second timeout
+          timeout: 10000 
         }
       );
       

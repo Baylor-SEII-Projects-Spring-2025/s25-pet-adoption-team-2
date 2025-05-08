@@ -19,8 +19,7 @@ public class EmailService {
     public void sendPasswordResetEmail(String toEmail, String resetLink) {
         try {
             logger.info("Attempting to send email to: {}", toEmail);
-            
-            // Create a new message
+
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("homefurgood25@gmail.com");
             message.setTo(toEmail);
@@ -36,8 +35,7 @@ public class EmailService {
                 "Home Fur Good Team");
             
             logger.info("Sending email...");
-            
-            // Get the actual JavaMailSenderImpl instance
+
             if (mailSender instanceof JavaMailSenderImpl) {
                 JavaMailSenderImpl mailSenderImpl = (JavaMailSenderImpl) mailSender;
                 logger.info("Using host: {}", mailSenderImpl.getHost());

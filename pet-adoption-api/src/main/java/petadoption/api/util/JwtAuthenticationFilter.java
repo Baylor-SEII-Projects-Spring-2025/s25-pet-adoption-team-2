@@ -21,13 +21,12 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    // Define logger
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Define public paths that should skip JWT authentication
+    // Defined public paths that should skip JWT authentication
     private final List<RequestMatcher> publicPaths = Arrays.asList(
             new AntPathRequestMatcher("/api/login", "POST"),
             new AntPathRequestMatcher("/api/signup", "POST"),

@@ -4,11 +4,11 @@ import { Typography } from "@mui/material";
 
 const libraries = ["places"];
 const mapContainerStyle = { width: "100%", height: "300px" };
-const center = { lat: 40.7128, lng: -74.0060 }; // Change to your desired default coordinates
+const center = { lat: 40.7128, lng: -74.0060 }; 
 
 const LocationPicker = ({ onLocationSelect }) => {
     const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY, // set your API key in .env file
+        googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY, 
         libraries,
     });
     
@@ -19,7 +19,6 @@ const LocationPicker = ({ onLocationSelect }) => {
         const lat = event.latLng.lat();
         const lng = event.latLng.lng();
         setMarker({ lat, lng });
-        // Here we pass back a string representation; you can modify this to include more details.
         onLocationSelect(`${lat}, ${lng}`);
     }, [onLocationSelect]);
 
