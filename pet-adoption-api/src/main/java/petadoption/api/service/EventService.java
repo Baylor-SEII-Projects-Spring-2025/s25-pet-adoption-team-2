@@ -13,13 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 @Service
 public class EventService {
@@ -148,83 +141,64 @@ public class EventService {
         }
     }
 
-    // Add this method to your EventService class
     public List<Events> getSafeEventsForShelter(Long userId) {
         System.out.println("Safely fetching events for shelter ID: " + userId);
 
-        // Log the start of the method call
-        try {
-            FileWriter fw = new FileWriter("app-error.log", true);
-            fw.write(new Date().toString() + ": getSafeEventsForShelter called for userId: " + userId + "\n");
-            fw.close();
-        } catch (IOException logError) {
-            System.out.println("Cannot write to log file");
-        }
-
-        // Return empty list if userId is invalid
         if (userId == null) {
             System.out.println("Null userId provided");
             return new ArrayList<>();
         }
 
         try {
-            // Try to get all events first
+            // First check if the user exists
+            boolean userExists = userRepository.existsById(userId);
+            if (!userExists) {
+                System.out.println("User ID " + userId + " does not exist");
+                return new ArrayList<>();
+            }
+
+            // Approach 1: Try direct query method first
+            try {
+                List<Events> userEvents = eventRepository.findByCreatedById(userId);
+                System.out.println("Found " + userEvents.size() + " events for user " + userId + " using direct query");
+                return userEvents;
+            } catch (Exception e) {
+                System.out.println("Direct query failed, falling back: " + e.getMessage());
+            }
+
+            // Approach 2: Try getting the user and then finding their events
+            try {
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null) {
+                    List<Events> userEvents = eventRepository.findByCreatedBy(user);
+                    System.out.println("Found " + userEvents.size() + " events for user " + userId + " using user object");
+                    return userEvents;
+                }
+            } catch (Exception e) {
+                System.out.println("User-based query failed, falling back: " + e.getMessage());
+            }
+
+            // Approach 3: Manual filtering as last resort
             List<Events> allEvents = eventRepository.findAll();
             System.out.println("Total events in database: " + allEvents.size());
 
-            // Use a more defensive approach to filter events
-            List<Events> userEvents = allEvents.stream()
-                    .filter(event -> {
-                        // Skip null events
-                        if (event == null) return false;
-
-                        try {
-                            // Check if createdBy exists and matches userId
-                            return event.getCreatedBy() != null &&
-                                    event.getCreatedBy().getId() != null &&
-                                    event.getCreatedBy().getId().equals(userId);
-                        } catch (Exception e) {
-                            // Log filter exceptions
-                            try {
-                                FileWriter fw = new FileWriter("app-error.log", true);
-                                fw.write(new Date().toString() + ": Error processing event: " + e.getMessage() + "\n");
-                                fw.close();
-                            } catch (IOException logError) {
-                                System.out.println("Cannot write to log file");
-                            }
-
-                            System.out.println("Error processing event: " + e.getMessage());
-                            return false; // Skip problematic events
-                        }
-                    })
-                    .collect(Collectors.toList());
-
-            // Log success
-            try {
-                FileWriter fw = new FileWriter("app-error.log", true);
-                fw.write(new Date().toString() + ": Found " + userEvents.size() + " events for userId: " + userId + "\n");
-                fw.close();
-            } catch (IOException logError) {
-                System.out.println("Cannot write to log file");
+            List<Events> userEvents = new ArrayList<>();
+            for (Events event : allEvents) {
+                try {
+                    if (event != null && event.getCreatedBy() != null &&
+                            userId.equals(event.getCreatedBy().getId())) {
+                        userEvents.add(event);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error processing event: " + e.getMessage());
+                }
             }
 
+            System.out.println("Found " + userEvents.size() + " events for user " + userId + " after manual filtering");
             return userEvents;
         } catch (Exception e) {
-            // Log the main exception
-            try {
-                FileWriter fw = new FileWriter("app-error.log", true);
-                fw.write(new Date().toString() + ": ERROR in getSafeEventsForShelter: " + e.getMessage() + "\n");
-                // Add stack trace for more detail
-                StringWriter sw = new StringWriter();
-                e.printStackTrace(new PrintWriter(sw));
-                fw.write(sw.toString() + "\n");
-                fw.close();
-            } catch (IOException logError) {
-                System.out.println("Cannot write to log file");
-            }
-
             System.out.println("Database error in getSafeEventsForShelter: " + e.getMessage());
-            // Return empty list rather than throwing an exception
+            // Always return empty list instead of throwing exception
             return new ArrayList<>();
         }
     }

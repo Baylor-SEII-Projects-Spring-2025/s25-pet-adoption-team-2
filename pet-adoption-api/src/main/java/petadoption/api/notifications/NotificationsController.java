@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 @RestController
 @RequestMapping("/api/notifications")
-@CrossOrigin(origins = "${cors.allowed.origins:http://35.225.196.242:3000}") // Use configuration or default
+@CrossOrigin(origins = "${cors.allowed.origins:http://35.225.196.242:3000}")
 public class NotificationsController {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationsController.class);
@@ -126,12 +126,11 @@ public class NotificationsController {
                     .orElseThrow(() -> new EntityNotFoundException("Adopter user not found: " + request.getUserId()));
             Pet pet = petRepository.findById(request.getPetId())
                     .orElseThrow(() -> new EntityNotFoundException("Pet not found: " + request.getPetId()));
-            Long shelterId = pet.getAdoptionCenterId(); // Use the field name from Pet entity
+            Long shelterId = pet.getAdoptionCenterId();
             if (shelterId == null) {
                 throw new IllegalStateException("Pet (ID: " + request.getPetId() + ") does not have an associated shelter.");
             }
 
-            // Ensure pet is actually available before creating request
             if (!pet.getAvailable()) {
                 log.warn("Attempt to create adoption request for unavailable pet ID: {}", request.getPetId());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "This pet is no longer available for adoption."));
@@ -139,15 +138,14 @@ public class NotificationsController {
 
             String displayName = request.getDisplayName() != null && !request.getDisplayName().isEmpty()
                     ? request.getDisplayName() : adopterUser.getEmailAddress();
-            // Include Pet Name in notification text
             String notificationText = String.format(
                     "New adoption request from %s (Adopter ID: %d) for pet '%s' (Pet ID: %d)",
                     displayName, adopterUser.getId(), pet.getName(), pet.getId());
 
             NotificationDTO createdDto = notificationsService.createNotificationForShelter(
-                    notificationText, shelterId, adopterUser); // Send FROM adopter TO shelter
+                    notificationText, shelterId, adopterUser);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdDto); // 201 Created
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdDto);
 
         } catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
             log.warn("Failed to create notification: {}", e.getMessage());
@@ -200,7 +198,6 @@ public class NotificationsController {
             // --- End Validation ---
 
             // --- Update Pet Status ---
-            // Directly mark as adopted instead of just approved
             pet.setAvailable(false);
             pet.setStatus("Adopted");
             pet.setAdopterId(adopterId); // Link pet to adopter
@@ -247,7 +244,6 @@ public class NotificationsController {
         }
     }
 
-    // Update the handleAdopterResponse method (simplify to just a read confirmation for legacy notifications)
     @PostMapping("/adopter-response")
     @Transactional // Ensure atomicity
     public ResponseEntity<?> handleAdopterResponse(@RequestBody Map<String, Object> request) {
@@ -285,8 +281,6 @@ public class NotificationsController {
         }
     }
 
-
-    // --- Helper methods for parsing request map ---
     private Long parseLongFromMap(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value == null) throw new NullPointerException("Missing required field in request: " + key);

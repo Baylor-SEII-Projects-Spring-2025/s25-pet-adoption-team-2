@@ -32,20 +32,17 @@ public class PasswordResetService {
 
     @Transactional(timeout = 5)
     public void processForgotPassword(String email) {
-        // First, find the user
         User user = userRepository.findByEmailAddress(email);
         if (user == null) {
             return;
         }
 
-        // Generate new token
         String token = UUID.randomUUID().toString();
         PasswordResetToken passwordResetToken = new PasswordResetToken();
         passwordResetToken.setToken(token);
         passwordResetToken.setUser(user);
         passwordResetToken.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-        // Delete existing tokens and save new one in a single transaction
         passwordResetTokenRepository.deleteByUserEmail(email);
         passwordResetTokenRepository.save(passwordResetToken);
 

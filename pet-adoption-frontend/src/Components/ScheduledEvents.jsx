@@ -1,5 +1,5 @@
 // pet-adoption-frontend/src/Components/ScheduledEvents.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
   Typography,
@@ -15,7 +15,8 @@ import {
   CardMedia,
   CardActions,
   Grid,
-  Box
+  Box,
+  CircularProgress
 } from "@mui/material";
 import axios from "axios";
 
@@ -34,45 +35,55 @@ const ScheduledEvents = () => {
   const userId = user ? user.id : null;
   const token = typeof window !== "undefined" ? localStorage.getItem("jwtToken") : null;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!userId) {
-        console.log("No user ID available, cannot fetch events");
-        setErrorMsg("Please log in to view scheduled events.");
-        return;
+  // Use useCallback to memoize the fetchEvents function
+  const fetchEvents = useCallback(async () => {
+    if (!userId) {
+      console.log("No user ID available, cannot fetch events");
+      setErrorMsg("Please log in to view scheduled events.");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      console.log("Fetching events for user ID:", userId);
+      
+      // Add a cache-busting parameter to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}&t=${timestamp}`,
+        { 
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          timeout: 10000
+        }
+      );
+      
+      console.log("Raw response:", response);
+      console.log("Received events:", response.data ? response.data.length : 0);
+      
+      // Extra debugging to see what might be wrong with the data
+      if (response.data && response.data.length > 0) {
+        console.log("First event:", response.data[0]);
       }
       
-      setLoading(true);
-      try {
-        console.log("Fetching events for user ID:", userId);
-        
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://35.225.196.242:8080"}/api/shelter/events?userId=${userId}`,
-          { 
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            timeout: 10000
-          }
-        );
-        
-        console.log("Received events:", response.data ? response.data.length : 0);
-        setEvents(Array.isArray(response.data) ? response.data : []);
-        setErrorMsg("");
-      } catch (err) {
-        console.error("Error details:", {
-          status: err.response?.status,
-          data: err.response?.data,
-          message: err.message
-        });
-        
-        setErrorMsg("Could not load events. Please try again later.");
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchData();
+      setEvents(Array.isArray(response.data) ? response.data : []);
+      setErrorMsg("");
+    } catch (err) {
+      console.error("Error details:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      setErrorMsg("Could not load events. Please try again later.");
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
   }, [userId, token]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]); // Now fetchEvents is properly included
 
   const handleDialogOpen = (event) => {
     setSelectedEvent(event);
@@ -117,6 +128,9 @@ const ScheduledEvents = () => {
       setSuccessMsg("Event updated successfully!");
       setErrorMsg("");
       handleDialogClose();
+      
+      // Refresh the events list to ensure we have the latest data
+      fetchEvents();
     } catch (err) {
       console.error("Error updating event:", err);
       setErrorMsg("Error updating event. Please try again.");
@@ -148,9 +162,19 @@ const ScheduledEvents = () => {
       {successMsg && <Alert severity="success" sx={{ mb: 2 }}>{successMsg}</Alert>}
       {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
       
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button 
+          variant="outlined" 
+          onClick={fetchEvents}
+          disabled={loading}
+        >
+          Refresh Events
+        </Button>
+      </Box>
+      
       {loading ? (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Typography>Loading events...</Typography>
+        <Box sx={{ textAlign: 'center', py: 4, display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
         </Box>
       ) : events.length > 0 ? (
         <Grid container spacing={3}>

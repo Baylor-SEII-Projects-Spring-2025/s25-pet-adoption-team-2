@@ -56,52 +56,31 @@ public class ShelterEventController {
         System.out.println("GET /api/shelter/events requested for userId: " + userId);
 
         try {
-            // Use the new safer method
             List<Events> events = eventService.getSafeEventsForShelter(userId);
             System.out.println("Successfully found " + events.size() + " events for shelter: " + userId);
             return ResponseEntity.ok(events);
         } catch (Exception e) {
-            // Log the error to file
-            try {
-                FileWriter fw = new FileWriter("app-error.log", true);
-                fw.write(new Date().toString() + ": ERROR in ShelterEventController: " + e.getMessage() + "\n");
-                // Add stack trace for more detail
-                StringWriter sw = new StringWriter();
-                e.printStackTrace(new PrintWriter(sw));
-                fw.write(sw.toString() + "\n");
-                fw.close();
-            } catch (IOException logError) {
-                System.out.println("Cannot write to log file");
-            }
-
             System.out.println("Error in shelter events controller: " + e.getMessage());
-            // Return empty list on error to avoid 500 status
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
 
-    // Add this to your ShelterEventController.java
-    // Add this to your ShelterEventController.java
     @GetMapping("/debug")
     public ResponseEntity<String> getDebugInfo() {
         StringBuilder debug = new StringBuilder();
         debug.append("Debug Information:\n");
 
         try {
-            // Check if user 10 exists
             boolean userExists = userRepository.existsById(10L);
             debug.append("User ID 10 exists: ").append(userExists).append("\n");
 
-            // Count total events using the repository, not the service
             long eventCount = eventRepository.count();
             debug.append("Total events in database: ").append(eventCount).append("\n");
 
-            // Try to list events for user 10 safely
             try {
                 List<Events> events = eventService.getSafeEventsForShelter(10L);
                 debug.append("Events found for user 10: ").append(events.size()).append("\n");
 
-                // Show some details about the first few events
                 int count = 0;
                 for (Events event : events) {
                     if (count++ >= 3) break; // Only show up to 3 events
@@ -115,7 +94,6 @@ public class ShelterEventController {
                 debug.append("Error getting events: ").append(e.getMessage()).append("\n");
             }
 
-            // Check app-error.log existence
             File logFile = new File("app-error.log");
             debug.append("Log file exists: ").append(logFile.exists()).append("\n");
             debug.append("Log file path: ").append(logFile.getAbsolutePath()).append("\n");

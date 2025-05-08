@@ -7,14 +7,14 @@ import java.time.LocalDateTime;
 /**
  * Data Transfer Object for sending Notification information to the frontend.
  */
-@Data // Adds getters, setters, toString, etc. automatically
-@NoArgsConstructor // Needed for frameworks like Jackson or MapStruct
+@Data
+@NoArgsConstructor
 public class NotificationDTO {
     private Long id;
     private String text;
     private boolean isRead;
-    private LocalDateTime createdAt; // Keep as LocalDateTime, Jackson handles default serialization
-    private String senderInfo; // Example: "Shelter Name (shelter@example.com)" or "Adopter Name (adopter@email.com)"
+    private LocalDateTime createdAt;
+    private String senderInfo;
     private String recipientInfo;
     private Long petId;
     private Long adopterId;

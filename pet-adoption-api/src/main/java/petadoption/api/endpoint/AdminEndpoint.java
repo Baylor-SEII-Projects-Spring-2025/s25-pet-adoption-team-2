@@ -91,12 +91,11 @@ public class AdminEndpoint {
     }
 
     @DeleteMapping("/users/{userId}")
-    public ResponseEntity<?> deleteUserAdmin(@PathVariable Long userId) { // Return ResponseEntity<?>
+    public ResponseEntity<?> deleteUserAdmin(@PathVariable Long userId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User adminUser = getAdminUser(authentication);
         if (adminUser == null) {
             log.warn("Forbidden attempt to delete user {} by non-admin user: {}", userId, authentication != null ? authentication.getName() : "unauthenticated");
-            // Provide error body
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Access denied"));
         }
 
@@ -104,7 +103,6 @@ public class AdminEndpoint {
 
         if (Objects.equals(userId, adminUser.getId())) {
             log.warn("Admin {} attempted self-deletion (ID: {}).", adminUser.getEmailAddress(), userId);
-            // Provide error body
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Admin cannot delete their own account"));
         }
 
@@ -118,14 +116,12 @@ public class AdminEndpoint {
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             log.error("Error deleting user {}: {}", userId, e.getMessage(), e);
-            // Provide error body
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to delete user"));
         }
     }
 
     @DeleteMapping("/pets/{petId}")
     public ResponseEntity<?> deletePetAdmin(@PathVariable Long petId) {
-        // verify admin
         User admin = getAdminUser(SecurityContextHolder.getContext().getAuthentication());
         if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error","Access denied"));

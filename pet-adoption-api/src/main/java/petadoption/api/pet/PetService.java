@@ -44,11 +44,9 @@ public class PetService {
     private final PetRepository petRepository;
     private final UserRepository userRepository;
 
-    // Inject the upload path from application.yml/properties
     @Value("${pet.upload.base-path:./pet-uploads}")
     private String uploadBasePath;
 
-    // Define the sub-directory for images within the base path
     private final String imageSubDir = "images";
 
     @Autowired
@@ -56,10 +54,8 @@ public class PetService {
         this.petRepository = petRepository;
         this.userRepository = userRepository;
 
-        // Log the configured upload path on startup
         log.info("Pet upload base path configured as: {}", uploadBasePath);
 
-        // We'll defer creating directories until first usage to avoid startup errors
     }
 
     /**
@@ -70,28 +66,27 @@ public class PetService {
      * @throws IllegalArgumentException if required fields are missing in the pet object.
      * @throws RuntimeException if there's a database error during saving.
      */
-    @Transactional // Ensure save operation is transactional
+    @Transactional
     public Pet addPet(Pet pet) {
-        // Validate required fields before proceeding
+
         if (pet == null || pet.getName() == null || pet.getName().trim().isEmpty() || pet.getAdoptionCenterId() == null) {
             throw new IllegalArgumentException("Pet name and adoptionCenterId are required to add a pet.");
         }
 
-        // Set defaults if not provided
+
         if (pet.getStatus() == null || pet.getStatus().trim().isEmpty()) {
-            pet.setStatus("Pending"); // Default status
+            pet.setStatus("Pending");
         }
         if (pet.getAvailable() == null) {
-            pet.setAvailable(true); // Default availability
+            pet.setAvailable(true);
         }
-        pet.setAdopterId(null); // New pets cannot have an adopter yet
+        pet.setAdopterId(null);
 
         log.info("Adding new pet '{}' for shelter ID {}", pet.getName(), pet.getAdoptionCenterId());
         try {
             return petRepository.save(pet);
         } catch (Exception e) {
             log.error("Database error while saving new pet '{}': {}", pet.getName(), e.getMessage(), e);
-            // Re-throw a more specific exception or handle as appropriate
             throw new RuntimeException("Failed to save pet to database.", e);
         }
     }
@@ -102,16 +97,13 @@ public class PetService {
      */
     private void ensureDirectoriesExist() throws IOException {
         if (uploadBasePath == null || uploadBasePath.trim().isEmpty()) {
-            // If config is missing, use a default path
             uploadBasePath = "./pet-uploads";
             log.warn("Upload base path is null or empty, using default: {}", uploadBasePath);
         }
 
-        // Construct the full path to the image directory
         File baseDir = new File(uploadBasePath);
         File imageDir = new File(baseDir, imageSubDir);
 
-        // Create directories if they don't exist
         if (!baseDir.exists()) {
             if (baseDir.mkdirs()) {
                 log.info("Created base upload directory: {}", baseDir.getAbsolutePath());
@@ -128,7 +120,6 @@ public class PetService {
             }
         }
 
-        // Verify directories are writable
         if (!baseDir.canWrite()) {
             log.warn("Base upload directory is not writable: {}", baseDir.getAbsolutePath());
         }
@@ -152,39 +143,30 @@ public class PetService {
             throw new IllegalArgumentException("Cannot store null or empty file.");
         }
 
-        // Ensure directories exist before attempting to store files
         ensureDirectoriesExist();
 
-        // Sanitize and create a unique filename
         String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
         String extension = "";
         int lastDot = originalFilename.lastIndexOf('.');
-        if (lastDot >= 0) { // Check >= 0 in case filename starts with dot
-            extension = originalFilename.substring(lastDot); // Include the dot (e.g., ".jpg")
+        if (lastDot >= 0) {
+            extension = originalFilename.substring(lastDot);
         }
-        // Sanitize base name + add timestamp for uniqueness
         String baseName = originalFilename.substring(0, lastDot >= 0 ? lastDot : originalFilename.length())
-                .replaceAll("[^a-zA-Z0-9.\\-]", "_"); // Allow dots and hyphens
+                .replaceAll("[^a-zA-Z0-9.\\-]", "_");
         String timestamp = String.valueOf(System.currentTimeMillis());
         String uniqueFilename = timestamp + "_" + baseName + extension;
 
-        // Use File API instead of Paths to avoid NullPointerException
         File imageDir = new File(uploadBasePath, imageSubDir);
         File targetFile = new File(imageDir, uniqueFilename);
 
-        // Copy the uploaded file's content to the target location on the server's filesystem
         try {
             Files.copy(file.getInputStream(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             log.info("Stored image {} at path {}", uniqueFilename, targetFile.getAbsolutePath());
         } catch (IOException e) {
             log.error("Could not save uploaded file {} to path {}: {}", uniqueFilename, targetFile.getAbsolutePath(), e.getMessage(), e);
-            // Provide a more specific error message
             throw new IOException("Failed to save image file to storage: " + uniqueFilename, e);
         }
 
-        // Return the web-accessible URL path. This path needs to be mapped by WebConfig
-        // to the physical file location defined by 'uploadBasePath'.
-        // Example: /uploads/images/unique_filename.jpg
         return "/uploads/" + imageSubDir + "/" + uniqueFilename;
     }
 
@@ -234,10 +216,10 @@ public class PetService {
      * @return A list of the imported and saved Pet entities.
      * @throws IOException If the CSV file cannot be read or found.
      */
-    @Transactional // Perform import within a transaction
+    @Transactional
     public List<Pet> importPetsFromCSV() throws IOException {
         List<Pet> pets = new ArrayList<>();
-        String csvResourcePath = "data/MOCK_DATA (3).csv"; // Path within src/main/resources
+        String csvResourcePath = "data/MOCK_DATA (3).csv";
         Resource resource = new ClassPathResource(csvResourcePath);
 
         if (!resource.exists()) {
@@ -247,9 +229,8 @@ public class PetService {
 
         log.info("Starting import from CSV resource: {}", csvResourcePath);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
-            // Configure CSV parser
             CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
-                    .setHeader() // Use first row as header
+                    .setHeader()
                     .setSkipHeaderRecord(true)
                     .setIgnoreHeaderCase(true)
                     .setTrim(true)
@@ -261,8 +242,7 @@ public class PetService {
                 recordCount++;
                 try {
                     Pet pet = parsePetFromCsvRecord(record);
-                    // Additional validation after parsing
-                    if (pet.getAdoptionCenterId() != null) { // Only add if shelter ID is valid
+                    if (pet.getAdoptionCenterId() != null) {
                         pets.add(pet);
                     } else {
                         log.warn("Skipping pet '{}' from CSV due to missing or invalid adoption center ID.", pet.getName());
@@ -273,11 +253,10 @@ public class PetService {
             }
             log.info("Parsed {} records from CSV. Saving {} valid pets.", recordCount, pets.size());
         }
-        // Save all valid pets parsed from the CSV
         if (!pets.isEmpty()) {
             return petRepository.saveAll(pets);
         } else {
-            return List.of(); // Return empty list if no valid pets were parsed
+            return List.of();
         }
     }
 
@@ -293,7 +272,7 @@ public class PetService {
         log.info("Starting import from CSV data string.");
         if (csvData == null || csvData.trim().isEmpty()) {
             log.warn("Attempted to import from empty CSV data string.");
-            return pets; // Return empty list
+            return pets;
         }
         try (BufferedReader reader = new BufferedReader(new java.io.StringReader(csvData))) {
             CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
@@ -309,7 +288,7 @@ public class PetService {
                 recordCount++;
                 try {
                     Pet pet = parsePetFromCsvRecord(record);
-                    if (pet.getAdoptionCenterId() != null) { // Only add if shelter ID is valid
+                    if (pet.getAdoptionCenterId() != null) {
                         pets.add(pet);
                     } else {
                         log.warn("Skipping pet '{}' from CSV data due to missing or invalid adoption center ID.", pet.getName());
@@ -336,7 +315,6 @@ public class PetService {
      */
     private Pet parsePetFromCsvRecord(CSVRecord record) {
         Pet pet = new Pet();
-        // Use safe getters for parsing
         pet.setName(getValueOrDefault(record, "NAME", "Unnamed Pet"));
         pet.setAge(getIntValueOrDefault(record, "AGE", 0));
         pet.setSpecies(getValueOrDefault(record, "SPECIES", "Unknown"));
@@ -347,13 +325,11 @@ public class PetService {
         pet.setCoatLength(getValueOrDefault(record, "COAT_LENGTH", null)); // Allow null
         pet.setImageUrl(getValueOrDefault(record, "IMAGE_URL", null)); // Allow null
         pet.setDescription(getValueOrDefault(record, "DESCRIPTION", "")); // Default to empty string
-        // Important: Ensure CSV header matches 'adoption_center_id' or adjust here
         pet.setAdoptionCenterId(getLongValueOrDefault(record, "adoption_center_id", null));
 
-        // Set defaults for imported pets
         pet.setStatus(getValueOrDefault(record, "STATUS", "Available")); // Default to Available
         pet.setAvailable(getBooleanValueOrDefault(record, "AVAILABLE", true)); // Default to true
-        pet.setAdopterId(null); // Ensure no adopter on import
+        pet.setAdopterId(null);
 
         return pet;
     }
@@ -382,7 +358,6 @@ public class PetService {
 
     // --- Helper methods for safe CSV parsing ---
     private String getValueOrDefault(CSVRecord record, String header, String defaultValue) {
-        // Check if the header exists in the record before trying to get it
         if (!record.isSet(header)) {
             log.trace("CSV header '{}' not found in record.", header);
             return defaultValue;
@@ -391,7 +366,6 @@ public class PetService {
             String value = record.get(header);
             return (value == null || value.trim().isEmpty()) ? defaultValue : value.trim();
         } catch (IllegalArgumentException e) {
-            // This catch might be redundant due to isSet check, but kept for safety
             log.trace("Error accessing CSV header '{}': {}", header, e.getMessage());
             return defaultValue;
         }
@@ -399,7 +373,7 @@ public class PetService {
 
     private Integer getIntValueOrDefault(CSVRecord record, String header, Integer defaultValue) {
         String value = getValueOrDefault(record, header, null);
-        if (value == null) { // Check if value is null after trimming
+        if (value == null) {
             return defaultValue;
         }
         try {
@@ -412,7 +386,7 @@ public class PetService {
 
     private Long getLongValueOrDefault(CSVRecord record, String header, Long defaultValue) {
         String value = getValueOrDefault(record, header, null);
-        if (value == null) { // Check if value is null after trimming
+        if (value == null) {
             return defaultValue;
         }
         try {
@@ -424,16 +398,13 @@ public class PetService {
     }
 
     private Boolean getBooleanValueOrDefault(CSVRecord record, String header, boolean defaultValue) {
-        String value = getValueOrDefault(record, header, ""); // Default to empty string if null
+        String value = getValueOrDefault(record, header, "");
         if (value.isEmpty()) {
             return defaultValue;
         }
-        // Handle common boolean representations (case-insensitive)
         value = value.toLowerCase();
         return "true".equals(value) || "1".equals(value) || "yes".equals(value) || "t".equals(value) || "y".equals(value);
     }
-
-    // --- Methods for fetching ALL pets (potentially for admin use) ---
 
     /**
      * Gets a paginated list of ALL pets (including unavailable/adopted).
@@ -459,13 +430,11 @@ public class PetService {
 
     @Transactional(readOnly = true)
     public Page<Pet> getAvailablePetsByLocation(String state, String city, Pageable pageable) {
-        // 1) load all shelters
         List<User> shelters = userRepository.findByUserType("SHELTER");
 
-        // 2) filter their IDs by address match
         List<Long> centerIds = shelters.stream()
                 .filter(u -> {
-                    String addr = u.getAddress();        // e.g. "Seattle, Washington"
+                    String addr = u.getAddress();
                     if (addr == null) return false;
                     boolean stateMatch = (state == null || state.isEmpty())
                             || addr.toLowerCase().endsWith(", " + state.toLowerCase());

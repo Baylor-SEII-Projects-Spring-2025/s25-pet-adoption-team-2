@@ -30,7 +30,6 @@ public class AdoptionRequestEndpoint {
     @PostMapping
     public ResponseEntity<?> createAdoptionRequest(@RequestBody Map<String, Object> request) {
         try {
-            // Parse and validate request parameters
             Long userId = request.containsKey("userId")
                     ? Long.parseLong(request.get("userId").toString())
                     : null;
@@ -58,13 +57,11 @@ public class AdoptionRequestEndpoint {
                 return ResponseEntity.badRequest().body(Map.of("error", "adoptionCenterId or shelterId is required"));
             }
 
-            // Load adopter and pet
             User adopter = userService.findUser(userId)
                     .orElseThrow(() -> new RuntimeException("User not found: " + userId));
             Pet pet = petService.findPetById(petId)
                     .orElseThrow(() -> new RuntimeException("Pet not found: " + petId));
 
-            // Build notification text
             String userName = adopter.getFirstName() != null
                     ? adopter.getFirstName() + (adopter.getLastName() != null ? " " + adopter.getLastName() : "")
                     : adopter.getEmailAddress();
@@ -76,7 +73,6 @@ public class AdoptionRequestEndpoint {
                 notificationText += "\nNotes: " + additionalNotes;
             }
 
-            // Create notification with metadata
             NotificationDTO dto = notificationsService.createAdoptionRequestNotification(
                     notificationText,
                     shelterId,

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * marking as read, and replying. Uses NotificationDTO for data transfer to controller.
  */
 @Service
-@Transactional // Default transactionality for all public methods
+@Transactional
 public class NotificationsService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationsService.class);
@@ -28,13 +28,13 @@ public class NotificationsService {
     private final NotificationsRepository notificationRepository;
     private final UserRepository userRepository;
 
-    // Constructor Injection
+
     public NotificationsService(NotificationsRepository notificationRepository, UserRepository userRepository) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
     }
 
-    // --- Helper Method to Map Entity to DTO ---
+
     private NotificationDTO mapToDTO(Notifications notification) {
         if (notification == null) {
             return null;
@@ -49,10 +49,9 @@ public class NotificationsService {
 
         User sender = notification.getSender();
         if (sender != null) {
-            // Customize sender info format as needed (e.g., add name if available)
             dto.setSenderInfo(sender.getEmailAddress());
         } else {
-            dto.setSenderInfo("System"); // Or null
+            dto.setSenderInfo("System");
         }
 
         User recipient = notification.getUser();
@@ -175,7 +174,6 @@ public class NotificationsService {
         return mapToDTO(savedNotification);
     }
 
-    // Overload without sender
     public NotificationDTO createNotificationForUser(String text, Long recipientUserId) {
         return createNotificationForUser(text, recipientUserId, null);
     }
@@ -211,7 +209,6 @@ public class NotificationsService {
         return mapToDTO(savedNotification);
     }
 
-    // Overload without sender
     public NotificationDTO createNotificationForShelter(String text, Long shelterId) {
         return createNotificationForShelter(text, shelterId, null);
     }
@@ -249,7 +246,6 @@ public class NotificationsService {
         replyNotification.setPetId(petId);
         replyNotification.setAdopterId(adopterId);
 
-        // Extract potential adopter ID from notification text if sender is missing
         Long extractedAdopterId = null;
         if (senderOfOriginal == null && originalNotification.getText() != null) {
             try {
@@ -265,7 +261,6 @@ public class NotificationsService {
         }
 
         if (isAdopterReplying) {
-            // Adopter (recipientOfOriginal) replying to Shelter (senderOfOriginal)
             if (senderOfOriginal == null || !"SHELTER".equals(senderOfOriginal.getUserType())) {
                 log.error("REPLY FAILED: Cannot determine recipient shelter for reply to notification ID: {}", notificationId);
                 throw new IllegalStateException("Cannot determine recipient shelter. Original sender missing/invalid for notification ID: " + notificationId);
@@ -275,14 +270,11 @@ public class NotificationsService {
             replyNotification.setText(String.format("Response from %s: %s", recipientOfOriginal.getEmailAddress(), replyText));
             log.info("Creating reply from Adopter {} to Shelter {}", recipientOfOriginal.getId(), senderOfOriginal.getId());
         } else {
-            // Shelter (recipientOfOriginal) replying to Adopter (senderOfOriginal)
             User adopter = null;
 
-            // Try to use the original sender first
             if (senderOfOriginal != null && !"SHELTER".equals(senderOfOriginal.getUserType())) {
                 adopter = senderOfOriginal;
             }
-            // If that fails, try to find the adopter by ID extracted from the notification text
             else if (extractedAdopterId != null) {
                 try {
                     adopter = userRepository.findById(extractedAdopterId)
@@ -300,45 +292,40 @@ public class NotificationsService {
                 throw new IllegalStateException("Cannot determine recipient adopter. Original sender missing/invalid for notification ID: " + notificationId);
             }
 
-            replyNotification.setUser(adopter); // Reply goes TO adopter
-            replyNotification.setSender(recipientOfOriginal); // Reply is FROM shelter
+            replyNotification.setUser(adopter);
+            replyNotification.setSender(recipientOfOriginal);
             replyNotification.setText("Shelter response: " + replyText);
             log.info("Creating reply from Shelter {} to Adopter {}", recipientOfOriginal.getId(), adopter.getId());
         }
 
-        // Mark original as read (within the same transaction)
         if (!originalNotification.isRead()) {
             originalNotification.setRead(true);
             notificationRepository.save(originalNotification);
             log.debug("Marked original notification ID: {} as read after reply.", notificationId);
         }
 
-        // Save the new reply notification
         Notifications savedReply = notificationRepository.save(replyNotification);
         log.info("Saved reply notification with ID: {}", savedReply.getId());
 
-        // Return the DTO of the created reply
+
         return mapToDTO(savedReply);
     }
 
     // --- Deprecated / Internal Use Only ---
-    // These methods returning raw entities might cause issues if used directly by controller
-
     @Transactional(readOnly = true)
-    @Deprecated // Suggest using DTO version or ensuring controller doesn't use directly
+    @Deprecated
     public List<Notifications> getAllNotifications() {
         log.warn("Deprecated getAllNotifications returning raw entities called.");
         return notificationRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    @Deprecated // Suggest using DTO version or ensuring controller doesn't use directly
+    @Deprecated
     public List<Notifications> getUnreadNotifications() {
         log.warn("Deprecated getUnreadNotifications returning raw entities called.");
         return notificationRepository.findByIsReadFalse();
     }
 
-    // Helper method remains internal
     private Long extractUserIdFromText(String text) {
         if (text == null) return null;
         try {
@@ -353,8 +340,6 @@ public class NotificationsService {
         return null;
     }
 
-    // in NotificationsService.java :contentReference[oaicite:6]{index=6}&#8203;:contentReference[oaicite:7]{index=7}
-
     public NotificationDTO createAdoptionRequestNotification(
             String text,
             Long shelterId,
@@ -364,7 +349,6 @@ public class NotificationsService {
         if (text == null || text.trim().isEmpty()) throw new IllegalArgumentException("Notification text cannot be empty");
         if (shelterId == null) throw new IllegalArgumentException("Shelter ID cannot be null");
 
-        // load shelter user…
         User shelter = userRepository.findById(shelterId)
                 .orElseThrow(() -> new EntityNotFoundException("Shelter not found: " + shelterId));
 
@@ -374,7 +358,6 @@ public class NotificationsService {
         n.setCreatedAt(LocalDateTime.now());
         n.setUser(shelter);
         n.setSender(adopterUser);
-        // **new fields**
         n.setAdopterId(adopterUser.getId());
         n.setPetId(petId);
 

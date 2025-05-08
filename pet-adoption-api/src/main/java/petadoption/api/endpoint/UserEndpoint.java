@@ -131,16 +131,13 @@ public class UserEndpoint {
                         .body(Map.of("error", "Email already registered"));
             }
 
-            // Check admin password for ADMIN user type
             if ("ADMIN".equals(userType)) {
-                // Admin password is required
                 if (adminPassword == null || adminPassword.isEmpty()) {
                     log.warn("Admin signup attempt without password from email: {}", email);
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(Map.of("error", "Admin password is required for administrator accounts"));
                 }
 
-                // Verify admin password
                 if (!adminPasswordService.isValidAdminPassword(adminPassword)) {
                     log.warn("Admin signup attempt with invalid password from email: {}", email);
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -203,7 +200,6 @@ public class UserEndpoint {
     @PutMapping("/api/user/rate")
     public ResponseEntity<?> updateUserRating(@RequestBody Map<String, String> request) {
         try {
-            // getting the parameters
             String userIdStr = request.get("userId");
             String petIdStr = request.get("petId");
             String ratingStr = request.get("rating");
@@ -217,7 +213,6 @@ public class UserEndpoint {
             Long petId = Long.parseLong(petIdStr);
             double rating = Double.parseDouble(ratingStr);
 
-            // getting the user
             Optional<User> userOpt = userService.findUser(userId);
             if (userOpt.isEmpty()) {
                 log.warn("User with id {} not found", userId);
@@ -225,7 +220,6 @@ public class UserEndpoint {
             }
             User user = userOpt.get();
 
-            // getting the pet
             Optional<Pet> petOpt = petRepository.findById(petId);
             if (petOpt.isEmpty()) {
                 log.warn("Pet with id {} not found", petId);
@@ -233,12 +227,10 @@ public class UserEndpoint {
             }
             Pet pet = petOpt.get();
 
-            // this method does all the actual work
             User updatedUser = userService.updatePreferencesAfterRating(user, pet, rating);
 
             log.info("Updated preferences for user {} after rating pet {} with rating {}", userId, petId, rating);
 
-            // returning the updated user
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "User preferences updated successfully");
@@ -281,7 +273,6 @@ public class UserEndpoint {
                         .body(Map.of("error", "Email and password are required"));
             }
 
-            // Find the user by email
             User user = userRepository.findByEmailAddress(email);
 
             if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
@@ -290,7 +281,6 @@ public class UserEndpoint {
                         .body(Map.of("error", "Invalid email or password"));
             }
 
-            // Generate the JWT token
             String token = jwtUtil.generateToken(user.getEmailAddress());
 
             log.info("User logged in successfully: {}", email);

@@ -8,23 +8,23 @@ import lombok.Data;
  */
 @Data
 @Entity
-@Table(name = "USERS") // Ensure table name matches your database schema
+@Table(name = "USERS")
 public class User {
     public static final String TABLE_NAME = "USERS";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Common strategy for auto-increment IDs
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "USER_ID")
     private Long id;
 
-    @Column(name = "EMAIL_ADDRESS", unique = true, nullable = false) // Email should be unique and required
+    @Column(name = "EMAIL_ADDRESS", unique = true, nullable = false)
     private String emailAddress;
 
-    @Column(name = "PASSWORD", nullable = false) // Password is required
-    private String password; // Consider storing hashed passwords
+    @Column(name = "PASSWORD", nullable = false)
+    private String password;
 
-    @Column(name = "USER_TYPE", nullable = false) // User type is required
-    private String userType; // e.g., "ADOPTER", "SHELTER", "ADMIN"
+    @Column(name = "USER_TYPE", nullable = false)
+    private String userType;
 
     @Column(name = "FIRST_NAME")
     private String firstName;
@@ -38,11 +38,9 @@ public class User {
     @Column(name = "ADDRESS")
     private String address;
 
-    // Specific to SHELTER users
     @Column(name = "SHELTER_NAME")
     private String shelterName;
 
-    // --- Preference fields ---
     @Column(name = "PREFERRED_DOG_WEIGHT")
     private Double preferredDogWeight = 0.5;
 
