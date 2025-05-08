@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/shelter/events").permitAll() // This should specifically allow the GET request
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/shelter/events/debug").permitAll()
                 // Then define protected endpoints
                 .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated()
